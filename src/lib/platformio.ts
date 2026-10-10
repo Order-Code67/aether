@@ -4,6 +4,8 @@ import { isTauriRuntime } from "@/lib/tauri";
 
 export type PioTask = "build" | "upload" | "clean" | "compiledb";
 
+export type PioStarter = "none" | "blink" | "servo";
+
 export interface PioInfo {
   installed: boolean;
   command: string | null;
@@ -47,11 +49,13 @@ export async function runPioTask(options: {
   cwd: string;
   task: PioTask;
   env?: string | null;
+  uploadPort?: string | null;
 }): Promise<void> {
   return invoke("pio_run", {
     cwd: options.cwd,
     task: options.task,
     env: options.env ?? null,
+    uploadPort: options.uploadPort ?? null,
   });
 }
 
@@ -63,11 +67,15 @@ export async function initPioProject(options: {
   parent: string;
   name: string;
   board: string;
+  framework?: string;
+  starter?: PioStarter;
 }): Promise<string> {
   return invoke<string>("pio_project_init", {
     parent: options.parent,
     name: options.name,
     board: options.board,
+    framework: options.framework ?? "arduino",
+    starter: options.starter ?? "none",
   });
 }
 

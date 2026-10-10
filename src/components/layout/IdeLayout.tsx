@@ -12,6 +12,7 @@ import { UnlockGate } from "@/components/editor/UnlockGate";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { CommandPalette } from "@/components/palette/CommandPalette";
+import { ToolsDoctorBanner } from "@/components/platformio/ToolsDoctorBanner";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { usePaletteStore } from "@/stores/paletteStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -53,6 +54,7 @@ export function IdeLayout() {
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-aether-bg">
+      <ToolsDoctorBanner />
       <div className="flex min-h-0 flex-1">
         <ActivityBar />
         <Sidebar />

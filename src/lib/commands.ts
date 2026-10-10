@@ -61,9 +61,9 @@ export function getCommands(): Command[] {
     },
     {
       id: "file.newProject",
-      title: "New PlatformIO Project…",
+      title: "New Project…",
       category: "File",
-      keywords: "create pio",
+      keywords: "create pio wizard arduino project новый проект",
       run: () => {
         usePaletteStore.getState().requestNewProject();
       },
@@ -236,6 +236,16 @@ export function getCommands(): Command[] {
       category: "PlatformIO",
       keybinding: "Ctrl+Alt+U",
       run: () => void usePlatformIoStore.getState().runTask("upload"),
+    },
+    {
+      id: "pio.doctor",
+      title: "PlatformIO: Check Tools…",
+      category: "PlatformIO",
+      keywords: "doctor toolchain clangd python диагностика",
+      run: () => {
+        usePlatformIoStore.getState().showDoctor();
+        void usePlatformIoStore.getState().runDoctor();
+      },
     },
     {
       id: "pio.clean",

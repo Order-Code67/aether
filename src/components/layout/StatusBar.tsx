@@ -40,6 +40,10 @@ export function StatusBar() {
   const running = usePlatformIoStore((s) => s.running);
   const lastSuccess = usePlatformIoStore((s) => s.lastSuccess);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
+  const uploadPortByRoot = usePlatformIoStore((s) => s.uploadPortByRoot);
+  const rootPath = useWorkspaceStore((s) => s.rootPath);
+  const uploadPort =
+    (rootPath && uploadPortByRoot[rootPath]) || serialPath || "";
   const problems = useProblemsStore((s) => s.problems);
   const errorCount = problems.filter((p) => p.severity === "error").length;
   const warningCount = problems.filter((p) => p.severity === "warning").length;
@@ -214,7 +218,7 @@ export function StatusBar() {
           <Radio size={12} />
           {serialConnected
             ? `${serialPath || "Serial"} @ ${serialBaud}`
-            : "No board"}
+            : uploadPort || (isProject ? t("pio.portNone") : "No board")}
         </button>
         <span className="flex items-center gap-1">
           <Wifi size={12} />

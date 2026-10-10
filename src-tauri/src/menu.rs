@@ -11,7 +11,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
         &[
             &MenuItem::with_id(app, "file.openFolder", "Open Folder…", true, Some("CmdOrCtrl+O"))?,
             &MenuItem::with_id(app, "file.addFolder", "Add Folder to Workspace…", true, None::<&str>)?,
-            &MenuItem::with_id(app, "file.newProject", "New PlatformIO Project…", true, None::<&str>)?,
+            &MenuItem::with_id(app, "file.newProject", "New Project…", true, None::<&str>)?,
             &MenuItem::with_id(app, "file.openExample", "Open Example…", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "file.save", "Save", true, Some("CmdOrCtrl+S"))?,
@@ -91,6 +91,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
         "Help",
         true,
         &[
+            &MenuItem::with_id(app, "pio.doctor", "Check Tools…", true, None::<&str>)?,
             &MenuItem::with_id(
                 app,
                 "help.checkUpdates",

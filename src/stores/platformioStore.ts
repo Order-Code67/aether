@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { t } from "@/hooks/useI18n";
+import { friendlyPioError } from "@/lib/pioErrors";
 import {
   cancelPioTask,
   detectPio,
@@ -10,9 +12,12 @@ import {
   type PioStatusPayload,
   type PioTask,
 } from "@/lib/platformio";
+import { lspDetect, type LspInfo } from "@/lib/lsp";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useProblemsStore } from "@/stores/problemsStore";
+import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 const MAX_LINES = 4000;
@@ -23,25 +28,47 @@ export interface OutputLine {
   text: string;
 }
 
+export interface DoctorReport {
+  checking: boolean;
+  checked: boolean;
+  pio: PioInfo | null;
+  clangd: LspInfo | null;
+  ok: boolean;
+}
+
 interface PlatformIoState {
   info: PioInfo | null;
   isProject: boolean;
   envs: string[];
   selectedEnv: string;
+  /** Upload port preference keyed by workspace root (falls back to serial selection). */
+  uploadPortByRoot: Record<string, string>;
   running: boolean;
   lastTask: PioTask | null;
   lastSuccess: boolean | null;
   lines: OutputLine[];
   error: string | null;
   lineSeq: number;
+  doctor: DoctorReport;
+  doctorDismissed: boolean;
   refreshCli: () => Promise<void>;
   refreshProject: () => Promise<void>;
   setSelectedEnv: (env: string) => void;
+  setUploadPort: (port: string) => void;
+  getUploadPort: () => string;
   appendOutput: (payload: PioOutputPayload) => void;
   applyStatus: (status: PioStatusPayload) => void;
   clearOutput: () => void;
   runTask: (task: PioTask) => Promise<void>;
   cancel: () => Promise<void>;
+  runDoctor: () => Promise<void>;
+  dismissDoctor: () => void;
+  showDoctor: () => void;
+}
+
+function localizeError(message: string): string {
+  const locale = useSettingsStore.getState().locale;
+  return friendlyPioError(message, locale);
 }
 
 export const usePlatformIoStore = create<PlatformIoState>()(
@@ -51,12 +78,21 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       isProject: false,
       envs: [],
       selectedEnv: "",
+      uploadPortByRoot: {},
       running: false,
       lastTask: null,
       lastSuccess: null,
       lines: [],
       error: null,
       lineSeq: 0,
+      doctor: {
+        checking: false,
+        checked: false,
+        pio: null,
+        clangd: null,
+        ok: true,
+      },
+      doctorDismissed: false,
 
       refreshCli: async () => {
         if (!isTauriRuntime()) {
@@ -71,10 +107,11 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           set({ info, error: null });
         } catch (error) {
           set({
-            error:
+            error: localizeError(
               error instanceof Error
                 ? error.message
                 : "Failed to detect PlatformIO.",
+            ),
           });
         }
       },
@@ -107,15 +144,34 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         } catch (error) {
           set({
             isProject: false,
-            error:
+            error: localizeError(
               error instanceof Error
                 ? error.message
                 : "Failed to inspect PlatformIO project.",
+            ),
           });
         }
       },
 
       setSelectedEnv: (env) => set({ selectedEnv: env }),
+
+      setUploadPort: (port) => {
+        const { rootPath } = useWorkspaceStore.getState();
+        useSerialStore.getState().setSelectedPath(port);
+        if (!rootPath) return;
+        set((state) => ({
+          uploadPortByRoot: { ...state.uploadPortByRoot, [rootPath]: port },
+        }));
+      },
+
+      getUploadPort: () => {
+        const { rootPath } = useWorkspaceStore.getState();
+        const byRoot = rootPath
+          ? get().uploadPortByRoot[rootPath]
+          : undefined;
+        if (byRoot) return byRoot;
+        return useSerialStore.getState().selectedPath;
+      },
 
       appendOutput: (payload) => {
         if (payload.stream === "stdout" || payload.stream === "stderr") {
@@ -138,11 +194,26 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       },
 
       applyStatus: (status) => {
+        let nextError = status.error ? localizeError(status.error) : null;
+        if (
+          !status.running &&
+          status.success === false &&
+          !nextError &&
+          status.task === "upload"
+        ) {
+          const recent = get()
+            .lines.slice(-40)
+            .map((l) => l.text)
+            .join("\n");
+          nextError = localizeError(
+            recent || "Upload failed. Check the selected COM port and board.",
+          );
+        }
         set({
           running: status.running,
           lastTask: (status.task as PioTask | null) ?? get().lastTask,
           lastSuccess: status.success,
-          error: status.error,
+          error: nextError,
         });
         // After a failed build, surface Problems if diagnostics were captured.
         if (
@@ -176,20 +247,28 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         const { kind, rootPath } = useWorkspaceStore.getState();
         if (!isTauriRuntime()) {
           set({
-            error: "PlatformIO requires the desktop app (npm run tauri:dev).",
+            error: localizeError(
+              "PlatformIO requires the desktop app (npm run tauri:dev).",
+            ),
           });
           return;
         }
         if (kind !== "folder" || !rootPath) {
-          set({ error: "Open a PlatformIO project folder first." });
+          set({ error: t("pio.error.needFolder") });
           return;
         }
         if (!get().isProject) {
-          set({ error: "No platformio.ini found in the workspace root." });
+          set({ error: t("pio.error.noIni") });
           return;
         }
         if (get().running) {
-          set({ error: "A PlatformIO task is already running." });
+          set({ error: t("pio.error.busy") });
+          return;
+        }
+
+        const uploadPort = get().getUploadPort().trim();
+        if (task === "upload" && !uploadPort) {
+          set({ error: t("pio.error.needPort") });
           return;
         }
 
@@ -208,15 +287,17 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             cwd: rootPath,
             task,
             env: get().selectedEnv || null,
+            uploadPort: task === "upload" ? uploadPort : null,
           });
         } catch (error) {
           set({
             running: false,
             lastSuccess: false,
-            error:
+            error: localizeError(
               error instanceof Error
                 ? error.message
                 : "Failed to start PlatformIO task.",
+            ),
           });
         }
       },
@@ -226,18 +307,78 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           await cancelPioTask();
         } catch (error) {
           set({
-            error:
+            error: localizeError(
               error instanceof Error
                 ? error.message
                 : "Failed to cancel PlatformIO task.",
+            ),
           });
         }
       },
+
+      runDoctor: async () => {
+        if (!isTauriRuntime()) {
+          set({
+            doctor: {
+              checking: false,
+              checked: true,
+              pio: { installed: false, command: null, version: null },
+              clangd: { installed: false, command: null, version: null },
+              ok: false,
+            },
+          });
+          return;
+        }
+
+        set((state) => ({
+          doctor: { ...state.doctor, checking: true },
+          doctorDismissed: false,
+        }));
+
+        try {
+          const [pio, clangd] = await Promise.all([detectPio(), lspDetect()]);
+          set({
+            info: pio,
+            doctor: {
+              checking: false,
+              checked: true,
+              pio,
+              clangd,
+              // PIO is required; clangd is optional but still reported in the banner.
+              ok: pio.installed && !!clangd.installed,
+            },
+          });
+          void import("@/stores/lspStore").then(({ useLspStore }) => {
+            useLspStore.setState({ info: clangd, error: null });
+          });
+        } catch (error) {
+          set({
+            doctor: {
+              checking: false,
+              checked: true,
+              pio: get().info,
+              clangd: null,
+              ok: false,
+            },
+            error: localizeError(
+              error instanceof Error
+                ? error.message
+                : "Toolchain check failed.",
+            ),
+          });
+        }
+      },
+
+      dismissDoctor: () => set({ doctorDismissed: true }),
+
+      showDoctor: () => set({ doctorDismissed: false }),
     }),
     {
       name: "aether-platformio",
       partialize: (state) => ({
         selectedEnv: state.selectedEnv,
+        uploadPortByRoot: state.uploadPortByRoot,
+        doctorDismissed: state.doctorDismissed,
       }),
     },
   ),

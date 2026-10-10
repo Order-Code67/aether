@@ -119,8 +119,8 @@ function ExplorerSidebar() {
           )}
           <button
             type="button"
-            title="New PlatformIO Project"
-            aria-label="New PlatformIO Project"
+            title={t("explorer.newProject")}
+            aria-label={t("explorer.newProject")}
             onClick={() => setNewProjectOpen(true)}
             className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >
@@ -162,7 +162,7 @@ function ExplorerSidebar() {
             onClick={() => setNewProjectOpen(true)}
             className="rounded border border-aether-border bg-aether-bg px-3 py-2 text-left text-xs text-aether-fg transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised"
           >
-            New PlatformIO Project…
+            {t("explorer.newProject")}
           </button>
           <button
             type="button"

@@ -219,6 +219,7 @@ pub fn pio_run(
     cwd: String,
     task: String,
     env: Option<String>,
+    upload_port: Option<String>,
 ) -> Result<(), String> {
     if state.running.load(Ordering::SeqCst) {
         return Err("A PlatformIO task is already running.".into());
@@ -258,6 +259,20 @@ pub fn pio_run(
     if let Some(env_name) = env.filter(|e| !e.is_empty()) {
         args.push("-e".into());
         args.push(env_name);
+    }
+
+    if task == "upload" {
+        if let Some(port) = upload_port
+            .as_deref()
+            .map(str::trim)
+            .filter(|p| !p.is_empty())
+        {
+            if port.contains('\0') || port.len() > 260 {
+                return Err("Invalid upload port.".into());
+            }
+            args.push("--upload-port".into());
+            args.push(port.to_string());
+        }
     }
 
     {
@@ -423,12 +438,202 @@ pub fn pio_is_running(state: State<'_, PioState>) -> bool {
     state.running.load(Ordering::SeqCst)
 }
 
-/// Create a new PlatformIO project via `pio project init`.
+fn platform_for_board(board: &str) -> &'static str {
+    match board {
+        "esp32dev"
+        | "esp32-s3-devkitc-1"
+        | "esp32doit-devkit-v1"
+        | "esp32-c3-devkitm-1" => "espressif32",
+        "esp8266" | "nodemcuv2" | "d1_mini" => "espressif8266",
+        "uno" | "nanoatmega328" | "megaatmega2560" | "leonardo" | "micro" => "atmelavr",
+        "teensy41" | "teensy40" | "teensy36" => "teensy",
+        "pico" | "pico2" => "raspberrypi",
+        _ if board.starts_with("esp32") => "espressif32",
+        _ if board.starts_with("esp8266") => "espressif8266",
+        _ => "atmelavr",
+    }
+}
+
+fn is_esp32_family(board: &str) -> bool {
+    board.starts_with("esp32") || matches!(board, "esp32dev" | "esp32doit-devkit-v1")
+}
+
+fn validate_framework(framework: &str) -> Result<&str, String> {
+    let fw = framework.trim();
+    if fw.is_empty() {
+        return Ok("arduino");
+    }
+    if fw == "arduino" {
+        return Ok(fw);
+    }
+    Err("Only the Arduino framework is supported in the project wizard.".into())
+}
+
+fn validate_starter(starter: &str) -> Result<&str, String> {
+    let s = starter.trim();
+    if s.is_empty() || s == "none" || s == "blink" || s == "servo" {
+        return Ok(if s.is_empty() { "none" } else { s });
+    }
+    Err("Invalid starter template.".into())
+}
+
+fn write_wizard_project_files(
+    project_dir: &Path,
+    board: &str,
+    framework: &str,
+    starter: &str,
+) -> Result<(), String> {
+    let platform = platform_for_board(board);
+    let env_name = board;
+    let mut lib_deps = String::new();
+    if starter == "servo" {
+        if is_esp32_family(board) {
+            lib_deps.push_str("lib_deps =\n\tmadhephaestus/ESP32Servo@^3.0.6\n");
+        } else {
+            lib_deps.push_str("lib_deps =\n\tarduino-libraries/Servo@^1.2.2\n");
+        }
+    }
+
+    let ini = format!(
+        "; PlatformIO Project Configuration File\n\
+         ; Created by Aether project wizard\n\n\
+         [env:{env_name}]\n\
+         platform = {platform}\n\
+         board = {board}\n\
+         framework = {framework}\n\
+         monitor_speed = 115200\n\
+         {lib_deps}"
+    );
+
+    let main_cpp = match starter {
+        "servo" if is_esp32_family(board) => {
+            r#"#include <Arduino.h>
+#include <ESP32Servo.h>
+
+#ifndef SERVO_PIN
+#define SERVO_PIN 13
+#endif
+
+Servo servo;
+
+void setup() {
+  Serial.begin(115200);
+  servo.attach(SERVO_PIN);
+  servo.write(90);
+  Serial.println("Aether servo sketch ready");
+}
+
+void loop() {
+  static int angle = 0;
+  static int step = 1;
+  servo.write(angle);
+  angle += step;
+  if (angle >= 180 || angle <= 0) {
+    step = -step;
+  }
+  delay(20);
+}
+"#
+        }
+        "servo" => {
+            r#"#include <Arduino.h>
+#include <Servo.h>
+
+#ifndef SERVO_PIN
+#define SERVO_PIN 9
+#endif
+
+Servo servo;
+
+void setup() {
+  Serial.begin(115200);
+  servo.attach(SERVO_PIN);
+  servo.write(90);
+  Serial.println("Aether servo sketch ready");
+}
+
+void loop() {
+  static int angle = 0;
+  static int step = 1;
+  servo.write(angle);
+  angle += step;
+  if (angle >= 180 || angle <= 0) {
+    step = -step;
+  }
+  delay(20);
+}
+"#
+        }
+        "blink" if is_esp32_family(board) => {
+            r#"#include <Arduino.h>
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2
+#endif
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(115200);
+  Serial.println("Aether blink sketch ready");
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+}
+"#
+        }
+        "blink" => {
+            r#"#include <Arduino.h>
+
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 13
+#endif
+
+void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(115200);
+  Serial.println("Aether blink sketch ready");
+}
+
+void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+}
+"#
+        }
+        _ => {
+            r#"#include <Arduino.h>
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+}
+"#
+        }
+    };
+
+    let src_dir = project_dir.join("src");
+    std::fs::create_dir_all(&src_dir).map_err(|e| e.to_string())?;
+    std::fs::write(project_dir.join("platformio.ini"), ini).map_err(|e| e.to_string())?;
+    std::fs::write(src_dir.join("main.cpp"), main_cpp).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Create a new PlatformIO project via `pio project init`, then apply wizard files.
 #[tauri::command]
 pub fn pio_project_init(
     parent: String,
     name: String,
     board: String,
+    framework: Option<String>,
+    starter: Option<String>,
 ) -> Result<String, String> {
     let command = resolve_pio_command().ok_or_else(|| {
         "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH."
@@ -451,6 +656,9 @@ pub fn pio_project_init(
         return Err("Invalid board id.".into());
     }
 
+    let framework = validate_framework(framework.as_deref().unwrap_or("arduino"))?;
+    let starter = validate_starter(starter.as_deref().unwrap_or("none"))?;
+
     let parent_path = PathBuf::from(&parent);
     if !parent_path.is_dir() {
         return Err(format!("Parent folder does not exist: {parent}"));
@@ -466,14 +674,17 @@ pub fn pio_project_init(
 
     std::fs::create_dir_all(&project_dir).map_err(|e| e.to_string())?;
 
-    let init_args = [
+    let init_args = vec![
         "project".into(),
         "init".into(),
         "--board".into(),
         board.to_string(),
         "--project-dir".into(),
         project_dir.to_string_lossy().to_string(),
+        "--project-option".into(),
+        format!("framework={framework}"),
     ];
+
     let output = run_pio(&command, &init_args, None)
         .map_err(|e| format!("Failed to run pio project init: {e}"))?;
 
@@ -491,6 +702,11 @@ pub fn pio_project_init(
         } else {
             detail
         });
+    }
+
+    if let Err(err) = write_wizard_project_files(&project_dir, board, framework, starter) {
+        let _ = std::fs::remove_dir_all(&project_dir);
+        return Err(err);
     }
 
     Ok(project_dir.to_string_lossy().to_string())

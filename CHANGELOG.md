@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4 — 2026-10-10
+
+- **New Project wizard** — guided project creation (board / framework) from Explorer and File menu
+- **Tools Doctor** — startup check for PlatformIO / toolchain readiness with a clear banner when something is missing
+- **Upload / COM port** — clearer port selection and Upload UX when flashing firmware
+
 ## 0.2.3 — 2026-10-10
 
 - **Bundled examples** — ESP32 Blink, Arduino Mega Servo, and Arduino Nano ship with the install (File → Open Example… / welcome **Примеры**); copies into `Documents/Aether/examples`
