@@ -1,8 +1,14 @@
 import { Save, SaveAll, X } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
+import { isMainSketchPath } from "@/lib/sketchMode";
 import { useEditorStore } from "@/stores/editorStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function EditorTabs() {
+  const { t } = useI18n();
   const tabs = useEditorStore((s) => s.tabs);
   const activeTabId = useEditorStore((s) => s.activeTabId);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
@@ -10,6 +16,9 @@ export function EditorTabs() {
   const saveTab = useEditorStore((s) => s.saveTab);
   const saveAllTabs = useEditorStore((s) => s.saveAllTabs);
   const saveStatus = useEditorStore((s) => s.saveStatus);
+  const rootPath = useWorkspaceStore((s) => s.rootPath);
+  const isProject = usePlatformIoStore((s) => s.isProject);
+  const sketchMode = useSettingsStore((s) => s.sketchMode);
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? null;
   const dirtyCount = tabs.filter((tab) => tab.dirty).length;
@@ -32,11 +41,16 @@ export function EditorTabs() {
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
+          const showSketchBadge =
+            sketchMode &&
+            isProject &&
+            !!rootPath &&
+            isMainSketchPath(tab.path, rootPath);
           return (
             <div
               key={tab.id}
               className={cn(
-                "group flex max-w-[200px] min-w-[120px] items-center gap-1 border-r border-aether-border px-2",
+                "group flex max-w-[220px] min-w-[120px] items-center gap-1 border-r border-aether-border px-2",
                 isActive
                   ? "bg-aether-bg text-aether-fg"
                   : "bg-aether-surface text-aether-fg-muted hover:bg-aether-surface-raised",
@@ -54,6 +68,11 @@ export function EditorTabs() {
                   {tab.dirty ? "● " : ""}
                   {tab.name}
                 </span>
+                {showSketchBadge && (
+                  <span className="shrink-0 rounded bg-aether-accent-muted px-1 py-px text-[9px] font-medium uppercase tracking-wide text-aether-fg-muted">
+                    {t("sketch.badge")}
+                  </span>
+                )}
               </button>
               <button
                 type="button"

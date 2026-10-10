@@ -13,13 +13,18 @@ import {
   detectPython,
   installPioCore,
   inspectPioProject,
+  prepareOfflineCache,
+  probeOfflineCache,
   runPioTask,
+  type OfflineCacheStatus,
   type PioInfo,
   type PioOutputPayload,
   type PioStatusPayload,
   type PioTask,
   type PythonInfo,
 } from "@/lib/platformio";
+import { matchEnvForBoard, pickPreferredPort } from "@/lib/pioPorts";
+import { findMainSketchPath } from "@/lib/sketchMode";
 import { lspDetect, type LspInfo } from "@/lib/lsp";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -53,6 +58,8 @@ interface PlatformIoState {
   isProject: boolean;
   envs: string[];
   selectedEnv: string;
+  /** Selected env keyed by workspace root. */
+  selectedEnvByRoot: Record<string, string>;
   /** Upload port preference keyed by workspace root (falls back to serial selection). */
   uploadPortByRoot: Record<string, string>;
   running: boolean;
@@ -64,8 +71,14 @@ interface PlatformIoState {
   progress: PioProgress;
   doctor: DoctorReport;
   doctorDismissed: boolean;
+  offlineCache: OfflineCacheStatus | null;
+  offlineCacheChecking: boolean;
   refreshCli: () => Promise<void>;
   refreshProject: () => Promise<void>;
+  /** Refresh serial ports and auto-pick preferred COM for this project. */
+  syncUploadPort: () => Promise<string>;
+  /** Open main sketch tab when a PIO project loads and no editors are open. */
+  maybeOpenMainSketch: () => Promise<void>;
   setSelectedEnv: (env: string) => void;
   setUploadPort: (port: string) => void;
   getUploadPort: () => string;
@@ -76,6 +89,8 @@ interface PlatformIoState {
   cancel: () => Promise<void>;
   runDoctor: () => Promise<void>;
   installMissing: () => Promise<void>;
+  refreshOfflineCache: () => Promise<void>;
+  prepareOfflineCache: () => Promise<void>;
   dismissDoctor: () => void;
   showDoctor: () => void;
 }
@@ -92,6 +107,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       isProject: false,
       envs: [],
       selectedEnv: "",
+      selectedEnvByRoot: {},
       uploadPortByRoot: {},
       running: false,
       lastTask: null,
@@ -111,6 +127,8 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         ok: true,
       },
       doctorDismissed: false,
+      offlineCache: null,
+      offlineCacheChecking: false,
 
       refreshCli: async () => {
         if (!isTauriRuntime()) {
@@ -149,16 +167,34 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         try {
           const project = await inspectPioProject(rootPath);
           set((state) => {
-            const stillSelected = project.envs.includes(state.selectedEnv);
+            const remembered = state.selectedEnvByRoot[rootPath];
+            const fromMemory =
+              remembered && project.envs.includes(remembered)
+                ? remembered
+                : null;
+            const stillSelected = project.envs.includes(state.selectedEnv)
+              ? state.selectedEnv
+              : null;
+            const matched =
+              fromMemory ||
+              stillSelected ||
+              matchEnvForBoard(project.envs, remembered) ||
+              project.envs[0] ||
+              "";
             return {
               isProject: project.isProject,
               envs: project.envs,
-              selectedEnv: stillSelected
-                ? state.selectedEnv
-                : (project.envs[0] ?? ""),
+              selectedEnv: matched,
+              selectedEnvByRoot: matched
+                ? { ...state.selectedEnvByRoot, [rootPath]: matched }
+                : state.selectedEnvByRoot,
               error: null,
             };
           });
+          if (project.isProject) {
+            void get().syncUploadPort();
+            void get().maybeOpenMainSketch();
+          }
         } catch (error) {
           set({
             isProject: false,
@@ -171,7 +207,57 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         }
       },
 
-      setSelectedEnv: (env) => set({ selectedEnv: env }),
+      syncUploadPort: async () => {
+        const { rootPath } = useWorkspaceStore.getState();
+        const serial = useSerialStore.getState();
+        await serial.refreshPorts();
+        const ports = useSerialStore.getState().ports;
+        const preferred = rootPath
+          ? get().uploadPortByRoot[rootPath]
+          : undefined;
+        const picked = pickPreferredPort(ports, preferred);
+        if (picked) {
+          get().setUploadPort(picked);
+        }
+        return picked;
+      },
+
+      maybeOpenMainSketch: async () => {
+        const settings = useSettingsStore.getState();
+        if (!settings.sketchMode) return;
+        const ws = useWorkspaceStore.getState();
+        const { kind, rootPath, tree } = ws;
+        if (kind !== "folder" || !rootPath || !get().isProject) return;
+        const { useEditorStore } = await import("@/stores/editorStore");
+        if (useEditorStore.getState().tabs.length > 0) return;
+
+        const srcNode = tree.find(
+          (n) => n.kind === "folder" && n.name.toLowerCase() === "src",
+        );
+        if (srcNode && !srcNode.loaded) {
+          await ws.expandFolder(srcNode.path);
+        }
+        const sketch = findMainSketchPath(
+          rootPath,
+          useWorkspaceStore.getState().tree,
+        );
+        if (!sketch) return;
+        try {
+          await useWorkspaceStore.getState().openPathInEditor(sketch);
+        } catch {
+          // main.cpp may not exist yet
+        }
+      },
+
+      setSelectedEnv: (env) => {
+        const { rootPath } = useWorkspaceStore.getState();
+        set((state) => ({
+          selectedEnv: env,
+          selectedEnvByRoot: rootPath
+            ? { ...state.selectedEnvByRoot, [rootPath]: env }
+            : state.selectedEnvByRoot,
+        }));
+      },
 
       setUploadPort: (port) => {
         const { rootPath } = useWorkspaceStore.getState();
@@ -287,6 +373,10 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           }
         }
 
+        if (status.task === "offline-cache" && !status.running) {
+          void get().refreshOfflineCache();
+        }
+
         // After a failed build, surface Problems if diagnostics were captured.
         if (
           !status.running &&
@@ -339,10 +429,13 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           return;
         }
 
-        const uploadPort = get().getUploadPort().trim();
-        if (task === "upload" && !uploadPort) {
-          set({ error: t("pio.error.needPort") });
-          return;
+        let uploadPort = get().getUploadPort().trim();
+        if (task === "upload") {
+          uploadPort = (await get().syncUploadPort()).trim() || uploadPort;
+          if (!uploadPort) {
+            set({ error: t("pio.error.needPort") });
+            return;
+          }
         }
 
         // Release the serial port so upload can open it.
@@ -564,6 +657,71 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         }
       },
 
+      refreshOfflineCache: async () => {
+        if (!isTauriRuntime()) {
+          set({ offlineCache: null, offlineCacheChecking: false });
+          return;
+        }
+        set({ offlineCacheChecking: true });
+        try {
+          const status = await probeOfflineCache();
+          set({ offlineCache: status, offlineCacheChecking: false, error: null });
+        } catch (error) {
+          set({
+            offlineCacheChecking: false,
+            error: localizeError(
+              error instanceof Error
+                ? error.message
+                : "Failed to probe offline cache.",
+            ),
+          });
+        }
+      },
+
+      prepareOfflineCache: async () => {
+        if (!isTauriRuntime()) {
+          set({ error: t("doctor.needDesktop") });
+          return;
+        }
+        if (get().running) {
+          set({ error: t("pio.error.busy") });
+          return;
+        }
+        if (!get().info?.installed && !get().doctor.pio?.installed) {
+          set({ error: t("offline.needPio") });
+          return;
+        }
+
+        useLayoutStore.getState().setBottomPanelTab("output");
+        set({
+          lines: [],
+          error: null,
+          lastTask: "offline-cache",
+          lastSuccess: null,
+          running: true,
+          progress: {
+            stage: "installing",
+            percent: null,
+            detail: null,
+          },
+        });
+
+        try {
+          await prepareOfflineCache();
+        } catch (error) {
+          set({
+            running: false,
+            lastSuccess: false,
+            progress: { stage: "failed", percent: null, detail: null },
+            error: localizeError(
+              error instanceof Error
+                ? error.message
+                : "Failed to prepare offline cache.",
+            ),
+          });
+        }
+      },
+
       dismissDoctor: () => set({ doctorDismissed: true }),
 
       showDoctor: () => set({ doctorDismissed: false }),
@@ -572,6 +730,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       name: "aether-platformio",
       partialize: (state) => ({
         selectedEnv: state.selectedEnv,
+        selectedEnvByRoot: state.selectedEnvByRoot,
         uploadPortByRoot: state.uploadPortByRoot,
         doctorDismissed: state.doctorDismissed,
       }),

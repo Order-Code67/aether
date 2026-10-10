@@ -96,10 +96,14 @@ export function StatusBar() {
     pioLabel =
       progress.percent != null ? `${stage} ${progress.percent}%` : stage;
   } else if (isProject) {
+    const boardPort = [
+      selectedEnv || t("pio.board"),
+      uploadPort || t("pio.portNone"),
+    ].join(" · ");
     pioLabel =
       lastSuccess === false
-        ? `${t("pio.failed")} · ${selectedEnv || "env"}`
-        : `${t("pio.ok")} · ${selectedEnv || "project"}`;
+        ? `${t("pio.failed")} · ${boardPort}`
+        : `${t("pio.ok")} · ${boardPort}`;
   } else if (kind === "folder") {
     pioLabel = "No platformio.ini";
   }
@@ -182,7 +186,11 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title="Open PlatformIO Output"
+          title={
+            isProject
+              ? `${t("pio.board")}: ${selectedEnv || "—"} · ${t("pio.port")}: ${uploadPort || t("pio.portNone")}`
+              : "Open PlatformIO Output"
+          }
           onClick={() => setBottomPanelTab("output")}
           className="truncate opacity-90 hover:opacity-100"
         >

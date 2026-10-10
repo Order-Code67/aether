@@ -10,27 +10,48 @@ pub struct BundledExample {
     pub title: String,
     pub description: String,
     pub board: String,
+    pub tags: Vec<String>,
 }
 
-const CATALOG: &[(&str, &str, &str, &str)] = &[
-    (
-        "esp32-blink",
-        "ESP32 Blink + libs",
-        "ESP32 Dev Module blink sketch with ArduinoJson, ESP32Servo, and FastLED in lib_deps.",
-        "esp32dev",
-    ),
-    (
-        "arduino-mega-servo",
-        "Arduino Mega Servo",
-        "Arduino Mega 2560 servo sweep with ArduinoJson.",
-        "megaatmega2560",
-    ),
-    (
-        "arduino-nano",
-        "Arduino Nano",
-        "Arduino Nano blink + Servo with ArduinoJson.",
-        "nanoatmega328",
-    ),
+struct CatalogEntry {
+    id: &'static str,
+    title: &'static str,
+    description: &'static str,
+    board: &'static str,
+    tags: &'static [&'static str],
+}
+
+const CATALOG: &[CatalogEntry] = &[
+    CatalogEntry {
+        id: "esp32-blink",
+        title: "ESP32 Blink",
+        description:
+            "Blink the built-in LED on an ESP32 Dev Module. Includes ArduinoJson, ESP32Servo, and FastLED in lib_deps.",
+        board: "esp32dev",
+        tags: &["ESP32", "Blink"],
+    },
+    CatalogEntry {
+        id: "arduino-mega-servo",
+        title: "Arduino Mega Servo",
+        description: "Servo sweep sketch for Arduino Mega 2560 with ArduinoJson.",
+        board: "megaatmega2560",
+        tags: &["Mega", "Servo"],
+    },
+    CatalogEntry {
+        id: "arduino-nano",
+        title: "Arduino Nano",
+        description: "Blink + Servo starter for Arduino Nano (ATmega328) with ArduinoJson.",
+        board: "nanoatmega328",
+        tags: &["Nano", "Blink", "Servo"],
+    },
+    CatalogEntry {
+        id: "esp32-wifi",
+        title: "ESP32 Wi-Fi stub",
+        description:
+            "Minimal Wi-Fi connect stub for ESP32. Replace SSID/password, then see PlatformIO Wi-Fi docs for next steps.",
+        board: "esp32dev",
+        tags: &["ESP32", "Wi-Fi"],
+    },
 ];
 
 fn examples_root(app: &AppHandle) -> Result<PathBuf, String> {
@@ -84,13 +105,14 @@ fn copy_dir_filtered(src: &Path, dst: &Path) -> Result<(), String> {
 pub fn list_bundled_examples(app: AppHandle) -> Result<Vec<BundledExample>, String> {
     let root = examples_root(&app)?;
     let mut out = Vec::new();
-    for (id, title, description, board) in CATALOG {
-        if root.join(id).is_dir() {
+    for entry in CATALOG {
+        if root.join(entry.id).is_dir() {
             out.push(BundledExample {
-                id: (*id).to_string(),
-                title: (*title).to_string(),
-                description: (*description).to_string(),
-                board: (*board).to_string(),
+                id: entry.id.to_string(),
+                title: entry.title.to_string(),
+                description: entry.description.to_string(),
+                board: entry.board.to_string(),
+                tags: entry.tags.iter().map(|s| (*s).to_string()).collect(),
             });
         }
     }
@@ -108,7 +130,7 @@ pub fn materialize_bundled_example(app: AppHandle, id: String) -> Result<String,
         || id.contains('/')
         || id.contains('\\')
         || id.contains("..")
-        || !CATALOG.iter().any(|(catalog_id, ..)| *catalog_id == id)
+        || !CATALOG.iter().any(|e| e.id == id)
     {
         return Err("Unknown example id.".into());
     }

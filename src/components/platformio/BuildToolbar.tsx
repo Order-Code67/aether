@@ -40,19 +40,19 @@ export function BuildToolbar() {
   const runTask = usePlatformIoStore((s) => s.runTask);
   const uploadPortByRoot = usePlatformIoStore((s) => s.uploadPortByRoot);
   const setUploadPort = usePlatformIoStore((s) => s.setUploadPort);
+  const syncUploadPort = usePlatformIoStore((s) => s.syncUploadPort);
   const ports = useSerialStore((s) => s.ports);
   const serialPath = useSerialStore((s) => s.selectedPath);
   const serialConnected = useSerialStore((s) => s.connected);
-  const refreshPorts = useSerialStore((s) => s.refreshPorts);
 
   const selectedPort =
     (rootPath && uploadPortByRoot[rootPath]) || serialPath || "";
 
   useEffect(() => {
     if (kind === "folder" && isProject) {
-      void refreshPorts();
+      void syncUploadPort();
     }
-  }, [kind, isProject, rootPath, refreshPorts]);
+  }, [kind, isProject, rootPath, syncUploadPort]);
 
   if (kind !== "folder" || !isProject) {
     return null;
@@ -76,13 +76,15 @@ export function BuildToolbar() {
         PlatformIO
       </span>
 
+      <span className="mr-0.5 text-[10px] text-aether-fg-dim">{t("pio.board")}</span>
       {envs.length > 0 && (
         <select
           value={selectedEnv}
           disabled={running}
           onChange={(event) => setSelectedEnv(event.target.value)}
           className="h-6 max-w-[140px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          aria-label="PlatformIO environment"
+          aria-label={t("pio.board")}
+          title={t("pio.boardEnv")}
         >
           {envs.map((env) => (
             <option key={env} value={env}>
@@ -92,6 +94,9 @@ export function BuildToolbar() {
         </select>
       )}
 
+      <span className="ml-1 mr-0.5 text-[10px] text-aether-fg-dim">
+        {t("pio.port")}
+      </span>
       <div className="flex items-center gap-0.5">
         <select
           value={selectedPort}
@@ -115,7 +120,7 @@ export function BuildToolbar() {
           aria-label={t("pio.portRefresh")}
           disabled={running}
           onClick={() => {
-            void refreshPorts();
+            void syncUploadPort();
           }}
           className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
         >

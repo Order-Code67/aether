@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+## 0.2.6 — 2026-10-10
+
+- **Sketch mode** — Arduino-like Explorer (default ON for PlatformIO): emphasize main sketch, hide `.pio` clutter, optional “Show all files”, auto-open `src/main.cpp`
+- **Board / port memory** — per-project env + upload port persistence; auto-detect COM on open and before upload
+- **Examples catalog** — card UI with RU/EN descriptions and board tags; ESP32 Wi-Fi stub example
+- **Offline cache** — Settings → Tools: detect `~/.platformio` platforms and pre-download espressif32 + atmelavr (streams to Output). To reuse toolchains across machines, copy the entire `~/.platformio` folder (see `docs/OFFLINE_CACHE.md`). Toolchains are **not** embedded in the NSIS installer.
+
 ## 0.2.5 — 2026-10-10
 
 - **Install missing tools** — Tools Doctor can install missing PlatformIO / toolchain pieces from the banner

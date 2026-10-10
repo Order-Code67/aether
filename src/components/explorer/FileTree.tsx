@@ -10,7 +10,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import {
+  filterTreeForSketchMode,
+  isMainSketchPath,
+  isSecondaryName,
+  sortTreeForSketchMode,
+} from "@/lib/sketchMode";
 import { useEditorStore } from "@/stores/editorStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import type { FileTreeNode } from "@/types/workspace";
 
@@ -43,12 +51,23 @@ function FileTreeNodeView({
   node,
   depth,
   isRoot,
+  sketchFilter,
 }: {
   node: FileTreeNode;
   depth: number;
   isRoot?: boolean;
+  sketchFilter: boolean;
 }) {
-  const [open, setOpen] = useState(depth < 1);
+  const rootPath = useWorkspaceStore((s) => s.rootPath);
+  const isMain =
+    !!rootPath &&
+    node.kind === "file" &&
+    isMainSketchPath(node.path, rootPath);
+  const isSecondary = node.kind === "file" && isSecondaryName(node.name);
+  const defaultOpen =
+    depth < 1 ||
+    (sketchFilter && node.kind === "folder" && node.name.toLowerCase() === "src");
+  const [open, setOpen] = useState(defaultOpen);
   const expandFolder = useWorkspaceStore((s) => s.expandFolder);
   const openPathInEditor = useWorkspaceStore((s) => s.openPathInEditor);
   const createFile = useWorkspaceStore((s) => s.createFile);
@@ -257,11 +276,17 @@ function FileTreeNodeView({
         {open && (
           <>
             {draftRow}
-            {node.children?.map((child) => (
+            {(sketchFilter
+              ? sortTreeForSketchMode(
+                  filterTreeForSketchMode(node.children ?? [], false),
+                )
+              : node.children
+            )?.map((child) => (
               <FileTreeNodeView
                 key={child.path}
                 node={child}
                 depth={depth + 1}
+                sketchFilter={sketchFilter}
               />
             ))}
           </>
@@ -292,6 +317,8 @@ function FileTreeNodeView({
         className={cn(
           "flex w-full items-center gap-1.5 py-0.5 pr-2 text-left text-xs hover:bg-aether-surface-raised",
           isActive ? "bg-aether-accent-muted text-aether-fg" : "text-aether-fg",
+          isSecondary && sketchFilter && "opacity-70",
+          isMain && sketchFilter && "font-medium",
         )}
         style={{ paddingLeft: 8 + depth * 12 + 14 }}
         title={node.path}
@@ -340,6 +367,13 @@ export function FileTree({
 }) {
   const createFile = useWorkspaceStore((s) => s.createFile);
   const createFolder = useWorkspaceStore((s) => s.createFolder);
+  const sketchMode = useSettingsStore((s) => s.sketchMode);
+  const showAllFiles = useSettingsStore((s) => s.showAllFiles);
+  const isProject = usePlatformIoStore((s) => s.isProject);
+  const sketchFilter = sketchMode && isProject && !showAllFiles;
+  const visibleNodes = sketchFilter
+    ? sortTreeForSketchMode(filterTreeForSketchMode(nodes, false))
+    : nodes;
   const [rootMenu, setRootMenu] = useState<MenuState | null>(null);
 
   useEffect(() => {
@@ -375,8 +409,13 @@ export function FileTree({
           : undefined
       }
     >
-      {nodes.map((node) => (
-        <FileTreeNodeView key={node.path} node={node} depth={0} />
+      {visibleNodes.map((node) => (
+        <FileTreeNodeView
+          key={node.path}
+          node={node}
+          depth={0}
+          sketchFilter={sketchFilter}
+        />
       ))}
       {nodes.length === 0 && (
         <p className="px-4 py-2 text-xs text-aether-fg-dim">

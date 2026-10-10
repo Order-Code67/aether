@@ -11,6 +11,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { openWindowsOptionalFeatures } from "@/lib/platformio";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 const PIO_DOCS =
   "https://docs.platformio.org/en/latest/core/installation.html";
@@ -41,6 +42,7 @@ export function ToolsDoctorBanner() {
   const runDoctor = usePlatformIoStore((s) => s.runDoctor);
   const installMissing = usePlatformIoStore((s) => s.installMissing);
   const dismissDoctor = usePlatformIoStore((s) => s.dismissDoctor);
+  const openSettings = useSettingsStore((s) => s.openSettings);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -129,6 +131,7 @@ export function ToolsDoctorBanner() {
         )}
 
         <p className="text-aether-fg-dim">{t("doctor.platformsNote")}</p>
+        <p className="text-aether-fg-dim">{t("doctor.offlineHint")}</p>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {pioMissing && (
@@ -162,6 +165,13 @@ export function ToolsDoctorBanner() {
             className="rounded border border-aether-border bg-aether-bg px-2 py-0.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
           >
             {t("doctor.recheck")}
+          </button>
+          <button
+            type="button"
+            onClick={() => openSettings("tools")}
+            className="rounded border border-aether-border bg-aether-bg px-2 py-0.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+          >
+            {t("offline.title")}
           </button>
           {pioMissing && (
             <button

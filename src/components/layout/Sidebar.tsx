@@ -22,6 +22,7 @@ import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { ACTIVITY_ITEMS } from "@/types/layout";
 
@@ -64,6 +65,11 @@ function ExplorerSidebar() {
   const closeWorkspace = useWorkspaceStore((s) => s.closeWorkspace);
   const createFile = useWorkspaceStore((s) => s.createFile);
   const createFolder = useWorkspaceStore((s) => s.createFolder);
+  const isProject = usePlatformIoStore((s) => s.isProject);
+  const sketchMode = useSettingsStore((s) => s.sketchMode);
+  const showAllFiles = useSettingsStore((s) => s.showAllFiles);
+  const setSketchMode = useSettingsStore((s) => s.setSketchMode);
+  const setShowAllFiles = useSettingsStore((s) => s.setShowAllFiles);
   const tauri = isTauriRuntime();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
 
@@ -78,6 +84,42 @@ function ExplorerSidebar() {
           {t("explorer.title")}
         </h2>
         <div className="flex items-center gap-0.5">
+          {kind === "folder" && isProject && (
+            <>
+              <button
+                type="button"
+                title={t("sketch.modeToggle")}
+                aria-label={t("sketch.modeToggle")}
+                aria-pressed={sketchMode}
+                onClick={() => setSketchMode(!sketchMode)}
+                className={cn(
+                  "rounded px-1.5 py-0.5 text-[10px] font-medium",
+                  sketchMode
+                    ? "bg-aether-accent-muted text-aether-fg"
+                    : "text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg",
+                )}
+              >
+                {t("sketch.badge")}
+              </button>
+              {sketchMode && (
+                <button
+                  type="button"
+                  title={t("sketch.showAll")}
+                  aria-label={t("sketch.showAll")}
+                  aria-pressed={showAllFiles}
+                  onClick={() => setShowAllFiles(!showAllFiles)}
+                  className={cn(
+                    "rounded px-1.5 py-0.5 text-[10px]",
+                    showAllFiles
+                      ? "bg-aether-surface-raised text-aether-fg"
+                      : "text-aether-fg-dim hover:bg-aether-surface-raised hover:text-aether-fg",
+                  )}
+                >
+                  {showAllFiles ? t("sketch.hideClutter") : t("sketch.showAll")}
+                </button>
+              )}
+            </>
+          )}
           {kind === "folder" && activeFolderPath && (
             <>
               <button

@@ -70,7 +70,7 @@ export function getCommands(): Command[] {
     },
     {
       id: "file.openExample",
-      title: "Open Example…",
+      title: "Examples…",
       category: "File",
       keywords: "examples sample esp32 mega nano arduino примеры",
       run: () => {

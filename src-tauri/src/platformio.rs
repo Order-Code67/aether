@@ -1585,3 +1585,241 @@ pub fn pio_lib_list(cwd: String) -> Result<Vec<String>, String> {
     deps.dedup();
     Ok(deps)
 }
+
+fn platformio_home() -> Option<PathBuf> {
+    if let Ok(custom) = std::env::var("PLATFORMIO_CORE_DIR") {
+        let p = PathBuf::from(custom);
+        if !p.as_os_str().is_empty() {
+            return Some(p);
+        }
+    }
+    for key in ["USERPROFILE", "HOME"] {
+        if let Ok(home) = std::env::var(key) {
+            return Some(PathBuf::from(home).join(".platformio"));
+        }
+    }
+    None
+}
+
+fn platform_installed(home: &Path, id: &str) -> bool {
+    home.join("platforms").join(id).is_dir()
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OfflineCacheStatus {
+    pub home: Option<String>,
+    pub espressif32: bool,
+    pub atmelavr: bool,
+}
+
+/// Probe ~/.platformio for installed platforms used by bundled examples.
+#[tauri::command]
+pub fn pio_cache_status() -> Result<OfflineCacheStatus, String> {
+    let Some(home) = platformio_home() else {
+        return Ok(OfflineCacheStatus {
+            home: None,
+            espressif32: false,
+            atmelavr: false,
+        });
+    };
+    Ok(OfflineCacheStatus {
+        home: Some(home.to_string_lossy().to_string()),
+        espressif32: platform_installed(&home, "espressif32"),
+        atmelavr: platform_installed(&home, "atmelavr"),
+    })
+}
+
+/// Install espressif32 + atmelavr platforms (and their toolchains) into the global PIO cache.
+/// Streams progress to the Output panel. Does not embed multi-GB toolchains in the installer.
+#[tauri::command]
+pub fn pio_prepare_offline_cache(
+    app: AppHandle,
+    state: State<'_, PioState>,
+) -> Result<(), String> {
+    let command = resolve_pio_command().ok_or_else(|| {
+        "PlatformIO CLI not found. Install PlatformIO Core first (Tools Doctor → Install missing)."
+            .to_string()
+    })?;
+
+    if state.running.load(Ordering::SeqCst) {
+        return Err("A PlatformIO task is already running.".into());
+    }
+
+    {
+        let mut slot = state.child.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(mut child) = slot.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
+
+    state.running.store(true, Ordering::SeqCst);
+    emit_status(
+        &app,
+        PioStatusPayload {
+            running: true,
+            task: Some("offline-cache".into()),
+            success: None,
+            code: None,
+            error: None,
+        },
+    );
+    emit_line(
+        &app,
+        "system",
+        "Preparing offline cache: espressif32 + atmelavr (ESP32 / Mega / Nano)…".into(),
+    );
+    emit_line(
+        &app,
+        "system",
+        "Downloads platforms and toolchains into ~/.platformio so first builds are faster.".into(),
+    );
+
+    let app_bg = app.clone();
+    let running = Arc::clone(&state.running);
+    let child_slot = Arc::clone(&state.child);
+
+    thread::spawn(move || {
+        let platforms = ["espressif32", "atmelavr"];
+        let mut all_ok = true;
+
+        for platform in platforms {
+            if !running.load(Ordering::SeqCst) {
+                all_ok = false;
+                break;
+            }
+
+            let attempts: [Vec<String>; 2] = [
+                vec![
+                    "pkg".into(),
+                    "install".into(),
+                    "-g".into(),
+                    "-p".into(),
+                    platform.into(),
+                ],
+                vec!["platform".into(), "install".into(), platform.into()],
+            ];
+
+            let mut platform_ok = false;
+            for args in &attempts {
+                emit_line(
+                    &app_bg,
+                    "system",
+                    format!("> {command} {}", args.join(" ")),
+                );
+
+                let mut child_cmd = Command::new(&command);
+                child_cmd
+                    .args(args)
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .stdin(Stdio::null());
+                configure_pio_command(&mut child_cmd);
+
+                let mut child = match child_cmd.spawn() {
+                    Ok(c) => c,
+                    Err(e) => {
+                        emit_line(&app_bg, "stderr", format!("Failed to start: {e}"));
+                        continue;
+                    }
+                };
+
+                let stdout = child.stdout.take();
+                let stderr = child.stderr.take();
+                {
+                    let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+                    *slot = Some(child);
+                }
+
+                let app_out = app_bg.clone();
+                let out_handle = thread::spawn(move || {
+                    if let Some(out) = stdout {
+                        for line in BufReader::new(out).lines().map_while(Result::ok) {
+                            emit_line(&app_out, "stdout", line);
+                        }
+                    }
+                });
+                let app_err = app_bg.clone();
+                let err_handle = thread::spawn(move || {
+                    if let Some(err) = stderr {
+                        for line in BufReader::new(err).lines().map_while(Result::ok) {
+                            emit_line(&app_err, "stderr", line);
+                        }
+                    }
+                });
+
+                let status = loop {
+                    let outcome = {
+                        let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+                        match slot.as_mut() {
+                            None => Some(None),
+                            Some(c) => match c.try_wait() {
+                                Ok(Some(s)) => {
+                                    *slot = None;
+                                    Some(Some(s))
+                                }
+                                Ok(None) => None,
+                                Err(_) => {
+                                    *slot = None;
+                                    Some(None)
+                                }
+                            },
+                        }
+                    };
+                    if let Some(done) = outcome {
+                        break done;
+                    }
+                    thread::sleep(std::time::Duration::from_millis(50));
+                };
+
+                let _ = out_handle.join();
+                let _ = err_handle.join();
+
+                if let Some(s) = status {
+                    if s.success() {
+                        platform_ok = true;
+                        emit_line(
+                            &app_bg,
+                            "system",
+                            format!("✔ Platform ready: {platform}"),
+                        );
+                        break;
+                    }
+                }
+            }
+
+            if !platform_ok {
+                all_ok = false;
+                emit_line(
+                    &app_bg,
+                    "system",
+                    format!("✖ Failed to install platform: {platform}"),
+                );
+            }
+        }
+
+        running.store(false, Ordering::SeqCst);
+        emit_line(
+            &app_bg,
+            "system",
+            if all_ok {
+                "✔ Offline cache prepared. You can copy ~/.platformio to another machine to reuse toolchains.".into()
+            } else {
+                "✖ Offline cache finished with errors — see output above.".into()
+            },
+        );
+        emit_status(
+            &app_bg,
+            PioStatusPayload {
+                running: false,
+                task: Some("offline-cache".into()),
+                success: Some(all_ok),
+                code: if all_ok { Some(0) } else { Some(1) },
+                error: None,
+            },
+        );
+    });
+
+    Ok(())
+}

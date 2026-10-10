@@ -59,6 +59,8 @@ pub fn run() {
             platformio::pio_lib_install,
             platformio::pio_lib_uninstall,
             platformio::pio_lib_list,
+            platformio::pio_cache_status,
+            platformio::pio_prepare_offline_cache,
             ai::ai_chat_completion,
             ai::ai_chat_stream,
             ai::ai_cancel,

@@ -4,12 +4,16 @@ import { detectDefaultLocale, type Locale } from "@/i18n";
 
 export type WordWrapSetting = "on" | "off" | "wordWrapColumn";
 
-export type SettingsTabId = "general" | "editor" | "agent" | "about";
+export type SettingsTabId = "general" | "editor" | "agent" | "tools" | "about";
 
 interface SettingsState {
   settingsOpen: boolean;
   initialTab: SettingsTabId | null;
   locale: Locale;
+  /** Arduino-like Explorer: emphasize main sketch, hide .pio clutter. Default ON. */
+  sketchMode: boolean;
+  /** When Sketch mode is on, still show the full file tree. */
+  showAllFiles: boolean;
   fontSize: number;
   tabSize: number;
   minimap: boolean;
@@ -22,6 +26,8 @@ interface SettingsState {
   toggleSettings: () => void;
   consumeInitialTab: () => SettingsTabId | null;
   setLocale: (locale: Locale) => void;
+  setSketchMode: (v: boolean) => void;
+  setShowAllFiles: (v: boolean) => void;
   setFontSize: (n: number) => void;
   setTabSize: (n: number) => void;
   setMinimap: (v: boolean) => void;
@@ -48,6 +54,8 @@ export const useSettingsStore = create<SettingsState>()(
       settingsOpen: false,
       initialTab: null,
       locale: detectDefaultLocale(),
+      sketchMode: true,
+      showAllFiles: false,
       ...EDITOR_DEFAULTS,
 
       openSettings: (tab) =>
@@ -65,6 +73,8 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setLocale: (locale) => set({ locale }),
+      setSketchMode: (v) => set({ sketchMode: v }),
+      setShowAllFiles: (v) => set({ showAllFiles: v }),
 
       setFontSize: (n) =>
         set({ fontSize: Math.min(28, Math.max(10, Math.round(n))) }),
@@ -81,6 +91,8 @@ export const useSettingsStore = create<SettingsState>()(
       name: "aether-settings",
       partialize: (state) => ({
         locale: state.locale,
+        sketchMode: state.sketchMode,
+        showAllFiles: state.showAllFiles,
         fontSize: state.fontSize,
         tabSize: state.tabSize,
         minimap: state.minimap,

@@ -5,6 +5,7 @@ import type { Locale } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useAgentStore } from "@/stores/agentStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
 import {
   useSettingsStore,
   type SettingsTabId,
@@ -19,6 +20,10 @@ export function SettingsDialog() {
   const open = useSettingsStore((s) => s.settingsOpen);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
   const consumeInitialTab = useSettingsStore((s) => s.consumeInitialTab);
+  const sketchMode = useSettingsStore((s) => s.sketchMode);
+  const showAllFiles = useSettingsStore((s) => s.showAllFiles);
+  const setSketchMode = useSettingsStore((s) => s.setSketchMode);
+  const setShowAllFiles = useSettingsStore((s) => s.setShowAllFiles);
   const fontSize = useSettingsStore((s) => s.fontSize);
   const tabSize = useSettingsStore((s) => s.tabSize);
   const minimap = useSettingsStore((s) => s.minimap);
@@ -34,6 +39,12 @@ export function SettingsDialog() {
   const setLineNumbers = useSettingsStore((s) => s.setLineNumbers);
   const setRenderWhitespace = useSettingsStore((s) => s.setRenderWhitespace);
   const resetEditorDefaults = useSettingsStore((s) => s.resetEditorDefaults);
+
+  const offlineCache = usePlatformIoStore((s) => s.offlineCache);
+  const offlineCacheChecking = usePlatformIoStore((s) => s.offlineCacheChecking);
+  const running = usePlatformIoStore((s) => s.running);
+  const refreshOfflineCache = usePlatformIoStore((s) => s.refreshOfflineCache);
+  const prepareOfflineCache = usePlatformIoStore((s) => s.prepareOfflineCache);
 
   const baseUrl = useAgentStore((s) => s.baseUrl);
   const apiKey = useAgentStore((s) => s.apiKey);
@@ -73,6 +84,11 @@ export function SettingsDialog() {
     );
   }, [open]);
 
+  useEffect(() => {
+    if (!open || tab !== "tools") return;
+    void refreshOfflineCache();
+  }, [open, tab, refreshOfflineCache]);
+
   if (!open) return null;
 
   return (
@@ -111,6 +127,7 @@ export function SettingsDialog() {
               [
                 ["general", "settings.general"],
                 ["editor", "settings.editor"],
+                ["tools", "settings.tools"],
                 ["agent", "settings.agent"],
                 ["about", "settings.about"],
               ] as const
@@ -133,17 +150,107 @@ export function SettingsDialog() {
 
           <div className="aether-scroll min-h-0 flex-1 space-y-3 overflow-auto p-4 text-xs">
             {tab === "general" && (
-              <label className="flex items-center justify-between gap-3">
-                <span className="text-aether-fg">{t("settings.language")}</span>
-                <select
-                  value={locale}
-                  onChange={(e) => setLocale(e.target.value as Locale)}
-                  className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
-                >
-                  <option value="ru">{t("settings.language.ru")}</option>
-                  <option value="en">{t("settings.language.en")}</option>
-                </select>
-              </label>
+              <>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-aether-fg">{t("settings.language")}</span>
+                  <select
+                    value={locale}
+                    onChange={(e) => setLocale(e.target.value as Locale)}
+                    className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
+                  >
+                    <option value="ru">{t("settings.language.ru")}</option>
+                    <option value="en">{t("settings.language.en")}</option>
+                  </select>
+                </label>
+                <label className="flex items-start justify-between gap-3">
+                  <span className="space-y-0.5">
+                    <span className="block text-aether-fg">
+                      {t("sketch.mode")}
+                    </span>
+                    <span className="block text-[11px] text-aether-fg-muted">
+                      {t("sketch.modeHint")}
+                    </span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={sketchMode}
+                    onChange={(e) => setSketchMode(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                </label>
+                {sketchMode && (
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="text-aether-fg">{t("sketch.showAll")}</span>
+                    <input
+                      type="checkbox"
+                      checked={showAllFiles}
+                      onChange={(e) => setShowAllFiles(e.target.checked)}
+                    />
+                  </label>
+                )}
+              </>
+            )}
+            {tab === "tools" && (
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-aether-fg">
+                    {t("offline.title")}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-aether-fg-muted">
+                    {t("offline.hint")}
+                  </p>
+                </div>
+                {offlineCacheChecking && (
+                  <p className="text-aether-fg-dim">{t("offline.checking")}</p>
+                )}
+                {offlineCache && (
+                  <ul className="space-y-1 text-aether-fg-muted">
+                    <li>
+                      {t("offline.home")}:{" "}
+                      <span className="text-aether-fg">
+                        {offlineCache.home ?? "—"}
+                      </span>
+                    </li>
+                    <li>
+                      espressif32:{" "}
+                      {offlineCache.espressif32
+                        ? t("offline.present")
+                        : t("offline.missing")}
+                    </li>
+                    <li>
+                      atmelavr:{" "}
+                      {offlineCache.atmelavr
+                        ? t("offline.present")
+                        : t("offline.missing")}
+                    </li>
+                  </ul>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={running || !isTauriRuntime()}
+                    onClick={() => {
+                      void prepareOfflineCache();
+                    }}
+                    className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white hover:opacity-90 disabled:opacity-40"
+                  >
+                    {running ? t("offline.preparing") : t("offline.prepare")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={offlineCacheChecking}
+                    onClick={() => {
+                      void refreshOfflineCache();
+                    }}
+                    className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                  >
+                    {t("doctor.recheck")}
+                  </button>
+                </div>
+                <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+                  {t("offline.reuseNote")}
+                </p>
+              </div>
             )}
             {tab === "editor" && (
               <>

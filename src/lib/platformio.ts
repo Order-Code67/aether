@@ -8,7 +8,8 @@ export type PioTask =
   | "clean"
   | "compiledb"
   | "install-core"
-  | "lib-install";
+  | "lib-install"
+  | "offline-cache";
 
 export type PioStarter = "none" | "blink" | "servo";
 
@@ -177,6 +178,24 @@ export async function uninstallPioLibrary(
 export async function listPioLibraries(cwd: string): Promise<string[]> {
   if (!isTauriRuntime()) return [];
   return invoke<string[]>("pio_lib_list", { cwd });
+}
+
+export interface OfflineCacheStatus {
+  home: string | null;
+  espressif32: boolean;
+  atmelavr: boolean;
+}
+
+export async function probeOfflineCache(): Promise<OfflineCacheStatus> {
+  if (!isTauriRuntime()) {
+    return { home: null, espressif32: false, atmelavr: false };
+  }
+  return invoke<OfflineCacheStatus>("pio_cache_status");
+}
+
+/** Download espressif32 + atmelavr platforms/toolchains into ~/.platformio (streams to Output). */
+export async function prepareOfflineCache(): Promise<void> {
+  return invoke("pio_prepare_offline_cache");
 }
 
 export async function listenPioOutput(

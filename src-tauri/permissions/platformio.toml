@@ -14,5 +14,7 @@ commands.allow = [
   "pio_lib_search",
   "pio_lib_install",
   "pio_lib_uninstall",
-  "pio_lib_list"
+  "pio_lib_list",
+  "pio_cache_status",
+  "pio_prepare_offline_cache"
 ]
