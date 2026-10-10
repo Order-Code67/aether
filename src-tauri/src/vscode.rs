@@ -273,3 +273,26 @@ pub fn open_external_vscode(path: String) -> Result<(), String> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vscode_detect_finds_install() {
+        let info = vscode_detect();
+        assert!(info.installed, "expected VS Code installed");
+        let p = info.path.expect("path");
+        assert!(Path::new(&p).exists(), "missing {p}");
+    }
+
+    #[test]
+    fn open_external_vscode_smoke() {
+        let folder = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("resources")
+            .join("examples")
+            .join("esp32-blink");
+        assert!(folder.is_dir(), "missing {}", folder.display());
+        open_external_vscode(folder.to_string_lossy().to_string()).expect("open");
+    }
+}
