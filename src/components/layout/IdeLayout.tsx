@@ -19,6 +19,7 @@ import { UpdateDialog } from "@/components/updater/UpdateDialog";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePaletteStore } from "@/stores/paletteStore";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useUpdaterStore } from "@/stores/updaterStore";
 import { ActivityBar } from "./ActivityBar";
 import { Sidebar } from "./Sidebar";
@@ -53,6 +54,30 @@ export function IdeLayout() {
   useEffect(() => {
     if (onboardingSignal > 0) setOnboardingOpen(true);
   }, [onboardingSignal]);
+
+  // First desktop launch: open Quick Start once (respects onboardingDone from 0.2.12+).
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    let cancelled = false;
+    const maybeOpen = () => {
+      if (cancelled) return;
+      if (!useSettingsStore.getState().onboardingDone) {
+        setOnboardingOpen(true);
+      }
+    };
+    const persistApi = useSettingsStore.persist;
+    if (persistApi.hasHydrated()) {
+      maybeOpen();
+      return () => {
+        cancelled = true;
+      };
+    }
+    const unsub = persistApi.onFinishHydration(() => maybeOpen());
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, []);
 
   // Quiet update check on desktop startup — dialog only if an update is available.
   useEffect(() => {

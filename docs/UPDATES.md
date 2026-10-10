@@ -24,19 +24,22 @@ Settings → About → **Updates** has a channel selector (persisted):
 | **Stable** | `https://github.com/Order-Code67/aether/releases/latest/download/latest.json` |
 | **Beta** | `https://github.com/Order-Code67/aether/releases/latest/download/latest-beta.json` |
 
-Quiet startup checks and manual **Check for Updates** both respect the selected channel. The update dialog shows the channel name.
+Quiet startup checks and manual **Check for Updates** both respect the selected channel. The update dialog shows a **Beta** badge when the Beta channel is selected.
 
-### Publishing both feeds
+### Publishing a real Beta (prerelease)
 
-On each release, upload **both** `latest.json` and `latest-beta.json` as assets on the GitHub Release (tag `vX.Y.Z`). Until a true prerelease exists, both may point at the same signed installer.
+GitHub `/releases/latest/` only serves the latest **non-prerelease** release. Keep both feed files as assets on that stable release, but point their `url`s appropriately:
 
-When you ship a beta-only build:
+1. Build and publish **stable** `vX.Y.Z` with signed `Aether_X.Y.Z_x64-setup.exe` + `latest.json` (version = `X.Y.Z`, URL under `…/download/vX.Y.Z/…`).
+2. Bump app version to a SemVer prerelease (e.g. `X.Y.Z-beta.1`), signed-build again, publish a **GitHub prerelease** tag `vX.Y.Z-beta.1` with that installer + `.sig`.
+3. Generate `latest-beta.json` with `-BetaVersion X.Y.Z-beta.1` so it points at the prerelease assets.
+4. Upload `latest-beta.json` onto the **stable** release assets (so Beta clients can fetch it via `/releases/latest/download/latest-beta.json`).
+5. Never point `latest.json` at a prerelease installer.
 
-1. Publish a prerelease (e.g. `v0.3.0-beta.1`) with the signed setup + `.sig`.
-2. Update `latest-beta.json` (on the **latest** release assets, or re-upload) so its `url` / `version` / `signature` point at that prerelease artifact.
-3. Keep `latest.json` on the last stable build.
-
-`.\scripts\make-latest-json.ps1` writes both files into `release/`.
+```powershell
+.\scripts\make-latest-json.ps1 -Version 0.2.17 -Notes "Stable notes." -StableOnly
+.\scripts\make-latest-json.ps1 -BetaVersion 0.2.17-beta.1 -BetaNotes "Beta notes." -BetaOnly
+```
 
 ## Sign a release build (Windows)
 
@@ -57,14 +60,18 @@ Default endpoint in `tauri.conf.json` remains the stable `latest.json` (fallback
 After a signed build, copy NSIS artifacts into `release/` and regenerate feeds:
 
 ```powershell
-.\scripts\make-latest-json.ps1 -Version 0.2.16 -Notes "Release notes."
+.\scripts\make-latest-json.ps1 -Version 0.2.17 -Notes "Release notes." -BetaVersion 0.2.17-beta.1 -BetaNotes "Beta notes."
 ```
 
-Ship on the GitHub Release (tag `v0.2.16`) at least:
+Ship on the GitHub Release (tag `v0.2.17`) at least:
 
-- `Aether_0.2.16_x64-setup.exe`
+- `Aether_0.2.17_x64-setup.exe`
 - `latest.json`
-- `latest-beta.json`
+- `latest-beta.json` (may point at `v0.2.17-beta.1` assets)
+
+And on the prerelease tag `v0.2.17-beta.1`:
+
+- `Aether_0.2.17-beta.1_x64-setup.exe` (+ `.sig`)
 
 Optional: MSI + `.sig` files. Offline PlatformIO cache zip is separate — see [`OFFLINE_INSTALLER.md`](./OFFLINE_INSTALLER.md).
 
@@ -72,13 +79,13 @@ Template:
 
 ```json
 {
-  "version": "0.2.16",
+  "version": "0.2.17",
   "notes": "Bug fixes and improvements.",
-  "pub_date": "2026-04-10T12:00:00Z",
+  "pub_date": "2026-10-11T12:00:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "<contents of Aether_0.2.16_x64-setup.exe.sig>",
-      "url": "https://github.com/Order-Code67/aether/releases/download/v0.2.16/Aether_0.2.16_x64-setup.exe"
+      "signature": "<contents of Aether_0.2.17_x64-setup.exe.sig>",
+      "url": "https://github.com/Order-Code67/aether/releases/download/v0.2.17/Aether_0.2.17_x64-setup.exe"
     }
   }
 }

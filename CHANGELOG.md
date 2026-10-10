@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.17 — 2026-10-11
+
+- **Quick Start on first launch** — desktop app opens the Quick Start wizard once when `onboardingDone` is unset; skip/complete still persisted (0.2.12+); Welcome / Help / Palette unchanged
+- **Real Beta channel** — Stable feed (`latest.json`) stays on non-prerelease; Beta (`latest-beta.json`) points at a genuine prerelease (e.g. `v0.2.17-beta.1`) with its own signed installer; update dialog shows a **Beta** badge; see `docs/UPDATES.md`
+- **Settings Editor / Agent RU** — all Editor and Agent tab labels/hints/options wired through i18n (en + ru)
+- **Arduino libraries via arduino-cli** — Libraries → Arduino detects `arduino-cli` on PATH; search/install into project `lib/` (PlatformIO-compatible); without CLI falls back to PlatformIO `framework=arduino` registry with install hint
+
 ## 0.2.16 — 2026-10-11
 
 - **UI audit / menu wiring** — View menu covers Boards, Libraries, AI, Problems, Output, Serial, Plotter, Camera, Debug Console; every native menu id is covered by the command registry (parity test)

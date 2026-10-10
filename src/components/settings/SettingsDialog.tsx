@@ -404,7 +404,7 @@ export function SettingsDialog() {
                   />
                 </label>
                 <label className="flex items-center justify-between gap-3">
-                  <span className="text-aether-fg">Tab size</span>
+                  <span className="text-aether-fg">{t("settings.tabSize")}</span>
                   <input
                     type="number"
                     min={1}
@@ -415,7 +415,7 @@ export function SettingsDialog() {
                   />
                 </label>
                 <label className="flex items-center justify-between gap-3">
-                  <span className="text-aether-fg">Word wrap</span>
+                  <span className="text-aether-fg">{t("settings.wordWrap")}</span>
                   <select
                     value={wordWrap}
                     onChange={(e) =>
@@ -423,13 +423,17 @@ export function SettingsDialog() {
                     }
                     className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
                   >
-                    <option value="off">Off</option>
-                    <option value="on">On</option>
-                    <option value="wordWrapColumn">Column</option>
+                    <option value="off">{t("settings.wordWrap.off")}</option>
+                    <option value="on">{t("settings.wordWrap.on")}</option>
+                    <option value="wordWrapColumn">
+                      {t("settings.wordWrap.column")}
+                    </option>
                   </select>
                 </label>
                 <label className="flex items-center justify-between gap-3">
-                  <span className="text-aether-fg">Render whitespace</span>
+                  <span className="text-aether-fg">
+                    {t("settings.renderWhitespace")}
+                  </span>
                   <select
                     value={renderWhitespace}
                     onChange={(e) =>
@@ -439,9 +443,15 @@ export function SettingsDialog() {
                     }
                     className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
                   >
-                    <option value="none">None</option>
-                    <option value="selection">Selection</option>
-                    <option value="all">All</option>
+                    <option value="none">
+                      {t("settings.renderWhitespace.none")}
+                    </option>
+                    <option value="selection">
+                      {t("settings.renderWhitespace.selection")}
+                    </option>
+                    <option value="all">
+                      {t("settings.renderWhitespace.all")}
+                    </option>
                   </select>
                 </label>
                 <label className="flex items-center gap-2 text-aether-fg">
@@ -450,7 +460,7 @@ export function SettingsDialog() {
                     checked={minimap}
                     onChange={(e) => setMinimap(e.target.checked)}
                   />
-                  Minimap
+                  {t("settings.minimap")}
                 </label>
                 <label className="flex items-center gap-2 text-aether-fg">
                   <input
@@ -458,7 +468,7 @@ export function SettingsDialog() {
                     checked={fontLigatures}
                     onChange={(e) => setFontLigatures(e.target.checked)}
                   />
-                  Font ligatures
+                  {t("settings.fontLigatures")}
                 </label>
                 <label className="flex items-center gap-2 text-aether-fg">
                   <input
@@ -466,18 +476,17 @@ export function SettingsDialog() {
                     checked={lineNumbers}
                     onChange={(e) => setLineNumbers(e.target.checked)}
                   />
-                  Line numbers
+                  {t("settings.lineNumbers")}
                 </label>
                 <button
                   type="button"
                   onClick={resetEditorDefaults}
                   className="rounded border border-aether-border px-2 py-1.5 text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
                 >
-                  Reset editor defaults
+                  {t("settings.resetEditor")}
                 </button>
                 <p className="text-[11px] text-aether-fg-dim">
-                  Find in file: <kbd className="text-aether-fg">Ctrl+F</kbd> ·
-                  Replace: <kbd className="text-aether-fg">Ctrl+H</kbd>
+                  {t("settings.editorFindHint")}
                 </p>
               </>
             )}
@@ -485,7 +494,9 @@ export function SettingsDialog() {
             {tab === "agent" && (
               <>
                 <label className="block">
-                  <span className="text-aether-fg-dim">Base URL</span>
+                  <span className="text-aether-fg-dim">
+                    {t("settings.agent.baseUrl")}
+                  </span>
                   <input
                     value={baseUrl}
                     onChange={(e) => setBaseUrl(e.target.value)}
@@ -493,7 +504,9 @@ export function SettingsDialog() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-aether-fg-dim">API key</span>
+                  <span className="text-aether-fg-dim">
+                    {t("settings.agent.apiKey")}
+                  </span>
                   <input
                     type="password"
                     value={apiKey}
@@ -503,7 +516,9 @@ export function SettingsDialog() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-aether-fg-dim">Model</span>
+                  <span className="text-aether-fg-dim">
+                    {t("settings.agent.model")}
+                  </span>
                   <input
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
@@ -516,7 +531,7 @@ export function SettingsDialog() {
                     checked={includeActiveFile}
                     onChange={(e) => setIncludeActiveFile(e.target.checked)}
                   />
-                  Attach active file by default
+                  {t("settings.agent.attachFile")}
                 </label>
                 <label className="flex items-center gap-2 text-aether-fg">
                   <input
@@ -524,10 +539,10 @@ export function SettingsDialog() {
                     checked={includeProblems}
                     onChange={(e) => setIncludeProblems(e.target.checked)}
                   />
-                  Attach Problems by default
+                  {t("settings.agent.attachProblems")}
                 </label>
                 <p className="text-[11px] text-aether-fg-dim">
-                  Key is stored locally in this app (zustand persist).
+                  {t("settings.agent.keyHint")}
                 </p>
               </>
             )}

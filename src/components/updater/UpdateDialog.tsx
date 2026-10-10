@@ -52,9 +52,16 @@ export function UpdateDialog() {
         className="w-full max-w-md overflow-hidden rounded border border-aether-border bg-aether-surface shadow-2xl"
       >
         <header className="flex h-10 items-center justify-between border-b border-aether-border px-3">
-          <h2 className="text-sm font-medium text-aether-fg">
-            {t("updater.title")}
-          </h2>
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="text-sm font-medium text-aether-fg">
+              {t("updater.title")}
+            </h2>
+            {updateChannel === "beta" && (
+              <span className="shrink-0 rounded border border-aether-warning/50 bg-aether-warning/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-aether-warning">
+                {t("updater.badge.beta")}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             title={t("updater.later")}

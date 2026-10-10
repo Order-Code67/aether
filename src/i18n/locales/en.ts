@@ -113,9 +113,17 @@ export const en = {
   "libraries.tab.arduino": "Arduino",
   "libraries.tab.github": "GitHub",
   "libraries.arduinoHint":
-    "Arduino Library Manager style — PlatformIO registry filtered to framework=arduino, plus popular Arduino libs.",
+    "Arduino Library Manager — uses arduino-cli when available (installs into project lib/), otherwise PlatformIO framework=arduino registry.",
   "libraries.arduinoEmpty":
     "Search for an Arduino library (e.g. Servo, Adafruit GFX) or tap a popular chip.",
+  "libraries.arduinoCliMissing":
+    "arduino-cli was not found on PATH. Install it for official Library Manager search/install, or continue with PlatformIO registry below.",
+  "libraries.arduinoCliInstall": "Install arduino-cli",
+  "libraries.arduinoCliDetected": "arduino-cli: {version}",
+  "libraries.arduinoCliInstallProgress":
+    "Installing with arduino-cli into lib/ — {name}…",
+  "libraries.arduinoCliFallback":
+    "Using PlatformIO registry (framework=arduino) until arduino-cli is installed.",
   "libraries.githubTabHint":
     "Install a library from GitHub into lib_deps via pio pkg install.",
   "libraries.githubEmptyState":
@@ -337,6 +345,25 @@ export const en = {
   "settings.fontSize": "Font size",
   "settings.tabSize": "Tab size",
   "settings.wordWrap": "Word wrap",
+  "settings.wordWrap.off": "Off",
+  "settings.wordWrap.on": "On",
+  "settings.wordWrap.column": "Column",
+  "settings.renderWhitespace": "Render whitespace",
+  "settings.renderWhitespace.none": "None",
+  "settings.renderWhitespace.selection": "Selection",
+  "settings.renderWhitespace.all": "All",
+  "settings.minimap": "Minimap",
+  "settings.fontLigatures": "Font ligatures",
+  "settings.lineNumbers": "Line numbers",
+  "settings.resetEditor": "Reset editor defaults",
+  "settings.editorFindHint": "Find in file: Ctrl+F · Replace: Ctrl+H",
+  "settings.agent.baseUrl": "Base URL",
+  "settings.agent.apiKey": "API key",
+  "settings.agent.model": "Model",
+  "settings.agent.attachFile": "Attach active file by default",
+  "settings.agent.attachProblems": "Attach Problems by default",
+  "settings.agent.keyHint":
+    "Key is stored locally in this app (zustand persist).",
   "settings.close": "Close",
   "encrypt.lock": "Encrypt sketch…",
   "encrypt.unlock": "Unlock sketch…",
@@ -447,10 +474,11 @@ export const en = {
   "updater.channel.stable": "Stable",
   "updater.channel.beta": "Beta",
   "updater.channelHint":
-    "Stable uses latest.json; Beta uses latest-beta.json from GitHub Releases (see docs/UPDATES.md).",
+    "Stable uses latest.json (non-prerelease); Beta uses latest-beta.json pointing at a prerelease when published (see docs/UPDATES.md).",
   "updater.channelLabel": "Channel: {channel}",
+  "updater.badge.beta": "Beta",
   "updater.feedHint":
-    "Signed updates via Tauri updater. Channel feeds: latest.json (stable) and latest-beta.json (beta).",
+    "Signed updates via Tauri updater. Stable → latest.json (non-prerelease); Beta → latest-beta.json (prerelease when published).",
 } as const;
 
 export type MessageKey = keyof typeof en;

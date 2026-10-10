@@ -1,37 +1,50 @@
-# Regenerates release/latest.json and release/latest-beta.json from the NSIS setup .sig after tauri:build.
+# Regenerates release/latest.json and/or release/latest-beta.json from signed NSIS setup .sig.
 # Usage (from repo root):
-#   .\scripts\make-latest-json.ps1
-#   .\scripts\make-latest-json.ps1 -Version 0.2.15 -Notes "Bug fixes."
-#   .\scripts\make-latest-json.ps1 -Version 0.2.15 -BetaNotes "Same as stable until a true prerelease."
+#   .\scripts\make-latest-json.ps1 -Version 0.2.17 -Notes "Stable notes."
+#   .\scripts\make-latest-json.ps1 -Version 0.2.17 -BetaVersion 0.2.17-beta.1 -BetaNotes "Beta notes."
+#   .\scripts\make-latest-json.ps1 -Version 0.2.17 -StableOnly
+#   .\scripts\make-latest-json.ps1 -BetaVersion 0.2.17-beta.1 -BetaOnly
+#
+# Stable latest.json must point at a non-prerelease installer.
+# Beta latest-beta.json should point at a prerelease build when one exists.
+# Upload latest-beta.json on the *latest stable* GitHub Release assets so
+# /releases/latest/download/latest-beta.json remains reachable.
 
 param(
-  [string]$Version = "0.2.16",
+  [string]$Version = "0.2.17",
   [string]$Notes = "Aether update.",
+  [string]$BetaVersion = "",
   [string]$BetaNotes = "",
   [string]$BaseUrl = "https://github.com/Order-Code67/aether/releases/download",
-  [string]$ReleaseDir = ""
+  [string]$ReleaseDir = "",
+  [switch]$StableOnly,
+  [switch]$BetaOnly
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if (-not $ReleaseDir) { $ReleaseDir = Join-Path $root "release" }
-if (-not $BetaNotes) { $BetaNotes = $Notes }
 
-$setupName = "Aether_${Version}_x64-setup.exe"
-$sigPath = Join-Path $ReleaseDir "$setupName.sig"
-if (-not (Test-Path $sigPath)) {
-  throw "Missing signature: $sigPath (copy from bundle/nsis after tauri:build)"
-}
-
-$signature = (Get-Content -Raw $sigPath).Trim()
-$pubDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-$url = "$BaseUrl/v$Version/$setupName"
-
-function Write-Feed([string]$OutName, [string]$FeedNotes) {
+function Write-Feed {
+  param(
+    [string]$OutName,
+    [string]$FeedVersion,
+    [string]$FeedNotes,
+    [string]$Tag
+  )
+  $setupName = "Aether_${FeedVersion}_x64-setup.exe"
+  # Tauri may emit prerelease filenames with the full semver (e.g. 0.2.17-beta.1).
+  $sigPath = Join-Path $ReleaseDir "$setupName.sig"
+  if (-not (Test-Path $sigPath)) {
+    throw "Missing signature: $sigPath (copy from bundle/nsis after tauri:build)"
+  }
+  $signature = (Get-Content -Raw $sigPath).Trim()
+  $pubDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+  $url = "$BaseUrl/$Tag/$setupName"
   $feed = [ordered]@{
-    version  = $Version
-    notes    = $FeedNotes
-    pub_date = $pubDate
+    version   = $FeedVersion
+    notes     = $FeedNotes
+    pub_date  = $pubDate
     platforms = [ordered]@{
       "windows-x86_64" = [ordered]@{
         signature = $signature
@@ -41,9 +54,21 @@ function Write-Feed([string]$OutName, [string]$FeedNotes) {
   }
   $out = Join-Path $ReleaseDir $OutName
   $feed | ConvertTo-Json -Depth 6 | Set-Content -Path $out -Encoding utf8
-  Write-Host "Wrote $out"
+  Write-Host "Wrote $out → $url"
 }
 
-Write-Feed "latest.json" $Notes
-Write-Feed "latest-beta.json" $BetaNotes
-Write-Host "Upload with the installer: $setupName + latest.json + latest-beta.json"
+if (-not $BetaOnly) {
+  if ($Version -match "-") {
+    throw "Stable -Version must be a non-prerelease SemVer (got '$Version')."
+  }
+  Write-Feed "latest.json" $Version $Notes "v$Version"
+}
+
+if (-not $StableOnly) {
+  $betaVer = if ($BetaVersion) { $BetaVersion } else { $Version }
+  $betaNotesText = if ($BetaNotes) { $BetaNotes } else { $Notes }
+  $betaTag = "v$betaVer"
+  Write-Feed "latest-beta.json" $betaVer $betaNotesText $betaTag
+}
+
+Write-Host "Upload: stable setup + latest.json on v$Version; beta setup on its prerelease tag; put latest-beta.json on the latest stable release assets."

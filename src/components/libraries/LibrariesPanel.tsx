@@ -15,6 +15,14 @@ import { errorMessage } from "@/lib/errors";
 import { parseGithubLibSpec } from "@/lib/githubLibSpec";
 import { friendlyPioError } from "@/lib/pioErrors";
 import {
+  ARDUINO_CLI_DOCS_URL,
+  detectArduinoCli,
+  installArduinoCliLibrary,
+  listArduinoCliLibFolders,
+  searchArduinoCliLibraries,
+  type ArduinoCliInfo,
+} from "@/lib/arduinoCli";
+import {
   installPioLibrary,
   listPioLibraries,
   searchPioLibraries,
@@ -180,9 +188,12 @@ export function LibrariesPanel() {
   const [installStatus, setInstallStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [arduinoCli, setArduinoCli] = useState<ArduinoCliInfo | null>(null);
 
   const effectivePreset: PlatformPreset =
     managerTab === "arduino" ? "arduino" : preset;
+  const useArduinoCli =
+    managerTab === "arduino" && Boolean(arduinoCli?.installed);
 
   const chip: PlatformChip = useMemo(() => {
     return (
@@ -212,7 +223,20 @@ export function LibrariesPanel() {
     }
     try {
       const list = await listPioLibraries(rootPath);
-      setInstalled(list);
+      let merged = list;
+      try {
+        const libFolders = await listArduinoCliLibFolders(rootPath);
+        const set = new Set(merged);
+        for (const name of libFolders) {
+          if (!set.has(name)) {
+            merged = [...merged, name];
+            set.add(name);
+          }
+        }
+      } catch {
+        // lib/ scan is best-effort
+      }
+      setInstalled(merged);
     } catch (err) {
       setError(mapLibError(err));
     }
@@ -222,10 +246,26 @@ export function LibrariesPanel() {
     void refreshInstalled();
   }, [refreshInstalled]);
 
+  useEffect(() => {
+    if (managerTab !== "arduino" || !isTauriRuntime()) {
+      return;
+    }
+    void detectArduinoCli()
+      .then(setArduinoCli)
+      .catch(() =>
+        setArduinoCli({ installed: false, path: null, version: null }),
+      );
+  }, [managerTab]);
+
   const runSearch = useCallback(
     async (overrideQuery?: string) => {
       const q = (overrideQuery ?? query).trim();
-      if (!q && !chipHasFilter(chip)) {
+      if (!q && !chipHasFilter(chip) && !useArduinoCli) {
+        setResults([]);
+        setHasSearched(false);
+        return;
+      }
+      if (!q && useArduinoCli) {
         setResults([]);
         setHasSearched(false);
         return;
@@ -234,23 +274,26 @@ export function LibrariesPanel() {
         setError(t("libraries.needDesktop"));
         return;
       }
-      if (pioInfo && !pioInfo.installed) {
-        setError(t("libraries.pioMissing"));
-        return;
-      }
       setLoading(true);
       setError(null);
       setHasSearched(true);
       try {
-        const entries = await searchPioLibraries({
-          query: q,
-          platform: chip.platform,
-          framework: chip.framework,
-          pages: 3,
-        });
-        setResults(entries);
-        if (entries.length === 0) {
-          setError(null);
+        if (useArduinoCli) {
+          const entries = await searchArduinoCliLibraries(q);
+          setResults(entries);
+        } else {
+          if (pioInfo && !pioInfo.installed) {
+            setError(t("libraries.pioMissing"));
+            setResults([]);
+            return;
+          }
+          const entries = await searchPioLibraries({
+            query: q,
+            platform: chip.platform,
+            framework: chip.framework,
+            pages: 3,
+          });
+          setResults(entries);
         }
       } catch (err) {
         setResults([]);
@@ -259,7 +302,7 @@ export function LibrariesPanel() {
         setLoading(false);
       }
     },
-    [query, chip, t, pioInfo, mapLibError],
+    [query, chip, t, pioInfo, mapLibError, useArduinoCli],
   );
 
   const selectPreset = (id: PlatformPreset) => {
@@ -309,28 +352,37 @@ export function LibrariesPanel() {
       return;
     }
     const display = options?.displayName ?? library;
+    const bareName = library.includes("/")
+      ? library.split("/").pop()!.replace(/\.git(#.*)?$/i, "")
+      : library;
+    const preferArduinoCli =
+      useArduinoCli && !options?.git && !/^https?:\/\//i.test(library);
+
     setBusyId(busyKey);
     setError(null);
     setInstallStatus(
       options?.git
         ? t("libraries.githubProgress", { name: display })
-        : t("libraries.installProgress", { name: display }),
+        : preferArduinoCli
+          ? t("libraries.arduinoCliInstallProgress", { name: display })
+          : t("libraries.installProgress", { name: display }),
     );
     try {
-      await installPioLibrary(rootPath, library, selectedEnv || null);
+      if (preferArduinoCli) {
+        await installArduinoCliLibrary(rootPath, bareName);
+      } else {
+        await installPioLibrary(rootPath, library, selectedEnv || null);
+      }
       pushRecent(library);
       setInstallStatus(t("libraries.installDone", { name: display }));
       await refreshInstalled();
     } catch (err) {
       // Registry fallback: owner/name → bare name (not for git URLs).
       const isGit = options?.git || /^https?:\/\//i.test(library);
-      const bare = library.includes("/")
-        ? library.split("/").pop()!.replace(/\.git(#.*)?$/i, "")
-        : library;
-      if (!isGit && bare !== library) {
+      if (!preferArduinoCli && !isGit && bareName !== library) {
         try {
-          setInstallStatus(t("libraries.installProgress", { name: bare }));
-          await installPioLibrary(rootPath, bare, selectedEnv || null);
+          setInstallStatus(t("libraries.installProgress", { name: bareName }));
+          await installPioLibrary(rootPath, bareName, selectedEnv || null);
           pushRecent(library);
           setInstallStatus(t("libraries.installDone", { name: display }));
           await refreshInstalled();
@@ -491,13 +543,25 @@ export function LibrariesPanel() {
                   setLoading(true);
                   setHasSearched(true);
                   try {
-                    const entries = await searchPioLibraries({
-                      query: query.trim(),
-                      platform: null,
-                      framework: "arduino",
-                      pages: 2,
-                    });
-                    setResults(entries);
+                    const info = await detectArduinoCli();
+                    setArduinoCli(info);
+                    if (info.installed && query.trim()) {
+                      const entries = await searchArduinoCliLibraries(
+                        query.trim(),
+                      );
+                      setResults(entries);
+                    } else if (!info.installed) {
+                      const entries = await searchPioLibraries({
+                        query: query.trim(),
+                        platform: null,
+                        framework: "arduino",
+                        pages: 2,
+                      });
+                      setResults(entries);
+                    } else {
+                      setResults([]);
+                      setHasSearched(false);
+                    }
                   } catch (err) {
                     setResults([]);
                     setError(mapLibError(err));
@@ -526,6 +590,50 @@ export function LibrariesPanel() {
             ? t("libraries.githubTabHint")
             : t("libraries.hint")}
       </p>
+
+      {managerTab === "arduino" && arduinoCli && (
+        <div className="mx-3 mb-2 space-y-1.5 rounded border border-aether-border px-2 py-1.5">
+          {arduinoCli.installed ? (
+            <p className="text-[11px] text-aether-fg-muted">
+              {t("libraries.arduinoCliDetected", {
+                version:
+                  arduinoCli.version || arduinoCli.path || "ok",
+              })}
+            </p>
+          ) : (
+            <>
+              <p className="text-[11px] leading-relaxed text-aether-fg">
+                {t("libraries.arduinoCliMissing")}
+              </p>
+              <p className="text-[10px] leading-relaxed text-aether-fg-dim">
+                {t("libraries.arduinoCliFallback")}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  void (async () => {
+                    try {
+                      const { openUrl } = await import(
+                        "@tauri-apps/plugin-opener"
+                      );
+                      await openUrl(ARDUINO_CLI_DOCS_URL);
+                    } catch {
+                      window.open(
+                        ARDUINO_CLI_DOCS_URL,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }
+                  })();
+                }}
+                className="rounded border border-aether-accent bg-aether-accent px-2 py-0.5 text-[11px] text-white"
+              >
+                {t("libraries.arduinoCliInstall")}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {!isProject || !rootPath ? (
         <div className="space-y-1.5 px-3">
@@ -587,7 +695,11 @@ export function LibrariesPanel() {
               </div>
               <button
                 type="submit"
-                disabled={loading || (!query.trim() && !chipHasFilter(chip))}
+                disabled={
+                  loading ||
+                  (!query.trim() &&
+                    (useArduinoCli || !chipHasFilter(chip)))
+                }
                 className="h-7 shrink-0 rounded border border-aether-accent bg-aether-accent px-2 text-[11px] text-white disabled:opacity-40"
               >
                 {t("libraries.searchBtn")}

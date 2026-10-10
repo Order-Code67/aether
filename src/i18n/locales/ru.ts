@@ -120,9 +120,17 @@ export const ru: Record<MessageKey, string> = {
   "libraries.tab.arduino": "Arduino",
   "libraries.tab.github": "GitHub",
   "libraries.arduinoHint":
-    "Как Arduino Library Manager — реестр PlatformIO с framework=arduino и популярные Arduino-библиотеки.",
+    "Arduino Library Manager — при наличии arduino-cli поиск/установка в lib/ проекта; иначе реестр PlatformIO (framework=arduino).",
   "libraries.arduinoEmpty":
     "Найдите библиотеку Arduino (например Servo, Adafruit GFX) или нажмите популярный чип.",
+  "libraries.arduinoCliMissing":
+    "arduino-cli не найден в PATH. Установите для официального Library Manager или продолжайте с реестром PlatformIO ниже.",
+  "libraries.arduinoCliInstall": "Установить arduino-cli",
+  "libraries.arduinoCliDetected": "arduino-cli: {version}",
+  "libraries.arduinoCliInstallProgress":
+    "Установка через arduino-cli в lib/ — {name}…",
+  "libraries.arduinoCliFallback":
+    "Используется реестр PlatformIO (framework=arduino), пока не установлен arduino-cli.",
   "libraries.githubTabHint":
     "Установка библиотеки с GitHub в lib_deps через pio pkg install.",
   "libraries.githubEmptyState":
@@ -344,6 +352,25 @@ export const ru: Record<MessageKey, string> = {
   "settings.fontSize": "Размер шрифта",
   "settings.tabSize": "Размер табуляции",
   "settings.wordWrap": "Перенос строк",
+  "settings.wordWrap.off": "Выкл",
+  "settings.wordWrap.on": "Вкл",
+  "settings.wordWrap.column": "Колонка",
+  "settings.renderWhitespace": "Отображение пробелов",
+  "settings.renderWhitespace.none": "Нет",
+  "settings.renderWhitespace.selection": "В выделении",
+  "settings.renderWhitespace.all": "Все",
+  "settings.minimap": "Мини-карта",
+  "settings.fontLigatures": "Лигатуры шрифта",
+  "settings.lineNumbers": "Номера строк",
+  "settings.resetEditor": "Сбросить настройки редактора",
+  "settings.editorFindHint": "Поиск в файле: Ctrl+F · Замена: Ctrl+H",
+  "settings.agent.baseUrl": "Базовый URL",
+  "settings.agent.apiKey": "API-ключ",
+  "settings.agent.model": "Модель",
+  "settings.agent.attachFile": "Прикреплять активный файл по умолчанию",
+  "settings.agent.attachProblems": "Прикреплять Проблемы по умолчанию",
+  "settings.agent.keyHint":
+    "Ключ хранится локально в этом приложении (zustand persist).",
   "settings.close": "Закрыть",
   "encrypt.lock": "Зашифровать скетч…",
   "encrypt.unlock": "Разблокировать скетч…",
@@ -454,8 +481,9 @@ export const ru: Record<MessageKey, string> = {
   "updater.channel.stable": "Stable",
   "updater.channel.beta": "Beta",
   "updater.channelHint":
-    "Stable — latest.json; Beta — latest-beta.json с GitHub Releases (см. docs/UPDATES.md).",
+    "Stable — latest.json (не prerelease); Beta — latest-beta.json на prerelease при наличии (см. docs/UPDATES.md).",
   "updater.channelLabel": "Канал: {channel}",
+  "updater.badge.beta": "Beta",
   "updater.feedHint":
-    "Подписанные обновления через Tauri updater. Каналы: latest.json (stable) и latest-beta.json (beta).",
+    "Подписанные обновления через Tauri updater. Stable → latest.json; Beta → latest-beta.json (prerelease).",
 };

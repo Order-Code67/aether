@@ -1,4 +1,5 @@
 mod ai;
+mod arduino_cli;
 mod debug;
 mod examples;
 mod git;
@@ -62,6 +63,10 @@ pub fn run() {
             platformio::pio_lib_install,
             platformio::pio_lib_uninstall,
             platformio::pio_lib_list,
+            arduino_cli::arduino_cli_detect,
+            arduino_cli::arduino_cli_lib_search,
+            arduino_cli::arduino_cli_lib_install,
+            arduino_cli::arduino_cli_lib_list,
             platformio::pio_cache_status,
             platformio::pio_prepare_offline_cache,
             platformio::pio_import_offline_cache,
