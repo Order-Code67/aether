@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  debugConsoleInput,
   debugContinue,
   debugDeleteBreakpoint,
   debugEval,
@@ -190,9 +191,7 @@ export const useDebugStore = create<DebugState>()(
           const cmd = trimmed
             ? `-break-condition ${bp.number} ${trimmed}`
             : `-break-condition ${bp.number}`;
-          void import("@/lib/debug").then(({ debugConsoleInput }) =>
-            debugConsoleInput(cmd).catch(() => undefined),
-          );
+          void debugConsoleInput(cmd).catch(() => undefined);
         }
       },
 
@@ -328,7 +327,6 @@ export const useDebugStore = create<DebugState>()(
               const res = await debugInsertBreakpoint(bp.path, bp.line);
               next.push({ ...bp, number: res.number });
               if (bp.condition?.trim() && res.number) {
-                const { debugConsoleInput } = await import("@/lib/debug");
                 await debugConsoleInput(
                   `-break-condition ${res.number} ${bp.condition.trim()}`,
                 ).catch(() => undefined);
