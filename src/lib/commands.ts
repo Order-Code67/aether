@@ -392,6 +392,84 @@ export function getCommands(): Command[] {
       run: () => useSettingsStore.getState().openSettings("general"),
     },
     {
+      id: "pio.exportFirmwareProfiles",
+      title: "PlatformIO: Export Firmware Profiles…",
+      category: "PlatformIO",
+      keywords: "profile export backup json профили экспорт",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { useFirmwareProfileStore } = await import(
+          "@/stores/firmwareProfileStore"
+        );
+        const { exportFirmwareProfilesToFile } = await import(
+          "@/lib/firmwareProfilesFile"
+        );
+        const locale = useSettingsStore.getState().locale;
+        const profiles = useFirmwareProfileStore.getState().profiles;
+        if (profiles.length === 0) {
+          useSettingsStore.getState().flashNotice(t("profiles.empty"));
+          return;
+        }
+        try {
+          const path = await exportFirmwareProfilesToFile(profiles, locale);
+          if (path) {
+            useSettingsStore
+              .getState()
+              .flashNotice(t("profiles.exported", { count: profiles.length }));
+          }
+        } catch (e) {
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              e instanceof Error ? e.message : t("profiles.exportFailed"),
+            );
+        }
+      },
+    },
+    {
+      id: "pio.importFirmwareProfiles",
+      title: "PlatformIO: Import Firmware Profiles…",
+      category: "PlatformIO",
+      keywords: "profile import merge json профили импорт",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { useFirmwareProfileStore } = await import(
+          "@/stores/firmwareProfileStore"
+        );
+        const { importFirmwareProfilesFromFile } = await import(
+          "@/lib/firmwareProfilesFile"
+        );
+        const locale = useSettingsStore.getState().locale;
+        try {
+          const result = await importFirmwareProfilesFromFile(locale);
+          if (!result.ok) {
+            if ("cancelled" in result && result.cancelled) return;
+            if ("errorKey" in result) {
+              useSettingsStore.getState().flashNotice(t(result.errorKey));
+            }
+            return;
+          }
+          const replace = window.confirm(t("profiles.importConfirm"));
+          if (replace) {
+            useFirmwareProfileStore.getState().replaceProfiles(result.profiles);
+          } else {
+            useFirmwareProfileStore.getState().mergeProfiles(result.profiles);
+          }
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              t("profiles.imported", { count: result.profiles.length }),
+            );
+        } catch (e) {
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              e instanceof Error ? e.message : t("profiles.importFailed"),
+            );
+        }
+      },
+    },
+    {
       id: "pio.build",
       title: "PlatformIO: Build",
       category: "PlatformIO",

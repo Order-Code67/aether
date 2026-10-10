@@ -1,13 +1,27 @@
-import { useEffect, useRef } from "react";
-import { Eraser, Pause, Play } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  Download,
+  Eraser,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { plotPointsToCsv, slicePlotWindow } from "@/lib/plotterExport";
 import { channelColor } from "@/lib/serialPlotter";
 import { cn } from "@/lib/cn";
+import { isTauriRuntime } from "@/lib/tauri";
 import { usePlotterStore } from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { documentDir, join } from "@tauri-apps/api/path";
+import { save } from "@tauri-apps/plugin-dialog";
+import { mkdir, writeTextFile } from "@tauri-apps/plugin-fs";
 
 export function SerialPlotter() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paused = usePlotterStore((s) => s.paused);
   const parseMode = usePlotterStore((s) => s.parseMode);
@@ -15,11 +29,23 @@ export function SerialPlotter() {
   const channels = usePlotterStore((s) => s.channels);
   const visibility = usePlotterStore((s) => s.visibility);
   const vehicle = usePlotterStore((s) => s.vehicle);
+  const zoomSamples = usePlotterStore((s) => s.zoomSamples);
+  const panFromEnd = usePlotterStore((s) => s.panFromEnd);
   const setPaused = usePlotterStore((s) => s.setPaused);
   const setParseMode = usePlotterStore((s) => s.setParseMode);
   const toggleChannel = usePlotterStore((s) => s.toggleChannel);
   const clear = usePlotterStore((s) => s.clear);
+  const zoomIn = usePlotterStore((s) => s.zoomIn);
+  const zoomOut = usePlotterStore((s) => s.zoomOut);
+  const resetZoom = usePlotterStore((s) => s.resetZoom);
+  const nudgePan = usePlotterStore((s) => s.nudgePan);
   const connected = useSerialStore((s) => s.connected);
+  const flashNotice = useSettingsStore((s) => s.flashNotice);
+
+  const visiblePoints = useMemo(
+    () => slicePlotWindow(points, zoomSamples, panFromEnd),
+    [points, zoomSamples, panFromEnd],
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -58,7 +84,7 @@ export function SerialPlotter() {
       }
 
       const visible = channels.filter((c) => visibility[c] !== false);
-      if (points.length === 0 || visible.length === 0) {
+      if (visiblePoints.length === 0 || visible.length === 0) {
         ctx.fillStyle = "rgba(255,255,255,0.35)";
         ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(
@@ -75,7 +101,7 @@ export function SerialPlotter() {
 
       let min = Infinity;
       let max = -Infinity;
-      for (const p of points) {
+      for (const p of visiblePoints) {
         for (const ch of visible) {
           const v = p.values[ch];
           if (v == null || !Number.isFinite(v)) continue;
@@ -95,14 +121,14 @@ export function SerialPlotter() {
       ctx.fillText(max.toFixed(2), pad.l - 4, pad.t + 10);
       ctx.fillText(min.toFixed(2), pad.l - 4, pad.t + plotH);
 
-      const n = Math.max(points.length - 1, 1);
+      const n = Math.max(visiblePoints.length - 1, 1);
       visible.forEach((ch) => {
         const color = channelColor(channels.indexOf(ch));
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         let started = false;
-        points.forEach((p, i) => {
+        visiblePoints.forEach((p, i) => {
           const v = p.values[ch];
           if (v == null || !Number.isFinite(v)) {
             started = false;
@@ -125,7 +151,43 @@ export function SerialPlotter() {
     const ro = new ResizeObserver(() => draw());
     ro.observe(parent);
     return () => ro.disconnect();
-  }, [points, channels, visibility, connected, parseMode, t]);
+  }, [visiblePoints, channels, visibility, connected, parseMode, t]);
+
+  const exportCsv = async (scope: "visible" | "all") => {
+    if (!isTauriRuntime()) {
+      flashNotice(t("plotter.desktopOnly"));
+      return;
+    }
+    const visibleCh = channels.filter((c) => visibility[c] !== false);
+    const data = scope === "visible" ? visiblePoints : points;
+    if (data.length === 0) {
+      flashNotice(t("plotter.exportEmpty"));
+      return;
+    }
+    const csv = plotPointsToCsv({
+      points: data,
+      channels: visibleCh.length > 0 ? visibleCh : channels,
+    });
+    try {
+      const docs = await documentDir();
+      const dir = await join(docs, "Aether", "plotter");
+      await mkdir(dir, { recursive: true });
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const suggested = await join(dir, `plot-${scope}-${stamp}.csv`);
+      const chosen = await save({
+        title: locale === "ru" ? "Экспорт CSV плоттера" : "Export plotter CSV",
+        defaultPath: suggested,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
+      });
+      if (typeof chosen !== "string" || !chosen) return;
+      await writeTextFile(chosen, csv);
+      flashNotice(t("plotter.exported", { count: data.length }), 3000);
+    } catch (e) {
+      flashNotice(
+        e instanceof Error ? e.message : t("plotter.exportFailed"),
+      );
+    }
+  };
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -164,11 +226,68 @@ export function SerialPlotter() {
           type="button"
           title={paused ? t("plotter.resume") : t("plotter.pause")}
           aria-label={paused ? t("plotter.resume") : t("plotter.pause")}
+          aria-pressed={paused}
           onClick={() => setPaused(!paused)}
-          className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+          className={cn(
+            "flex h-7 items-center gap-1 rounded border px-2 text-[11px]",
+            paused
+              ? "border-aether-accent bg-aether-accent-muted text-aether-fg"
+              : "border-aether-border text-aether-fg hover:bg-aether-surface-raised",
+          )}
         >
           {paused ? <Play size={13} /> : <Pause size={13} />}
           {paused ? t("plotter.resume") : t("plotter.pause")}
+        </button>
+        <div
+          className="flex h-7 items-center gap-0.5 rounded border border-aether-border px-0.5"
+          role="group"
+          aria-label={t("plotter.zoom")}
+        >
+          <button
+            type="button"
+            title={t("plotter.zoomOut")}
+            aria-label={t("plotter.zoomOut")}
+            onClick={zoomOut}
+            className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
+          >
+            <Minus size={13} />
+          </button>
+          <span className="min-w-[3.5rem] text-center font-mono text-[10px] text-aether-fg-dim">
+            {Math.min(zoomSamples, points.length || zoomSamples)}
+          </span>
+          <button
+            type="button"
+            title={t("plotter.zoomIn")}
+            aria-label={t("plotter.zoomIn")}
+            onClick={zoomIn}
+            className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
+          >
+            <Plus size={13} />
+          </button>
+          <button
+            type="button"
+            title={t("plotter.zoomReset")}
+            aria-label={t("plotter.zoomReset")}
+            onClick={resetZoom}
+            className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
+          >
+            <RotateCcw size={12} />
+          </button>
+        </div>
+        <button
+          type="button"
+          title={t("plotter.exportCsv")}
+          aria-label={t("plotter.exportCsv")}
+          onClick={() => {
+            const scope = window.confirm(t("plotter.exportScope"))
+              ? "visible"
+              : "all";
+            void exportCsv(scope);
+          }}
+          className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+        >
+          <Download size={13} />
+          {t("plotter.exportCsv")}
         </button>
         <button
           type="button"
@@ -182,6 +301,11 @@ export function SerialPlotter() {
         <span className="ml-1 text-[11px] text-aether-fg-dim">
           {parseMode === "mavlink" ? t("plotter.hintMavlink") : t("plotter.hint")}
         </span>
+        {paused && (
+          <span className="rounded bg-aether-accent-muted px-1.5 py-0.5 text-[10px] font-medium text-aether-fg">
+            {t("plotter.pausedBadge")}
+          </span>
+        )}
         {parseMode === "mavlink" && vehicle && (
           <span className="text-[11px] text-aether-fg-muted">
             {t("plotter.vehicle", {
@@ -221,7 +345,20 @@ export function SerialPlotter() {
           })}
         </div>
       </div>
-      <div className="relative min-h-0 flex-1">
+      <div
+        className="relative min-h-0 flex-1"
+        onWheel={(e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) zoomIn();
+            else zoomOut();
+          } else if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey) {
+            e.preventDefault();
+            const delta = Math.sign(e.deltaX || e.deltaY) * Math.max(1, Math.round(zoomSamples / 20));
+            nudgePan(delta);
+          }
+        }}
+      >
         <canvas ref={canvasRef} className="absolute inset-0" />
       </div>
     </div>

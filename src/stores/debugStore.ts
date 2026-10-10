@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import {
   debugContinue,
   debugDeleteBreakpoint,
+  debugEval,
   debugInsertBreakpoint,
   debugPause,
   debugStack,
@@ -19,6 +20,10 @@ import {
   type DebugVariable,
 } from "@/lib/debug";
 import { friendlyDebugError } from "@/lib/debugErrors";
+import {
+  isConditionTruthy,
+  normalizeWatchExpression,
+} from "@/lib/debugWatch";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -30,12 +35,35 @@ function localizeDebugError(message: string): string {
   return friendlyDebugError(message, useSettingsStore.getState().locale);
 }
 
+function noSessionError(): string {
+  const locale = useSettingsStore.getState().locale;
+  return locale === "ru"
+    ? "Нет активной сессии отладки. Сначала запустите отладчик."
+    : "No active debug session. Start the debugger first.";
+}
+
+function notPausedError(): string {
+  const locale = useSettingsStore.getState().locale;
+  return locale === "ru"
+    ? "Оценка выражений доступна только на паузе."
+    : "Expression evaluation is only available while paused.";
+}
+
 export interface Breakpoint {
   path: string;
   line: number;
   /** GDB breakpoint number when session is active */
   number: string | null;
   enabled: boolean;
+  /** Optional GDB-style condition expression; empty = always stop. */
+  condition?: string;
+}
+
+export interface WatchEntry {
+  id: string;
+  expression: string;
+  value: string | null;
+  error: string | null;
 }
 
 interface DebugState {
@@ -43,6 +71,7 @@ interface DebugState {
   execState: DebugExecState;
   error: string | null;
   breakpoints: Breakpoint[];
+  watches: WatchEntry[];
   frames: DebugFrame[];
   variables: DebugVariable[];
   stoppedFile: string | null;
@@ -50,7 +79,15 @@ interface DebugState {
   consoleLines: { id: number; stream: string; text: string }[];
   consoleSeq: number;
   toggleBreakpoint: (path: string, line: number) => void;
+  setBreakpointCondition: (
+    path: string,
+    line: number,
+    condition: string,
+  ) => void;
   clearBreakpoints: () => void;
+  addWatch: (expression: string) => string | null;
+  removeWatch: (id: string) => void;
+  refreshWatches: () => Promise<void>;
   start: () => Promise<void>;
   stop: () => Promise<void>;
   continueExec: () => Promise<void>;
@@ -62,10 +99,16 @@ interface DebugState {
   appendConsole: (payload: DebugConsolePayload) => void;
   clearConsole: () => void;
   refreshStoppedContext: () => Promise<void>;
+  /** After stop: evaluate BP condition; continue if false. */
+  handleConditionalStop: () => Promise<void>;
 }
 
 function samePath(a: string, b: string): boolean {
   return a.replace(/\//g, "\\").toLowerCase() === b.replace(/\//g, "\\").toLowerCase();
+}
+
+function newWatchId(): string {
+  return `w_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
 const MAX_CONSOLE = 3000;
@@ -77,6 +120,7 @@ export const useDebugStore = create<DebugState>()(
       execState: "inactive",
       error: null,
       breakpoints: [],
+      watches: [],
       frames: [],
       variables: [],
       stoppedFile: null,
@@ -105,6 +149,7 @@ export const useDebugStore = create<DebugState>()(
           line,
           number: null,
           enabled: true,
+          condition: "",
         };
         set({ breakpoints: [...get().breakpoints, bp] });
         if (get().sessionActive) {
@@ -128,7 +173,91 @@ export const useDebugStore = create<DebugState>()(
         }
       },
 
+      setBreakpointCondition: (path, line, condition) => {
+        const trimmed = condition.trim();
+        set({
+          breakpoints: get().breakpoints.map((b) =>
+            samePath(b.path, path) && b.line === line
+              ? { ...b, condition: trimmed }
+              : b,
+          ),
+        });
+        const bp = get().breakpoints.find(
+          (b) => samePath(b.path, path) && b.line === line,
+        );
+        // Best-effort: push condition to GDB when we have a number
+        if (get().sessionActive && bp?.number) {
+          const cmd = trimmed
+            ? `-break-condition ${bp.number} ${trimmed}`
+            : `-break-condition ${bp.number}`;
+          void import("@/lib/debug").then(({ debugConsoleInput }) =>
+            debugConsoleInput(cmd).catch(() => undefined),
+          );
+        }
+      },
+
       clearBreakpoints: () => set({ breakpoints: [] }),
+
+      addWatch: (expression) => {
+        const expr = normalizeWatchExpression(expression);
+        if (!expr) return null;
+        if (get().watches.some((w) => w.expression === expr)) return null;
+        const entry: WatchEntry = {
+          id: newWatchId(),
+          expression: expr,
+          value: null,
+          error: null,
+        };
+        set({ watches: [...get().watches, entry] });
+        if (get().sessionActive && get().execState === "stopped") {
+          void get().refreshWatches();
+        }
+        return entry.id;
+      },
+
+      removeWatch: (id) =>
+        set({ watches: get().watches.filter((w) => w.id !== id) }),
+
+      refreshWatches: async () => {
+        const watches = get().watches;
+        if (watches.length === 0) return;
+        if (!get().sessionActive) {
+          set({
+            watches: watches.map((w) => ({
+              ...w,
+              value: null,
+              error: noSessionError(),
+            })),
+          });
+          return;
+        }
+        if (get().execState !== "stopped") {
+          set({
+            watches: watches.map((w) => ({
+              ...w,
+              value: null,
+              error: notPausedError(),
+            })),
+          });
+          return;
+        }
+        const next: WatchEntry[] = [];
+        for (const w of watches) {
+          try {
+            const value = await debugEval(w.expression);
+            next.push({ ...w, value, error: null });
+          } catch (error) {
+            const raw =
+              error instanceof Error ? error.message : String(error);
+            next.push({
+              ...w,
+              value: null,
+              error: localizeDebugError(raw),
+            });
+          }
+        }
+        set({ watches: next });
+      },
 
       start: async () => {
         const locale = useSettingsStore.getState().locale;
@@ -189,7 +318,6 @@ export const useDebugStore = create<DebugState>()(
           await debugStart(rootPath, pio.selectedEnv || null);
           set({ sessionActive: true, execState: "running" });
 
-          // Apply persisted breakpoints for this session
           const next: Breakpoint[] = [];
           for (const bp of get().breakpoints) {
             if (!bp.enabled) {
@@ -199,6 +327,12 @@ export const useDebugStore = create<DebugState>()(
             try {
               const res = await debugInsertBreakpoint(bp.path, bp.line);
               next.push({ ...bp, number: res.number });
+              if (bp.condition?.trim() && res.number) {
+                const { debugConsoleInput } = await import("@/lib/debug");
+                await debugConsoleInput(
+                  `-break-condition ${res.number} ${bp.condition.trim()}`,
+                ).catch(() => undefined);
+              }
             } catch {
               next.push({ ...bp, number: null });
             }
@@ -233,6 +367,11 @@ export const useDebugStore = create<DebugState>()(
           breakpoints: get().breakpoints.map((b) => ({
             ...b,
             number: null,
+          })),
+          watches: get().watches.map((w) => ({
+            ...w,
+            value: null,
+            error: null,
           })),
         });
       },
@@ -329,19 +468,48 @@ export const useDebugStore = create<DebugState>()(
             stoppedFile: event.file,
             stoppedLine: event.line,
           });
-          if (event.file && event.line) {
-            void useWorkspaceStore
-              .getState()
-              .openPathInEditor(event.file)
-              .then(() => {
-                useEditorStore.getState().requestReveal({
-                  path: event.file!,
-                  lineNumber: event.line!,
-                  column: 1,
+          void (async () => {
+            await get().handleConditionalStop();
+            if (get().execState !== "stopped") return;
+            if (event.file && event.line) {
+              void useWorkspaceStore
+                .getState()
+                .openPathInEditor(event.file)
+                .then(() => {
+                  useEditorStore.getState().requestReveal({
+                    path: event.file!,
+                    lineNumber: event.line!,
+                    column: 1,
+                  });
                 });
-              });
+            }
+            void get().refreshStoppedContext();
+            void get().refreshWatches();
+          })();
+        }
+      },
+
+      handleConditionalStop: async () => {
+        const file = get().stoppedFile;
+        const line = get().stoppedLine;
+        if (!file || line == null) return;
+        const bp = get().breakpoints.find(
+          (b) => samePath(b.path, file) && b.line === line,
+        );
+        const cond = bp?.condition?.trim();
+        if (!cond) return;
+        try {
+          const value = await debugEval(cond);
+          if (!isConditionTruthy(value)) {
+            await debugContinue();
+            set({
+              execState: "running",
+              stoppedFile: null,
+              stoppedLine: null,
+            });
           }
-          void get().refreshStoppedContext();
+        } catch {
+          // If condition evaluation fails, stay stopped (safer)
         }
       },
 
@@ -388,6 +556,13 @@ export const useDebugStore = create<DebugState>()(
           line: b.line,
           number: null,
           enabled: b.enabled,
+          condition: b.condition ?? "",
+        })),
+        watches: state.watches.map((w) => ({
+          id: w.id,
+          expression: w.expression,
+          value: null,
+          error: null,
         })),
       }),
     },

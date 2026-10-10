@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.18 — 2026-10-11
+
+- **Firmware profiles export/import** — Settings + Command Palette: export selected/all profiles to JSON (`Documents/Aether/profiles`); import with replace or merge; schema validation; RU/EN errors; localStorage unchanged
+- **Serial Plotter** — clearer Pause badge; horizontal zoom (+/− / Ctrl+wheel) and pan; reset zoom; export visible or all samples as CSV
+- **Camera** — save current frame (PNG/JPEG); record N-frame series to a folder; auto-reconnect with backoff + “Reconnecting…”; optional keep last good frame on Wi‑Fi drop
+- **Debug watches & conditions** — Watch panel evaluates expressions when paused via GDB; per-breakpoint condition (Debug panel / context menu); continue when condition is false (best-effort)
+
 ## 0.2.17 — 2026-10-11
 
 - **Quick Start on first launch** — desktop app opens the Quick Start wizard once when `onboardingDone` is unset; skip/complete still persisted (0.2.12+); Welcome / Help / Palette unchanged

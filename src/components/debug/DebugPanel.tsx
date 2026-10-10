@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -6,9 +6,11 @@ import {
   Circle,
   Pause,
   Play,
+  Plus,
   Square,
   StepForward,
   Trash2,
+  X,
 } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
@@ -23,6 +25,7 @@ export function DebugPanel() {
   const execState = useDebugStore((s) => s.execState);
   const error = useDebugStore((s) => s.error);
   const breakpoints = useDebugStore((s) => s.breakpoints);
+  const watches = useDebugStore((s) => s.watches);
   const frames = useDebugStore((s) => s.frames);
   const variables = useDebugStore((s) => s.variables);
   const stoppedFile = useDebugStore((s) => s.stoppedFile);
@@ -35,13 +38,19 @@ export function DebugPanel() {
   const stepInto = useDebugStore((s) => s.stepInto);
   const stepOut = useDebugStore((s) => s.stepOut);
   const toggleBreakpoint = useDebugStore((s) => s.toggleBreakpoint);
+  const setBreakpointCondition = useDebugStore((s) => s.setBreakpointCondition);
   const clearBreakpoints = useDebugStore((s) => s.clearBreakpoints);
+  const addWatch = useDebugStore((s) => s.addWatch);
+  const removeWatch = useDebugStore((s) => s.removeWatch);
+  const refreshWatches = useDebugStore((s) => s.refreshWatches);
 
   const kind = useWorkspaceStore((s) => s.kind);
   const isProject = usePlatformIoStore((s) => s.isProject);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
   const envs = usePlatformIoStore((s) => s.envs);
   const setSelectedEnv = usePlatformIoStore((s) => s.setSelectedEnv);
+
+  const [watchInput, setWatchInput] = useState("");
 
   const stopped = execState === "stopped";
   const running = execState === "running" || execState === "starting";
@@ -153,6 +162,76 @@ export function DebugPanel() {
         )}
 
         <Section
+          title={t("debug.watches")}
+          action={
+            watches.length > 0 ? (
+              <button
+                type="button"
+                title={t("debug.refreshWatches")}
+                onClick={() => void refreshWatches()}
+                className="text-[10px] text-aether-fg-dim hover:text-aether-fg"
+              >
+                {t("debug.refreshWatches")}
+              </button>
+            ) : null
+          }
+          empty={watches.length === 0 ? t("debug.watchesEmpty") : null}
+        >
+          {watches.map((w) => (
+            <div
+              key={w.id}
+              className="flex items-start gap-1 px-1.5 py-0.5 font-mono text-[11px]"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="text-aether-accent">{w.expression}</span>
+                <div className="truncate text-aether-fg-muted">
+                  {w.error ? (
+                    <span className="text-aether-danger">{w.error}</span>
+                  ) : (
+                    (w.value ?? "—")
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                title={t("debug.removeWatch")}
+                onClick={() => removeWatch(w.id)}
+                className="shrink-0 text-aether-fg-dim hover:text-aether-fg"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+        </Section>
+
+        <div className="flex gap-1">
+          <input
+            type="text"
+            value={watchInput}
+            onChange={(e) => setWatchInput(e.target.value)}
+            placeholder={t("debug.watchPlaceholder")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                addWatch(watchInput);
+                setWatchInput("");
+              }
+            }}
+            className="h-7 min-w-0 flex-1 rounded border border-aether-border bg-aether-bg px-2 font-mono text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+          />
+          <button
+            type="button"
+            title={t("debug.addWatch")}
+            onClick={() => {
+              addWatch(watchInput);
+              setWatchInput("");
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg hover:bg-aether-surface-raised"
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+
+        <Section
           title={t("debug.stack")}
           empty={frames.length === 0 ? t("debug.stackEmpty") : null}
         >
@@ -225,35 +304,73 @@ export function DebugPanel() {
           }
         >
           {breakpoints.map((bp) => (
-            <button
+            <div
               key={`${bp.path}:${bp.line}`}
-              type="button"
-              className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs hover:bg-aether-surface-raised"
-              onClick={() => {
-                void useWorkspaceStore
-                  .getState()
-                  .openPathInEditor(bp.path)
-                  .then(() => {
-                    useEditorStore.getState().requestReveal({
-                      path: bp.path,
-                      lineNumber: bp.line,
-                      column: 1,
-                    });
-                  });
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                toggleBreakpoint(bp.path, bp.line);
-              }}
+              className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-xs"
             >
-              <Circle
-                size={10}
-                className="shrink-0 fill-aether-danger text-aether-danger"
-              />
-              <span className="min-w-0 truncate text-aether-fg">
-                {bp.path.split(/[/\\]/).pop()}:{bp.line}
-              </span>
-            </button>
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 items-center gap-1.5 text-left hover:bg-aether-surface-raised"
+                onClick={() => {
+                  void useWorkspaceStore
+                    .getState()
+                    .openPathInEditor(bp.path)
+                    .then(() => {
+                      useEditorStore.getState().requestReveal({
+                        path: bp.path,
+                        lineNumber: bp.line,
+                        column: 1,
+                      });
+                    });
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  const next = window.prompt(
+                    t("debug.conditionPrompt"),
+                    bp.condition ?? "",
+                  );
+                  if (next == null) return;
+                  setBreakpointCondition(bp.path, bp.line, next);
+                }}
+              >
+                <Circle
+                  size={10}
+                  className="shrink-0 fill-aether-danger text-aether-danger"
+                />
+                <span className="min-w-0 truncate text-aether-fg">
+                  {bp.path.split(/[/\\]/).pop()}:{bp.line}
+                  {bp.condition?.trim() ? (
+                    <span className="text-aether-fg-dim">
+                      {" "}
+                      if {bp.condition.trim()}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+              <button
+                type="button"
+                title={t("debug.editCondition")}
+                className="shrink-0 text-[10px] text-aether-fg-muted hover:text-aether-fg"
+                onClick={() => {
+                  const next = window.prompt(
+                    t("debug.conditionPrompt"),
+                    bp.condition ?? "",
+                  );
+                  if (next == null) return;
+                  setBreakpointCondition(bp.path, bp.line, next);
+                }}
+              >
+                {t("debug.condition")}
+              </button>
+              <button
+                type="button"
+                title={t("debug.removeBreakpoint")}
+                className="shrink-0 text-aether-fg-dim hover:text-aether-danger"
+                onClick={() => toggleBreakpoint(bp.path, bp.line)}
+              >
+                <X size={12} />
+              </button>
+            </div>
           ))}
         </Section>
       </div>

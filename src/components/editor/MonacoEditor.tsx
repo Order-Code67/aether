@@ -194,7 +194,11 @@ export function MonacoEditor() {
         options: {
           isWholeLine: false,
           glyphMarginClassName: "aether-breakpoint-glyph",
-          glyphMarginHoverMessage: { value: "Breakpoint" },
+          glyphMarginHoverMessage: {
+            value: b.condition?.trim()
+              ? `Breakpoint if ${b.condition.trim()}`
+              : "Breakpoint",
+          },
         },
       })),
     ];

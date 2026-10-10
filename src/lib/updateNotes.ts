@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.18": {
+    en: "Firmware profile export/import, Plotter zoom & CSV, Camera save/record + reconnect, Debug watches & conditional breakpoints.",
+    ru: "Экспорт/импорт профилей прошивки, зум и CSV в плоттере, сохранение/запись камеры с переподключением, watches и условные точки останова.",
+  },
+  "0.2.17": {
+    en: "Quick Start on first launch, real Beta update channel, Settings Editor/Agent i18n, Arduino libraries via arduino-cli.",
+    ru: "Быстрый старт при первом запуске, реальный канал Beta, i18n вкладок Editor/Agent, библиотеки Arduino через arduino-cli.",
+  },
   "0.2.15": {
     en: "Offline PlatformIO cache import zip, Stable/Beta update channels.",
     ru: "Импорт офлайн-кэша PlatformIO из zip, каналы обновлений Stable/Beta.",

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { mergeFirmwareProfiles } from "@/lib/firmwareProfilesIo";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSerialStore } from "@/stores/serialStore";
@@ -28,6 +29,10 @@ interface FirmwareProfileState {
   /** Snapshot current PIO/serial/workspace into a named profile. */
   saveCurrentAs: (name: string) => string | null;
   applyProfile: (id: string) => Promise<boolean>;
+  /** Replace all profiles (import replace mode). */
+  replaceProfiles: (profiles: FirmwareProfile[]) => void;
+  /** Merge profiles by id (imported wins). */
+  mergeProfiles: (profiles: FirmwareProfile[]) => void;
 }
 
 function newId(): string {
@@ -148,6 +153,18 @@ export const useFirmwareProfileStore = create<FirmwareProfileState>()(
           .flashNotice(t("profiles.applied", { name: profile.name }), 3000);
         return true;
       },
+
+      replaceProfiles: (profiles) =>
+        set({
+          profiles: profiles
+            .map((p) => ({ ...p }))
+            .sort((a, b) => b.updatedAt - a.updatedAt),
+        }),
+
+      mergeProfiles: (profiles) =>
+        set((state) => ({
+          profiles: mergeFirmwareProfiles(state.profiles, profiles),
+        })),
     }),
     {
       name: "aether-firmware-profiles",
