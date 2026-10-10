@@ -1,9 +1,11 @@
 import { FileCode2, Hammer, Trash2, Upload } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function BuildToolbar() {
+  const { t } = useI18n();
   const kind = useWorkspaceStore((s) => s.kind);
   const info = usePlatformIoStore((s) => s.info);
   const isProject = usePlatformIoStore((s) => s.isProject);
@@ -54,12 +56,12 @@ export function BuildToolbar() {
         )}
       >
         <Hammer size={13} />
-        Build
+        {t("pio.build")}
       </button>
 
       <button
         type="button"
-        title="Upload"
+        title={t("pio.upload")}
         disabled={disabled}
         onClick={() => {
           void runTask("upload");
@@ -70,12 +72,12 @@ export function BuildToolbar() {
         )}
       >
         <Upload size={13} />
-        Upload
+        {t("pio.upload")}
       </button>
 
       <button
         type="button"
-        title="Clean"
+        title={t("pio.clean")}
         disabled={disabled}
         onClick={() => {
           void runTask("clean");
@@ -86,7 +88,7 @@ export function BuildToolbar() {
         )}
       >
         <Trash2 size={13} />
-        Clean
+        {t("pio.clean")}
       </button>
 
       <button
@@ -102,7 +104,7 @@ export function BuildToolbar() {
         )}
       >
         <FileCode2 size={13} />
-        IntelliSense DB
+        {t("pio.compiledb")}
       </button>
 
       {!info?.installed && (

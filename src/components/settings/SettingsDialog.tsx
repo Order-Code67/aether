@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
+import type { Locale } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useAgentStore } from "@/stores/agentStore";
@@ -13,6 +15,7 @@ import { useUpdaterStore } from "@/stores/updaterStore";
 type SettingsTab = SettingsTabId;
 
 export function SettingsDialog() {
+  const { t, locale, setLocale } = useI18n();
   const open = useSettingsStore((s) => s.settingsOpen);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
   const consumeInitialTab = useSettingsStore((s) => s.consumeInitialTab);
@@ -43,7 +46,7 @@ export function SettingsDialog() {
   const setIncludeActiveFile = useAgentStore((s) => s.setIncludeActiveFile);
   const setIncludeProblems = useAgentStore((s) => s.setIncludeProblems);
 
-  const [tab, setTab] = useState<SettingsTab>("editor");
+  const [tab, setTab] = useState<SettingsTab>("general");
   const [appVersion, setAppVersion] = useState<string>("0.1.0");
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -88,11 +91,13 @@ export function SettingsDialog() {
         className="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded border border-aether-border bg-aether-surface shadow-2xl"
       >
         <header className="flex h-10 shrink-0 items-center justify-between border-b border-aether-border px-3">
-          <h2 className="text-sm font-medium text-aether-fg">Settings</h2>
+          <h2 className="text-sm font-medium text-aether-fg">
+            {t("settings.title")}
+          </h2>
           <button
             type="button"
-            title="Close"
-            aria-label="Close settings"
+            title={t("settings.close")}
+            aria-label={t("settings.close")}
             onClick={closeSettings}
             className="flex h-7 w-7 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >
@@ -104,11 +109,12 @@ export function SettingsDialog() {
           <nav className="flex w-36 shrink-0 flex-col gap-0.5 border-r border-aether-border p-2">
             {(
               [
-                ["editor", "Editor"],
-                ["agent", "AI Agent"],
-                ["about", "About"],
+                ["general", "settings.general"],
+                ["editor", "settings.editor"],
+                ["agent", "settings.agent"],
+                ["about", "settings.about"],
               ] as const
-            ).map(([id, label]) => (
+            ).map(([id, labelKey]) => (
               <button
                 key={id}
                 type="button"
@@ -120,16 +126,29 @@ export function SettingsDialog() {
                     : "text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg",
                 )}
               >
-                {label}
+                {t(labelKey)}
               </button>
             ))}
           </nav>
 
           <div className="aether-scroll min-h-0 flex-1 space-y-3 overflow-auto p-4 text-xs">
+            {tab === "general" && (
+              <label className="flex items-center justify-between gap-3">
+                <span className="text-aether-fg">{t("settings.language")}</span>
+                <select
+                  value={locale}
+                  onChange={(e) => setLocale(e.target.value as Locale)}
+                  className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
+                >
+                  <option value="ru">{t("settings.language.ru")}</option>
+                  <option value="en">{t("settings.language.en")}</option>
+                </select>
+              </label>
+            )}
             {tab === "editor" && (
               <>
                 <label className="flex items-center justify-between gap-3">
-                  <span className="text-aether-fg">Font size</span>
+                  <span className="text-aether-fg">{t("settings.fontSize")}</span>
                   <input
                     type="number"
                     min={10}

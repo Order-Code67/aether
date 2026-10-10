@@ -43,7 +43,7 @@ export const useLayoutStore = create<LayoutState>()(
       sidebarWidth: SIDEBAR_DEFAULT,
       bottomPanelVisible: true,
       bottomPanelHeight: BOTTOM_DEFAULT,
-      bottomPanelTab: "terminal",
+      bottomPanelTab: "output",
 
       setActiveActivity: (id) =>
         set({ activeActivity: id, sidebarVisible: true }),

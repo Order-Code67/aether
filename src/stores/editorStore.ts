@@ -1,5 +1,10 @@
 import { create } from "zustand";
 import { writeWorkspaceTextFile } from "@/lib/fsWorkspace";
+import {
+  encryptSketch,
+  getSketchPassword,
+  forgetSketchPassword,
+} from "@/lib/sketchCrypto";
 import { isTauriRuntime } from "@/lib/tauri";
 import type { CursorPosition, EditorLanguage, EditorTab } from "@/types/editor";
 import { languageFromPath, tabNameFromPath } from "@/types/editor";
@@ -33,7 +38,7 @@ interface EditorState {
   saveStatus: SaveStatus;
   revealRequest: RevealRequest | null;
   findRequest: FindRequest | null;
-  openFile: (file: OpenFileInput) => void;
+  openFile: (file: OpenFileInput & { encrypted?: boolean }) => void;
   setActiveTab: (id: string) => void;
   closeTab: (id: string) => void;
   closeAllTabs: () => void;
@@ -42,6 +47,7 @@ interface EditorState {
   updateContent: (id: string, content: string) => void;
   replaceContentFromDisk: (path: string, content: string) => void;
   markClean: (id: string) => void;
+  setEncrypted: (id: string, encrypted: boolean) => void;
   setCursor: (cursor: CursorPosition) => void;
   requestReveal: (pos: Omit<RevealRequest, "token">) => void;
   requestFind: (action?: FindAction) => void;
@@ -50,7 +56,7 @@ interface EditorState {
   saveAllTabs: () => Promise<boolean>;
 }
 
-function createTab(file: OpenFileInput): EditorTab {
+function createTab(file: OpenFileInput & { encrypted?: boolean }): EditorTab {
   const language: EditorLanguage =
     file.language ?? languageFromPath(file.path);
 
@@ -61,6 +67,7 @@ function createTab(file: OpenFileInput): EditorTab {
     language,
     content: file.content,
     dirty: false,
+    encrypted: !!file.encrypted,
   };
 }
 
@@ -117,6 +124,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       );
       if (!discard) return;
     }
+    if (tab) forgetSketchPassword(tab.path);
 
     const nextTabs = tabs.filter((t) => t.id !== id);
     let nextActive = activeTabId;
@@ -180,6 +188,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           path: next,
           name: tabNameFromPath(next),
           language: languageFromPath(next),
+          encrypted: tab.encrypted,
         };
       }),
       activeTabId: state.activeTabId
@@ -208,6 +217,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((state) => ({
       tabs: state.tabs.map((tab) =>
         tab.id === id ? { ...tab, dirty: false } : tab,
+      ),
+    })),
+
+  setEncrypted: (id, encrypted) =>
+    set((state) => ({
+      tabs: state.tabs.map((tab) =>
+        tab.id === id ? { ...tab, encrypted, dirty: true } : tab,
       ),
     })),
 
@@ -259,7 +275,21 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({ saveStatus: { kind: "saving" } });
 
     try {
-      await writeWorkspaceTextFile(tab.path, tab.content);
+      let toWrite = tab.content;
+      if (tab.encrypted) {
+        const password = getSketchPassword(tab.path);
+        if (!password) {
+          set({
+            saveStatus: {
+              kind: "error",
+              message: "Encrypted sketch has no session password. Unlock again.",
+            },
+          });
+          return false;
+        }
+        toWrite = await encryptSketch(tab.content, password);
+      }
+      await writeWorkspaceTextFile(tab.path, toWrite);
       get().markClean(tab.id);
       set({
         saveStatus: {

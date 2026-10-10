@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DebugToolbar } from "@/components/debug/DebugToolbar";
+import { EditorEncryptBar } from "@/components/editor/EditorEncryptBar";
 import { EditorTabs, MonacoEditor, WelcomeView } from "@/components/editor";
 import {
   MergeConflictBanner,
@@ -37,6 +38,7 @@ export function EditorArea() {
       <EditorTabs />
       <BuildToolbar />
       <DebugToolbar />
+      {hasTabs && <EditorEncryptBar />}
       {hasTabs && conflicted && (
         <MergeConflictBanner
           count={conflicts}

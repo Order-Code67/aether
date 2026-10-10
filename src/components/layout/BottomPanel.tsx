@@ -5,11 +5,13 @@ import { OutputPanel } from "@/components/platformio/OutputPanel";
 import { ProblemsPanel } from "@/components/problems/ProblemsPanel";
 import { SerialMonitor } from "@/components/serial/SerialMonitor";
 import { TerminalView } from "@/components/terminal/TerminalView";
+import { useI18n } from "@/hooks/useI18n";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { BOTTOM_PANEL_TABS, type BottomPanelTab } from "@/types/layout";
 import { cn } from "@/lib/cn";
 
 export function BottomPanel() {
+  const { t } = useI18n();
   const visible = useLayoutStore((s) => s.bottomPanelVisible);
   const height = useLayoutStore((s) => s.bottomPanelHeight);
   const activeTab = useLayoutStore((s) => s.bottomPanelTab);
@@ -38,7 +40,7 @@ export function BottomPanel() {
               onClick={() => visit(tab.id)}
               className="px-2 py-1 text-[11px] uppercase tracking-wide text-aether-fg-muted transition-colors hover:text-aether-fg"
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -79,7 +81,7 @@ export function BottomPanel() {
                     : "text-aether-fg-muted hover:text-aether-fg",
                 )}
               >
-                {tab.label}
+                {t(tab.labelKey)}
                 {isActive && (
                   <span className="absolute inset-x-2 bottom-0 h-px bg-aether-accent" />
                 )}
@@ -115,8 +117,11 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "problems" ? "visible z-10" : "invisible z-0",
+              activeTab === "problems"
+                ? "z-10"
+                : "pointer-events-none invisible z-0",
             )}
+            aria-hidden={activeTab !== "problems"}
           >
             <ProblemsPanel />
           </div>
@@ -126,8 +131,11 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "output" ? "visible z-10" : "invisible z-0",
+              activeTab === "output"
+                ? "z-10"
+                : "pointer-events-none invisible z-0",
             )}
+            aria-hidden={activeTab !== "output"}
           >
             <OutputPanel />
           </div>
@@ -137,8 +145,11 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "debug" ? "visible z-10" : "invisible z-0",
+              activeTab === "debug"
+                ? "z-10"
+                : "pointer-events-none invisible z-0",
             )}
+            aria-hidden={activeTab !== "debug"}
           >
             <DebugConsole />
           </div>
@@ -148,8 +159,11 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "serial" ? "visible z-10" : "invisible z-0",
+              activeTab === "serial"
+                ? "z-10"
+                : "pointer-events-none invisible z-0",
             )}
+            aria-hidden={activeTab !== "serial"}
           >
             <SerialMonitor />
           </div>
@@ -159,8 +173,11 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "terminal" ? "visible z-10" : "invisible z-0",
+              activeTab === "terminal"
+                ? "z-10"
+                : "pointer-events-none invisible z-0",
             )}
+            aria-hidden={activeTab !== "terminal"}
           >
             <TerminalView active={activeTab === "terminal"} />
           </div>

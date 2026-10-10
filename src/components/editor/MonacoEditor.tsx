@@ -218,6 +218,8 @@ export function MonacoEditor() {
     monaco.editor.setTheme(AETHER_THEME);
     registerLspMonacoProviders(monaco);
     registerExtensionSnippetProviders(monaco);
+    // Ensure the editor can accept keystrokes after mount (WebView2 focus quirks).
+    window.setTimeout(() => editor.focus(), 0);
 
     editor.onDidChangeCursorPosition((event) => {
       setCursor({

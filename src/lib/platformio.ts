@@ -76,6 +76,70 @@ export async function isPioRunning(): Promise<boolean> {
   return invoke<boolean>("pio_is_running");
 }
 
+export interface PioLibEntry {
+  id: string;
+  name: string;
+  owner: string;
+  description: string;
+  version: string;
+  platforms: string[];
+}
+
+export interface PioLibSearchOptions {
+  query: string;
+  /** PlatformIO platform id, e.g. espressif32 / atmelavr */
+  platform?: string | null;
+  /** PlatformIO framework id, e.g. arduino */
+  framework?: string | null;
+  /** Extra registry pages to fetch (1–4). */
+  pages?: number;
+}
+
+export async function searchPioLibraries(
+  queryOrOptions: string | PioLibSearchOptions,
+): Promise<PioLibEntry[]> {
+  if (!isTauriRuntime()) return [];
+  const options =
+    typeof queryOrOptions === "string"
+      ? { query: queryOrOptions }
+      : queryOrOptions;
+  return invoke<PioLibEntry[]>("pio_lib_search", {
+    query: options.query,
+    platform: options.platform ?? null,
+    framework: options.framework ?? null,
+    pages: options.pages ?? null,
+  });
+}
+
+export async function installPioLibrary(
+  cwd: string,
+  library: string,
+  env?: string | null,
+): Promise<string> {
+  return invoke<string>("pio_lib_install", {
+    cwd,
+    library,
+    env: env ?? null,
+  });
+}
+
+export async function uninstallPioLibrary(
+  cwd: string,
+  library: string,
+  env?: string | null,
+): Promise<string> {
+  return invoke<string>("pio_lib_uninstall", {
+    cwd,
+    library,
+    env: env ?? null,
+  });
+}
+
+export async function listPioLibraries(cwd: string): Promise<string[]> {
+  if (!isTauriRuntime()) return [];
+  return invoke<string[]>("pio_lib_list", { cwd });
+}
+
 export async function listenPioOutput(
   handler: (payload: PioOutputPayload) => void,
 ): Promise<UnlistenFn> {

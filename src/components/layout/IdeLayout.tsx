@@ -8,6 +8,7 @@ import { useSaveStatusToast } from "@/hooks/useSaveStatusToast";
 import { useSerialBridge } from "@/hooks/useSerialBridge";
 import { useScmBridge } from "@/hooks/useScmBridge";
 import { useWorkspaceWatcher } from "@/hooks/useWorkspaceWatcher";
+import { UnlockGate } from "@/components/editor/UnlockGate";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { CommandPalette } from "@/components/palette/CommandPalette";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
@@ -73,6 +74,7 @@ export function IdeLayout() {
       <StatusBar />
       <SettingsDialog />
       <CommandPalette />
+      <UnlockGate />
       <NewProjectDialog
         open={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}

@@ -7,5 +7,9 @@ commands.allow = [
   "pio_run",
   "pio_cancel",
   "pio_is_running",
-  "pio_project_init"
+  "pio_project_init",
+  "pio_lib_search",
+  "pio_lib_install",
+  "pio_lib_uninstall",
+  "pio_lib_list"
 ]

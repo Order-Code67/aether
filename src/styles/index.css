@@ -43,7 +43,24 @@
     font-family: var(--font-sans);
     background: var(--color-aether-bg);
     color: var(--color-aether-fg);
+    /* Keep chrome non-selectable, but never block typing in editors/inputs.
+       WebView2 + Monaco breaks when an ancestor has user-select: none. */
     user-select: none;
+  }
+
+  input,
+  textarea,
+  select,
+  option,
+  [contenteditable="true"],
+  .monaco-editor,
+  .monaco-editor textarea,
+  .monaco-editor .inputarea,
+  .xterm,
+  .xterm textarea,
+  .xterm-helper-textarea {
+    -webkit-user-select: text !important;
+    user-select: text !important;
   }
 
   ::selection {

@@ -1,8 +1,11 @@
+import type { MessageKey } from "@/i18n";
+
 export type ActivityId =
   | "explorer"
   | "search"
   | "source-control"
   | "boards"
+  | "libraries"
   | "debug"
   | "agent"
   | "extensions";
@@ -16,27 +19,44 @@ export type BottomPanelTab =
 
 export interface ActivityItem {
   id: ActivityId;
-  label: string;
-  title: string;
+  labelKey: MessageKey;
+  titleKey: MessageKey;
 }
 
 export const ACTIVITY_ITEMS: readonly ActivityItem[] = [
-  { id: "explorer", label: "Explorer", title: "Explorer" },
-  { id: "search", label: "Search", title: "Search" },
-  { id: "source-control", label: "Source Control", title: "Source Control" },
-  { id: "boards", label: "Boards", title: "Boards & Targets" },
-  { id: "debug", label: "Run and Debug", title: "Run and Debug" },
-  { id: "agent", label: "Agent", title: "AI Agent" },
-  { id: "extensions", label: "Extensions", title: "Extensions" },
+  {
+    id: "explorer",
+    labelKey: "activity.explorer",
+    titleKey: "activity.explorer",
+  },
+  { id: "search", labelKey: "activity.search", titleKey: "activity.search" },
+  {
+    id: "source-control",
+    labelKey: "activity.sourceControl",
+    titleKey: "activity.sourceControl",
+  },
+  { id: "boards", labelKey: "activity.boards", titleKey: "activity.boards" },
+  {
+    id: "libraries",
+    labelKey: "activity.libraries",
+    titleKey: "activity.libraries",
+  },
+  { id: "debug", labelKey: "activity.debug", titleKey: "activity.debug" },
+  { id: "agent", labelKey: "activity.agent", titleKey: "activity.agent" },
+  {
+    id: "extensions",
+    labelKey: "activity.extensions",
+    titleKey: "activity.extensions",
+  },
 ] as const;
 
 export const BOTTOM_PANEL_TABS: readonly {
   id: BottomPanelTab;
-  label: string;
+  labelKey: MessageKey;
 }[] = [
-  { id: "problems", label: "Problems" },
-  { id: "output", label: "Output" },
-  { id: "debug", label: "Debug Console" },
-  { id: "serial", label: "Serial" },
-  { id: "terminal", label: "Terminal" },
+  { id: "problems", labelKey: "panel.problems" },
+  { id: "output", labelKey: "panel.output" },
+  { id: "debug", labelKey: "panel.debug" },
+  { id: "serial", labelKey: "panel.serial" },
+  { id: "terminal", labelKey: "panel.terminal" },
 ] as const;

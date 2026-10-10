@@ -14,8 +14,10 @@ import { DebugPanel } from "@/components/debug/DebugPanel";
 import { ExtensionsPanel } from "@/components/extensions/ExtensionsPanel";
 import { FileTree } from "@/components/explorer/FileTree";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
+import { LibrariesPanel } from "@/components/libraries/LibrariesPanel";
 import { SearchPanel } from "@/components/search/SearchPanel";
 import { SourceControlPanel } from "@/components/scm/SourceControlPanel";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -46,6 +48,7 @@ function SidebarPlaceholder({ title, hint }: { title: string; hint: string }) {
 }
 
 function ExplorerSidebar() {
+  const { t } = useI18n();
   const kind = useWorkspaceStore((s) => s.kind);
   const folders = useWorkspaceStore((s) => s.folders);
   const tree = useWorkspaceStore((s) => s.tree);
@@ -72,7 +75,7 @@ function ExplorerSidebar() {
       />
       <header className="flex h-9 shrink-0 items-center justify-between gap-2 px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          Explorer
+          {t("explorer.title")}
         </h2>
         <div className="flex items-center gap-0.5">
           {kind === "folder" && activeFolderPath && (
@@ -279,6 +282,7 @@ function ExplorerSidebar() {
 const SIDEBAR_CONTENT: Record<string, { title: string; hint: string }> = {};
 
 function BoardsSidebar() {
+  const { t } = useI18n();
   const info = usePlatformIoStore((s) => s.info);
   const isProject = usePlatformIoStore((s) => s.isProject);
   const envs = usePlatformIoStore((s) => s.envs);
@@ -297,7 +301,7 @@ function BoardsSidebar() {
     <div className="flex h-full flex-col">
       <header className="flex h-9 shrink-0 items-center justify-between px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          Boards & Targets
+          {t("boards.title")}
         </h2>
         <button
           type="button"
@@ -307,7 +311,7 @@ function BoardsSidebar() {
             void refreshProject();
           }}
         >
-          Refresh
+          {t("common.refresh")}
         </button>
       </header>
       <div className="aether-scroll flex-1 space-y-3 overflow-auto px-3 pb-4 text-xs">
@@ -349,18 +353,17 @@ function BoardsSidebar() {
 
         {!isProject ? (
           <p className="text-aether-fg-dim">
-            Active root ({rootName}) has no platformio.ini. Pin another folder
-            or open a PlatformIO project.
+            {t("boards.noIni")} ({rootName})
           </p>
         ) : (
           <>
             <div>
               <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
-                Environments
+                {t("boards.environments")}
               </p>
               <div className="space-y-0.5">
                 {envs.length === 0 ? (
-                  <p className="text-aether-fg-dim">No [env:…] sections found.</p>
+                  <p className="text-aether-fg-dim">{t("boards.noEnvs")}</p>
                 ) : (
                   envs.map((env) => (
                     <button
@@ -389,7 +392,7 @@ function BoardsSidebar() {
                 }}
                 className="rounded border border-aether-border px-2 py-1.5 text-left text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
               >
-                Build
+                {t("boards.build")}
               </button>
               <button
                 type="button"
@@ -399,7 +402,7 @@ function BoardsSidebar() {
                 }}
                 className="rounded border border-aether-border px-2 py-1.5 text-left text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
               >
-                Upload
+                {t("boards.upload")}
               </button>
             </div>
           </>
@@ -410,6 +413,7 @@ function BoardsSidebar() {
 }
 
 export function Sidebar() {
+  const { t } = useI18n();
   const activeActivity = useLayoutStore((s) => s.activeActivity);
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const sidebarWidth = useLayoutStore((s) => s.sidebarWidth);
@@ -418,9 +422,12 @@ export function Sidebar() {
     return null;
   }
 
-  const activityLabel =
-    ACTIVITY_ITEMS.find((item) => item.id === activeActivity)?.label ??
-    "Sidebar";
+  const activityItem = ACTIVITY_ITEMS.find(
+    (item) => item.id === activeActivity,
+  );
+  const activityLabel = activityItem
+    ? t(activityItem.labelKey)
+    : "Sidebar";
 
   return (
     <aside
@@ -436,6 +443,8 @@ export function Sidebar() {
         <SourceControlPanel />
       ) : activeActivity === "boards" ? (
         <BoardsSidebar />
+      ) : activeActivity === "libraries" ? (
+        <LibrariesPanel />
       ) : activeActivity === "debug" ? (
         <DebugPanel />
       ) : activeActivity === "agent" ? (
