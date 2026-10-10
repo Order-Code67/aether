@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.11 — 2026-10-11
+
+- **Open in VS Code (Windows)** — stop using `CREATE_NO_WINDOW` for `Code.exe`; launch via `cmd /C start "" Code.exe folder` so the GUI appears
+- **VS Code UX** — if no folder is open, prompt the folder dialog; hard failures use a longer status notice plus `window.alert` (Welcome / File menu / Command Palette)
+- **Generate VS Code config** — new Rust command `vscode_generate_config` writes/merges `.vscode/extensions.json`, `settings.json`, `c_cpp_properties.json` (success lists created files)
+- **Status bar** — «Serial: отключено» / «Serial: disconnected» with tooltip clarifying Serial Monitor (not app crash)
+
 ## 0.2.10 — 2026-10-11
 
 - **VS Code launch fix (Windows)** — prefer `Code.exe` over `code.cmd`; avoid `CREATE_NO_WINDOW` on batch launchers; broader discovery (registry Uninstall keys, Insiders, LocalAppData)

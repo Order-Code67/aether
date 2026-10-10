@@ -270,9 +270,18 @@ export function StatusBar() {
             ? `${serialPath || "Serial"} @ ${serialBaud}`
             : uploadPort || (isProject ? t("pio.portNone") : "No board")}
         </button>
-        <span className="flex items-center gap-1">
+        <span
+          className="flex items-center gap-1"
+          title={
+            serialConnected
+              ? t("status.serialConnectedTip")
+              : t("status.serialDisconnectedTip")
+          }
+        >
           <Wifi size={12} />
-          {serialConnected ? "Serial" : "Disconnected"}
+          {serialConnected
+            ? t("status.serialConnected")
+            : t("status.serialDisconnected")}
         </span>
         {activeTab && <span>{languageLabel(activeTab.language)}</span>}
         <span>UTF-8</span>

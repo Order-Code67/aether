@@ -34,6 +34,8 @@ export const en = {
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
   "vscode.needDesktop": "VS Code integration requires the desktop app.",
   "vscode.needFolder": "Open a project folder first.",
+  "vscode.needFolderHint":
+    "No folder open — click to choose a project folder, then continue.",
   "vscode.opened": "Opened folder in VS Code.",
   "vscode.cliMissing":
     "VS Code is not installed (or not found). Install from https://code.visualstudio.com/ or run: winget install -e --id Microsoft.VisualStudioCode — then restart Aether.",
@@ -198,6 +200,11 @@ export const en = {
   "status.clangdInit": "clangd…",
   "status.clangdNoDb": "no DB",
   "status.debug": "Debug",
+  "status.serialConnected": "Serial: connected",
+  "status.serialDisconnected": "Serial: disconnected",
+  "status.serialConnectedTip": "Serial Monitor is connected to the selected port.",
+  "status.serialDisconnectedTip":
+    "Serial Monitor is not connected — pick a COM port and press Connect.",
   "debug.toolbar": "Debug",
   "debug.start": "Start Debugging (F5)",
   "debug.stop": "Stop (Shift+F5)",

@@ -1,4 +1,4 @@
 [[permission]]
 identifier = "allow-vscode"
-description = "Open the current workspace folder in Visual Studio Code."
-commands.allow = ["open_external_vscode", "vscode_detect"]
+description = "Open the workspace in VS Code and generate .vscode helper config."
+commands.allow = ["open_external_vscode", "vscode_detect", "vscode_generate_config"]

@@ -1,13 +1,9 @@
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use serde::Serialize;
-
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
-
-#[cfg(windows)]
-const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+use serde_json::{json, Map, Value};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,10 +12,21 @@ pub struct VsCodeInfo {
     pub path: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VsCodeGenerateResult {
+    pub created: Vec<String>,
+    pub merged: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
+const PIO_EXTENSION: &str = "platformio.platformio-ide";
+
 fn path_ok(p: &Path) -> bool {
     p.is_file()
 }
 
+#[cfg(windows)]
 fn is_windows_batch(p: &Path) -> bool {
     p.extension()
         .and_then(|e| e.to_str())
@@ -28,6 +35,7 @@ fn is_windows_batch(p: &Path) -> bool {
 }
 
 /// Prefer `Code.exe` next to a `bin\code.cmd` launcher when present.
+#[cfg(windows)]
 fn prefer_code_exe(cli: PathBuf) -> PathBuf {
     if !is_windows_batch(&cli) {
         return cli;
@@ -211,6 +219,11 @@ fn validate_folder(path: &str) -> Result<PathBuf, String> {
     Ok(p)
 }
 
+fn utf8_path<'a>(p: &'a Path, what: &str) -> Result<&'a str, String> {
+    p.to_str()
+        .ok_or_else(|| format!("{what} path is not valid UTF-8."))
+}
+
 /// Detect whether Visual Studio Code is installed and where.
 #[tauri::command]
 pub fn vscode_detect() -> VsCodeInfo {
@@ -227,6 +240,9 @@ pub fn vscode_detect() -> VsCodeInfo {
 }
 
 /// Open a folder in Visual Studio Code.
+///
+/// On Windows, never use `CREATE_NO_WINDOW` for `Code.exe` — that can hide the GUI.
+/// Prefer `cmd /C start "" "Code.exe" "folder"` so the editor window appears.
 #[tauri::command]
 pub fn open_external_vscode(path: String) -> Result<(), String> {
     let folder = validate_folder(&path)?;
@@ -234,32 +250,12 @@ pub fn open_external_vscode(path: String) -> Result<(), String> {
 
     #[cfg(windows)]
     {
-        // Spawning `.cmd` with CREATE_NO_WINDOW often fails (needs a console host).
-        // Prefer Code.exe; for batch files use `cmd /C start "" /B …` without NO_WINDOW.
-        if is_windows_batch(&code) {
-            let status = Command::new("cmd.exe")
-                .args([
-                    "/C",
-                    "start",
-                    "",
-                    "/B",
-                    code.to_str().ok_or_else(|| {
-                        "VS Code path is not valid UTF-8.".to_string()
-                    })?,
-                    folder
-                        .to_str()
-                        .ok_or_else(|| "Folder path is not valid UTF-8.".to_string())?,
-                ])
-                .spawn()
-                .map_err(|e| format!("Failed to launch VS Code: {e}"))?;
-            let _ = status;
-            return Ok(());
-        }
-
-        let mut cmd = Command::new(&code);
-        cmd.arg(folder.as_os_str());
-        cmd.creation_flags(CREATE_NO_WINDOW);
-        cmd.spawn()
+        let code_s = utf8_path(&code, "VS Code")?;
+        let folder_s = utf8_path(&folder, "Folder")?;
+        // `start "" <app> <args>` launches a GUI process without CREATE_NO_WINDOW.
+        Command::new("cmd.exe")
+            .args(["/C", "start", "", code_s, folder_s])
+            .spawn()
             .map_err(|e| format!("Failed to launch VS Code: {e}"))?;
         return Ok(());
     }
@@ -274,9 +270,155 @@ pub fn open_external_vscode(path: String) -> Result<(), String> {
     }
 }
 
+fn read_json_value(path: &Path) -> Option<Value> {
+    let raw = fs::read_to_string(path).ok()?;
+    serde_json::from_str(&raw).ok()
+}
+
+fn write_pretty_json(path: &Path, value: &Value) -> Result<(), String> {
+    let body = serde_json::to_string_pretty(value)
+        .map_err(|e| format!("Failed to serialize {}: {e}", path.display()))?;
+    fs::write(path, format!("{body}\n"))
+        .map_err(|e| format!("Failed to write {}: {e}", path.display()))
+}
+
+fn merge_extensions(existing: Option<Value>) -> Value {
+    let mut recs = vec![PIO_EXTENSION.to_string()];
+    if let Some(Value::Object(map)) = existing {
+        if let Some(Value::Array(arr)) = map.get("recommendations") {
+            for item in arr {
+                if let Value::String(s) = item {
+                    let t = s.trim();
+                    if !t.is_empty() && !recs.iter().any(|r| r == t) {
+                        recs.push(t.to_string());
+                    }
+                }
+            }
+        }
+    }
+    json!({ "recommendations": recs })
+}
+
+fn merge_settings(existing: Option<Value>) -> Value {
+    let defaults = json!({
+        "files.associations": { "*.ino": "cpp" },
+        "C_Cpp.errorSquiggles": "enabled"
+    });
+    let mut out: Map<String, Value> = match existing {
+        Some(Value::Object(m)) => m,
+        _ => Map::new(),
+    };
+    if let Value::Object(defs) = defaults {
+        for (key, value) in defs {
+            if !out.contains_key(&key) {
+                out.insert(key, value);
+                continue;
+            }
+            if key == "files.associations" {
+                if let (Value::Object(def_assoc), Some(Value::Object(cur))) =
+                    (&value, out.get(&key))
+                {
+                    let mut merged = def_assoc.clone();
+                    for (k, v) in cur {
+                        merged.insert(k.clone(), v.clone());
+                    }
+                    out.insert(key, Value::Object(merged));
+                }
+            }
+        }
+    }
+    Value::Object(out)
+}
+
+fn default_cpp_properties() -> Value {
+    json!({
+        "configurations": [{
+            "name": "PlatformIO",
+            "includePath": ["${workspaceFolder}/**"],
+            "defines": [],
+            "compilerPath": "",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compileCommands": "${workspaceFolder}/.pio/build/*/compile_commands.json"
+        }],
+        "version": 4
+    })
+}
+
+/// Write / merge `.vscode` helpers for PlatformIO + C/C++ IntelliSense.
+#[tauri::command]
+pub fn vscode_generate_config(path: String) -> Result<VsCodeGenerateResult, String> {
+    let folder = validate_folder(&path)?;
+    let vscode_dir = folder.join(".vscode");
+    fs::create_dir_all(&vscode_dir)
+        .map_err(|e| format!("Failed to create .vscode: {e}"))?;
+
+    let mut created = Vec::new();
+    let mut merged = Vec::new();
+    let mut skipped = Vec::new();
+
+    // extensions.json
+    {
+        let rel = ".vscode/extensions.json".to_string();
+        let file = vscode_dir.join("extensions.json");
+        let existed = file.is_file();
+        let existing = if existed { read_json_value(&file) } else { None };
+        if existed && existing.is_none() {
+            skipped.push(rel);
+        } else {
+            let payload = merge_extensions(existing);
+            write_pretty_json(&file, &payload)?;
+            if existed {
+                merged.push(rel);
+            } else {
+                created.push(rel);
+            }
+        }
+    }
+
+    // settings.json
+    {
+        let rel = ".vscode/settings.json".to_string();
+        let file = vscode_dir.join("settings.json");
+        let existed = file.is_file();
+        let existing = if existed { read_json_value(&file) } else { None };
+        if existed && existing.is_none() {
+            skipped.push(rel);
+        } else {
+            let payload = merge_settings(existing);
+            write_pretty_json(&file, &payload)?;
+            if existed {
+                merged.push(rel);
+            } else {
+                created.push(rel);
+            }
+        }
+    }
+
+    // c_cpp_properties.json — create if missing; skip if present
+    {
+        let rel = ".vscode/c_cpp_properties.json".to_string();
+        let file = vscode_dir.join("c_cpp_properties.json");
+        if file.is_file() {
+            skipped.push(rel);
+        } else {
+            write_pretty_json(&file, &default_cpp_properties())?;
+            created.push(rel);
+        }
+    }
+
+    Ok(VsCodeGenerateResult {
+        created,
+        merged,
+        skipped,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn vscode_detect_finds_install() {
@@ -294,5 +436,30 @@ mod tests {
             .join("esp32-blink");
         assert!(folder.is_dir(), "missing {}", folder.display());
         open_external_vscode(folder.to_string_lossy().to_string()).expect("open");
+    }
+
+    #[test]
+    fn vscode_generate_config_creates_files() {
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        let dir = std::env::temp_dir().join(format!("aether-vscode-gen-{stamp}"));
+        fs::create_dir_all(&dir).unwrap();
+        let result = vscode_generate_config(dir.to_string_lossy().to_string()).expect("gen");
+        assert!(result.created.iter().any(|f| f.ends_with("extensions.json")));
+        assert!(result.created.iter().any(|f| f.ends_with("settings.json")));
+        assert!(result
+            .created
+            .iter()
+            .any(|f| f.ends_with("c_cpp_properties.json")));
+        // second run merges / skips
+        let again = vscode_generate_config(dir.to_string_lossy().to_string()).expect("gen2");
+        assert!(again.merged.iter().any(|f| f.ends_with("extensions.json")));
+        assert!(again
+            .skipped
+            .iter()
+            .any(|f| f.ends_with("c_cpp_properties.json")));
+        let _ = fs::remove_dir_all(&dir);
     }
 }

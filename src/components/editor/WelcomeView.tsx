@@ -7,12 +7,22 @@ import { useI18n } from "@/hooks/useI18n";
 import { errorMessage } from "@/lib/errors";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
+  formatGenerateSummary,
   generateVsCodeConfig,
+  notifyVsCodeFailure,
   openInVsCode,
   vscodeErrorKey,
+  VSCODE_NOTICE_MS,
 } from "@/lib/vscodeIntegration";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+
+async function ensureWorkspaceFolder(): Promise<string | null> {
+  const current = useWorkspaceStore.getState().rootPath;
+  if (current) return current;
+  await useWorkspaceStore.getState().openFolder();
+  return useWorkspaceStore.getState().rootPath;
+}
 
 export function WelcomeView() {
   const { t } = useI18n();
@@ -28,20 +38,21 @@ export function WelcomeView() {
 
   const runOpenVsCode = async () => {
     if (!tauri) {
-      flashNotice(t("vscode.needDesktop"));
-      return;
-    }
-    const folder = rootPath;
-    if (!folder) {
-      flashNotice(t("vscode.needFolder"));
+      notifyVsCodeFailure(t("vscode.needDesktop"));
       return;
     }
     setVscodeBusy(true);
     try {
+      const folder = await ensureWorkspaceFolder();
+      if (!folder) {
+        window.alert(t("vscode.needFolder"));
+        flashNotice(t("vscode.needFolder"), VSCODE_NOTICE_MS);
+        return;
+      }
       await openInVsCode(folder);
-      flashNotice(t("vscode.opened"));
+      flashNotice(t("vscode.opened"), VSCODE_NOTICE_MS);
     } catch (err) {
-      flashNotice(t(vscodeErrorKey(err)));
+      notifyVsCodeFailure(t(vscodeErrorKey(err)));
     } finally {
       setVscodeBusy(false);
     }
@@ -49,34 +60,31 @@ export function WelcomeView() {
 
   const runGenerateVsCode = async () => {
     if (!tauri) {
-      flashNotice(t("vscode.needDesktop"));
-      return;
-    }
-    const folder = rootPath;
-    if (!folder) {
-      flashNotice(t("vscode.needFolder"));
+      notifyVsCodeFailure(t("vscode.needDesktop"));
       return;
     }
     setVscodeBusy(true);
     try {
-      const result = await generateVsCodeConfig(folder, {
-        confirmOverwrite: (rel) =>
-          window.confirm(t("vscode.overwriteConfirm", { file: rel })),
-      });
-      const parts = [
-        ...result.created.map((f) => t("vscode.created", { file: f })),
-        ...result.merged.map((f) => t("vscode.merged", { file: f })),
-        ...result.skipped.map((f) => t("vscode.skipped", { file: f })),
-      ];
-      flashNotice(
-        parts.length > 0 ? parts.join(" · ") : t("vscode.generateDone"),
-      );
+      const folder = await ensureWorkspaceFolder();
+      if (!folder) {
+        window.alert(t("vscode.needFolder"));
+        flashNotice(t("vscode.needFolder"), VSCODE_NOTICE_MS);
+        return;
+      }
+      const result = await generateVsCodeConfig(folder);
+      const summary = formatGenerateSummary(result, t);
+      flashNotice(summary.replace(/\n/g, " · "), VSCODE_NOTICE_MS);
+      window.alert(`${t("vscode.generateDone")}\n\n${summary}`);
     } catch (err) {
-      flashNotice(errorMessage(err, t("vscode.generateFailed")));
+      notifyVsCodeFailure(errorMessage(err, t("vscode.generateFailed")));
     } finally {
       setVscodeBusy(false);
     }
   };
+
+  const vscodeTitle = rootPath
+    ? undefined
+    : t("vscode.needFolderHint");
 
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden">
@@ -128,6 +136,7 @@ export function WelcomeView() {
             <button
               type="button"
               disabled={vscodeBusy}
+              title={vscodeTitle}
               onClick={() => void runOpenVsCode()}
               className="flex w-64 items-center justify-center gap-2 rounded border border-aether-border bg-aether-surface/90 px-3 py-2.5 text-xs text-aether-fg backdrop-blur-sm transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised disabled:opacity-40"
             >
@@ -146,6 +155,7 @@ export function WelcomeView() {
             <button
               type="button"
               disabled={vscodeBusy}
+              title={vscodeTitle}
               onClick={() => void runGenerateVsCode()}
               className="w-64 rounded border border-transparent px-3 py-1.5 text-[11px] text-aether-fg-dim transition-colors hover:text-aether-fg-muted disabled:opacity-40"
             >

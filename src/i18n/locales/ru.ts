@@ -37,6 +37,8 @@ export const ru: Record<MessageKey, string> = {
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
   "vscode.needDesktop": "Интеграция с VS Code доступна в десктопном приложении.",
   "vscode.needFolder": "Сначала откройте папку проекта.",
+  "vscode.needFolderHint":
+    "Папка не открыта — нажмите, чтобы выбрать папку проекта, затем продолжить.",
   "vscode.opened": "Папка открыта в VS Code.",
   "vscode.cliMissing":
     "VS Code не установлен (или не найден). Установите с https://code.visualstudio.com/ или выполните: winget install -e --id Microsoft.VisualStudioCode — затем перезапустите Aether.",
@@ -201,6 +203,11 @@ export const ru: Record<MessageKey, string> = {
   "status.clangdInit": "clangd…",
   "status.clangdNoDb": "нет БД",
   "status.debug": "Отладка",
+  "status.serialConnected": "Serial: подключено",
+  "status.serialDisconnected": "Serial: отключено",
+  "status.serialConnectedTip": "Монитор порта подключён к выбранному COM.",
+  "status.serialDisconnectedTip":
+    "Монитор порта не подключён — выберите COM и нажмите Connect.",
   "debug.toolbar": "Отладка",
   "debug.start": "Начать отладку (F5)",
   "debug.stop": "Стоп (Shift+F5)",
