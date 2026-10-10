@@ -1,10 +1,29 @@
 import { useEffect } from "react";
-import { FileCode2, Hammer, RefreshCw, Trash2, Upload } from "lucide-react";
+import {
+  FileCode2,
+  Hammer,
+  Loader2,
+  RefreshCw,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
+import type { PioStage } from "@/lib/pioProgress";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSerialStore } from "@/stores/serialStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+
+const STAGE_KEYS: Partial<Record<PioStage, MessageKey>> = {
+  starting: "pio.stage.starting",
+  compiling: "pio.stage.compiling",
+  linking: "pio.stage.linking",
+  uploading: "pio.stage.uploading",
+  installing: "pio.stage.installing",
+  done: "pio.stage.done",
+  failed: "pio.stage.failed",
+};
 
 export function BuildToolbar() {
   const { t } = useI18n();
@@ -16,11 +35,14 @@ export function BuildToolbar() {
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
   const setSelectedEnv = usePlatformIoStore((s) => s.setSelectedEnv);
   const running = usePlatformIoStore((s) => s.running);
+  const progress = usePlatformIoStore((s) => s.progress);
+  const error = usePlatformIoStore((s) => s.error);
   const runTask = usePlatformIoStore((s) => s.runTask);
   const uploadPortByRoot = usePlatformIoStore((s) => s.uploadPortByRoot);
   const setUploadPort = usePlatformIoStore((s) => s.setUploadPort);
   const ports = useSerialStore((s) => s.ports);
   const serialPath = useSerialStore((s) => s.selectedPath);
+  const serialConnected = useSerialStore((s) => s.connected);
   const refreshPorts = useSerialStore((s) => s.refreshPorts);
 
   const selectedPort =
@@ -38,6 +60,12 @@ export function BuildToolbar() {
 
   const disabled = running || !info?.installed;
   const uploadDisabled = disabled || !selectedPort;
+  const showProgress =
+    running ||
+    progress.stage === "done" ||
+    progress.stage === "failed";
+  const stageKey = STAGE_KEYS[progress.stage];
+  const stageText = stageKey ? t(stageKey) : "";
 
   return (
     <div
@@ -114,7 +142,11 @@ export function BuildToolbar() {
       <button
         type="button"
         title={
-          !selectedPort ? t("pio.uploadNeedPort") : t("pio.upload")
+          !selectedPort
+            ? t("pio.uploadNeedPort")
+            : serialConnected
+              ? t("pio.uploadWillDisconnect")
+              : t("pio.upload")
         }
         disabled={uploadDisabled}
         onClick={() => {
@@ -125,7 +157,11 @@ export function BuildToolbar() {
           "hover:bg-aether-surface-raised disabled:opacity-40",
         )}
       >
-        <Upload size={13} />
+        {running && progress.stage === "uploading" ? (
+          <Loader2 size={13} className="animate-spin" />
+        ) : (
+          <Upload size={13} />
+        )}
         {t("pio.upload")}
       </button>
 
@@ -160,6 +196,24 @@ export function BuildToolbar() {
         <FileCode2 size={13} />
         {t("pio.compiledb")}
       </button>
+
+      {showProgress && stageText && (
+        <span
+          className={cn(
+            "ml-1 flex min-w-0 max-w-[220px] items-center gap-1 truncate text-[11px]",
+            progress.stage === "failed"
+              ? "text-aether-danger"
+              : progress.stage === "done"
+                ? "text-aether-accent"
+                : "text-aether-fg-muted",
+          )}
+          title={error || progress.detail || stageText}
+        >
+          {running && <Loader2 size={11} className="shrink-0 animate-spin" />}
+          {stageText}
+          {progress.percent != null ? ` ${progress.percent}%` : ""}
+        </span>
+      )}
 
       {!info?.installed && (
         <span className="ml-2 text-[11px] text-aether-warning">

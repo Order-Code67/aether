@@ -1,11 +1,26 @@
 import { useEffect, useRef } from "react";
 import { Eraser, Square } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
+import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
+import type { PioStage } from "@/lib/pioProgress";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 
+const STAGE_KEYS: Partial<Record<PioStage, MessageKey>> = {
+  starting: "pio.stage.starting",
+  compiling: "pio.stage.compiling",
+  linking: "pio.stage.linking",
+  uploading: "pio.stage.uploading",
+  installing: "pio.stage.installing",
+  done: "pio.stage.done",
+  failed: "pio.stage.failed",
+};
+
 export function OutputPanel() {
+  const { t } = useI18n();
   const lines = usePlatformIoStore((s) => s.lines);
   const running = usePlatformIoStore((s) => s.running);
+  const progress = usePlatformIoStore((s) => s.progress);
   const error = usePlatformIoStore((s) => s.error);
   const clearOutput = usePlatformIoStore((s) => s.clearOutput);
   const cancel = usePlatformIoStore((s) => s.cancel);
@@ -16,11 +31,18 @@ export function OutputPanel() {
     logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [lines]);
 
+  const stageKey = STAGE_KEYS[progress.stage];
+  const header = running
+    ? stageKey
+      ? `${t(stageKey)}${progress.percent != null ? ` ${progress.percent}%` : ""}`
+      : t("pio.running")
+    : t("pio.outputTitle");
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-7 shrink-0 items-center justify-between border-b border-aether-border px-2">
-        <span className="text-[11px] text-aether-fg-muted">
-          {running ? "PlatformIO running…" : "PlatformIO Output"}
+        <span className="truncate text-[11px] text-aether-fg-muted">
+          {header}
         </span>
         <div className="flex items-center gap-0.5">
           {running && (

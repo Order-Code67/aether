@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Library, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  Download,
+  Library,
+  Loader2,
+  RefreshCw,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { errorMessage } from "@/lib/errors";
+import { friendlyPioError } from "@/lib/pioErrors";
 import {
   installPioLibrary,
   listPioLibraries,
@@ -11,7 +20,9 @@ import {
   type PioLibEntry,
 } from "@/lib/platformio";
 import { isTauriRuntime } from "@/lib/tauri";
+import { useLibrariesPrefsStore } from "@/stores/librariesPrefsStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 type PlatformPreset = "all" | "arduino" | "esp32" | "nano" | "mega";
@@ -98,6 +109,7 @@ const POPULAR: Record<PlatformPreset, { spec: string; label: string }[]> = {
     { spec: "fastled/FastLED", label: "FastLED" },
     { spec: "adafruit/Adafruit NeoPixel", label: "NeoPixel" },
     { spec: "olikraus/U8g2", label: "U8g2" },
+    { spec: "madhephaestus/ESP32Servo", label: "ESP32Servo" },
   ],
   nano: [
     { spec: "bblanchon/ArduinoJson", label: "ArduinoJson" },
@@ -121,6 +133,8 @@ const POPULAR: Record<PlatformPreset, { spec: string; label: string }[]> = {
   ],
 };
 
+const ESP32_SERVO_SPEC = "madhephaestus/ESP32Servo";
+
 function depMatches(dep: string, needle: string): boolean {
   const d = dep.toLowerCase();
   const n = needle.toLowerCase();
@@ -141,16 +155,23 @@ function entrySpec(entry: PioLibEntry): string {
 
 export function LibrariesPanel() {
   const { t } = useI18n();
+  const locale = useSettingsStore((s) => s.locale);
   const rootPath = useWorkspaceStore((s) => s.rootPath);
   const isProject = usePlatformIoStore((s) => s.isProject);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
   const pioInfo = usePlatformIoStore((s) => s.info);
+  const favorites = useLibrariesPrefsStore((s) => s.favorites);
+  const recent = useLibrariesPrefsStore((s) => s.recent);
+  const toggleFavorite = useLibrariesPrefsStore((s) => s.toggleFavorite);
+  const isFavorite = useLibrariesPrefsStore((s) => s.isFavorite);
+  const pushRecent = useLibrariesPrefsStore((s) => s.pushRecent);
   const [query, setQuery] = useState("");
   const [preset, setPreset] = useState<PlatformPreset>("all");
   const [results, setResults] = useState<PioLibEntry[]>([]);
   const [installed, setInstalled] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [installStatus, setInstallStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -160,26 +181,17 @@ export function LibrariesPanel() {
 
   const popular = POPULAR[preset];
 
+  const isEsp32Context =
+    preset === "esp32" || /esp32/i.test(selectedEnv || "");
+  const showServoHint =
+    isEsp32Context && /servo/i.test(query.trim());
+
   const mapLibError = useCallback(
     (err: unknown) => {
       const raw = errorMessage(err, t("common.error"));
-      const lower = raw.toLowerCase();
-      if (
-        lower.includes("platformio cli not found") ||
-        lower.includes("pio` is on path") ||
-        (lower.includes("not found") && lower.includes("platformio"))
-      ) {
-        return t("libraries.pioMissing");
-      }
-      if (
-        lower.includes("platformio.ini") ||
-        lower.includes("workspace root")
-      ) {
-        return t("libraries.needProject");
-      }
-      return raw;
+      return friendlyPioError(raw, locale);
     },
-    [t],
+    [t, locale],
   );
 
   const refreshInstalled = useCallback(async () => {
@@ -244,7 +256,6 @@ export function LibrariesPanel() {
     setError(null);
     const next = PLATFORM_CHIPS.find((c) => c.id === id);
     if (next && chipHasFilter(next)) {
-      // Browse registry for that platform/framework when switching chips.
       void (async () => {
         if (!isTauriRuntime()) {
           setError(t("libraries.needDesktop"));
@@ -284,27 +295,35 @@ export function LibrariesPanel() {
     }
     setBusyId(busyKey);
     setError(null);
+    setInstallStatus(t("libraries.installProgress", { name: library }));
     try {
       await installPioLibrary(rootPath, library, selectedEnv || null);
+      pushRecent(library);
+      setInstallStatus(t("libraries.installDone", { name: library }));
       await refreshInstalled();
     } catch (err) {
-      // Retry with bare name (after last slash) for older specs.
       const bare = library.includes("/")
         ? library.split("/").pop()!
         : library;
       if (bare !== library) {
         try {
+          setInstallStatus(t("libraries.installProgress", { name: bare }));
           await installPioLibrary(rootPath, bare, selectedEnv || null);
+          pushRecent(library);
+          setInstallStatus(t("libraries.installDone", { name: library }));
           await refreshInstalled();
           return;
         } catch (err2) {
+          setInstallStatus(null);
           setError(mapLibError(err2));
           return;
         }
       }
+      setInstallStatus(null);
       setError(mapLibError(err));
     } finally {
       setBusyId(null);
+      window.setTimeout(() => setInstallStatus(null), 4000);
     }
   };
 
@@ -315,10 +334,13 @@ export function LibrariesPanel() {
     }
     setBusyId(`uninstall:${dep}`);
     setError(null);
+    setInstallStatus(t("libraries.uninstalling"));
     try {
       await uninstallPioLibrary(rootPath, dep, selectedEnv || null);
+      setInstallStatus(null);
       await refreshInstalled();
     } catch (err) {
+      setInstallStatus(null);
       setError(mapLibError(err));
     } finally {
       setBusyId(null);
@@ -334,6 +356,54 @@ export function LibrariesPanel() {
 
   const isInstalledEntry = (entry: PioLibEntry) =>
     isInstalledSpec(entrySpec(entry));
+
+  const renderSpecChip = (spec: string, label?: string) => {
+    const hit = isInstalledSpec(spec);
+    const busy = busyId === `spec:${spec}`;
+    const fav = isFavorite(spec);
+    return (
+      <span key={spec} className="inline-flex items-center gap-0.5">
+        <button
+          type="button"
+          title={
+            fav ? t("libraries.unfavorite") : t("libraries.favorite")
+          }
+          onClick={() => toggleFavorite(spec)}
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded border border-aether-border",
+            fav
+              ? "text-aether-warning"
+              : "text-aether-fg-dim hover:text-aether-fg",
+          )}
+        >
+          <Star size={11} fill={fav ? "currentColor" : "none"} />
+        </button>
+        <button
+          type="button"
+          title={spec}
+          disabled={busy || hit}
+          onClick={() => void install(spec, `spec:${spec}`)}
+          className={cn(
+            "rounded border px-2 py-0.5 text-[11px]",
+            hit
+              ? "border-aether-border text-aether-fg-dim"
+              : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
+          )}
+        >
+          {busy ? (
+            <span className="inline-flex items-center gap-1">
+              <Loader2 size={10} className="animate-spin" />
+              {t("libraries.installing")}
+            </span>
+          ) : hit ? (
+            `${label ?? spec} ✓`
+          ) : (
+            (label ?? spec)
+          )}
+        </button>
+      </span>
+    );
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -420,6 +490,55 @@ export function LibrariesPanel() {
             </button>
           </form>
 
+          {showServoHint && (
+            <div className="mx-3 mb-2 rounded border border-aether-accent/40 bg-aether-accent-muted/40 px-2 py-1.5 text-[11px] leading-relaxed text-aether-fg">
+              <p>{t("libraries.servoHint")}</p>
+              <button
+                type="button"
+                disabled={
+                  busyId === `spec:${ESP32_SERVO_SPEC}` ||
+                  isInstalledSpec(ESP32_SERVO_SPEC)
+                }
+                onClick={() =>
+                  void install(ESP32_SERVO_SPEC, `spec:${ESP32_SERVO_SPEC}`)
+                }
+                className="mt-1 inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2 py-0.5 text-[11px] text-white disabled:opacity-40"
+              >
+                <Download size={11} />
+                {t("libraries.installEsp32Servo")}
+              </button>
+            </div>
+          )}
+
+          {(installStatus || busyId) && (
+            <p className="mx-3 mb-2 flex items-center gap-1.5 text-[11px] text-aether-fg-muted">
+              {busyId && <Loader2 size={12} className="animate-spin" />}
+              {installStatus || t("libraries.installing")}
+            </p>
+          )}
+
+          {favorites.length > 0 && (
+            <div className="px-3 pb-2">
+              <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
+                {t("libraries.favorites")}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {favorites.map((spec) => renderSpecChip(spec))}
+              </div>
+            </div>
+          )}
+
+          {recent.length > 0 && (
+            <div className="px-3 pb-2">
+              <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
+                {t("libraries.recent")}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {recent.map((spec) => renderSpecChip(spec))}
+              </div>
+            </div>
+          )}
+
           <div className="px-3 pb-2">
             <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
               {t("libraries.popular")}
@@ -428,26 +547,58 @@ export function LibrariesPanel() {
               {popular.map((item) => {
                 const hit = isInstalledSpec(item.spec);
                 const busy = busyId === `popular:${item.spec}`;
+                const fav = isFavorite(item.spec);
                 return (
-                  <button
+                  <span
                     key={item.spec}
-                    type="button"
-                    title={item.spec}
-                    disabled={busy || hit}
-                    onClick={() => void install(item.spec, `popular:${item.spec}`)}
-                    className={cn(
-                      "rounded border px-2 py-0.5 text-[11px]",
-                      hit
-                        ? "border-aether-border text-aether-fg-dim"
-                        : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
-                    )}
+                    className="inline-flex items-center gap-0.5"
                   >
-                    {busy
-                      ? t("libraries.installing")
-                      : hit
-                        ? `${item.label} ✓`
-                        : item.label}
-                  </button>
+                    <button
+                      type="button"
+                      title={
+                        fav
+                          ? t("libraries.unfavorite")
+                          : t("libraries.favorite")
+                      }
+                      onClick={() => toggleFavorite(item.spec)}
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded border border-aether-border",
+                        fav
+                          ? "text-aether-warning"
+                          : "text-aether-fg-dim hover:text-aether-fg",
+                      )}
+                    >
+                      <Star
+                        size={11}
+                        fill={fav ? "currentColor" : "none"}
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      title={item.spec}
+                      disabled={busy || hit}
+                      onClick={() =>
+                        void install(item.spec, `popular:${item.spec}`)
+                      }
+                      className={cn(
+                        "rounded border px-2 py-0.5 text-[11px]",
+                        hit
+                          ? "border-aether-border text-aether-fg-dim"
+                          : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
+                      )}
+                    >
+                      {busy ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Loader2 size={10} className="animate-spin" />
+                          {t("libraries.installing")}
+                        </span>
+                      ) : hit ? (
+                        `${item.label} ✓`
+                      ) : (
+                        item.label
+                      )}
+                    </button>
+                  </span>
                 );
               })}
             </div>
@@ -480,10 +631,33 @@ export function LibrariesPanel() {
                         key={dep}
                         className="flex items-center gap-1.5 text-[11px] text-aether-fg"
                       >
-                        <Library size={12} className="shrink-0 text-aether-fg-muted" />
+                        <Library
+                          size={12}
+                          className="shrink-0 text-aether-fg-muted"
+                        />
                         <span className="min-w-0 flex-1 truncate" title={dep}>
                           {dep}
                         </span>
+                        <button
+                          type="button"
+                          title={
+                            isFavorite(dep)
+                              ? t("libraries.unfavorite")
+                              : t("libraries.favorite")
+                          }
+                          onClick={() => toggleFavorite(dep)}
+                          className={cn(
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded",
+                            isFavorite(dep)
+                              ? "text-aether-warning"
+                              : "text-aether-fg-dim hover:text-aether-fg",
+                          )}
+                        >
+                          <Star
+                            size={11}
+                            fill={isFavorite(dep) ? "currentColor" : "none"}
+                          />
+                        </button>
                         <button
                           type="button"
                           title={t("libraries.uninstall")}
@@ -504,7 +678,8 @@ export function LibrariesPanel() {
             </div>
 
             {loading && (
-              <p className="px-3 py-3 text-xs text-aether-fg-dim">
+              <p className="flex items-center gap-1.5 px-3 py-3 text-xs text-aether-fg-dim">
+                <Loader2 size={12} className="animate-spin" />
                 {t("common.loading")}
               </p>
             )}
@@ -523,8 +698,12 @@ export function LibrariesPanel() {
               const installBusy = busyId === entry.id;
               const uninstallBusy =
                 busyId === `uninstall:${spec}` ||
-                installed.some((d) => busyId === `uninstall:${d}` && depMatches(d, spec));
+                installed.some(
+                  (d) =>
+                    busyId === `uninstall:${d}` && depMatches(d, spec),
+                );
               const busy = installBusy || uninstallBusy;
+              const fav = isFavorite(spec);
               return (
                 <div
                   key={entry.id}
@@ -559,6 +738,21 @@ export function LibrariesPanel() {
                       </p>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    title={
+                      fav ? t("libraries.unfavorite") : t("libraries.favorite")
+                    }
+                    onClick={() => toggleFavorite(spec)}
+                    className={cn(
+                      "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded border border-aether-border",
+                      fav
+                        ? "text-aether-warning"
+                        : "text-aether-fg-dim hover:text-aether-fg",
+                    )}
+                  >
+                    <Star size={12} fill={fav ? "currentColor" : "none"} />
+                  </button>
                   {installedHit ? (
                     <button
                       type="button"
@@ -586,7 +780,11 @@ export function LibrariesPanel() {
                       onClick={() => void install(spec, entry.id)}
                       className="mt-0.5 flex shrink-0 items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2 py-1 text-[11px] text-white disabled:opacity-40"
                     >
-                      <Download size={12} />
+                      {installBusy ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Download size={12} />
+                      )}
                       {installBusy
                         ? t("libraries.installing")
                         : t("libraries.install")}

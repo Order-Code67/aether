@@ -2,11 +2,23 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { isTauriRuntime } from "@/lib/tauri";
 
-export type PioTask = "build" | "upload" | "clean" | "compiledb";
+export type PioTask =
+  | "build"
+  | "upload"
+  | "clean"
+  | "compiledb"
+  | "install-core"
+  | "lib-install";
 
 export type PioStarter = "none" | "blink" | "servo";
 
 export interface PioInfo {
+  installed: boolean;
+  command: string | null;
+  version: string | null;
+}
+
+export interface PythonInfo {
   installed: boolean;
   command: string | null;
   version: string | null;
@@ -38,6 +50,23 @@ export async function detectPio(): Promise<PioInfo> {
   return invoke<PioInfo>("pio_detect");
 }
 
+export async function detectPython(): Promise<PythonInfo> {
+  if (!isTauriRuntime()) {
+    return { installed: false, command: null, version: null };
+  }
+  return invoke<PythonInfo>("python_detect");
+}
+
+/** Non-interactive `python -m pip install -U platformio` (streams to pio-output). */
+export async function installPioCore(): Promise<void> {
+  return invoke("pio_install_core");
+}
+
+/** Open Windows Optional Features settings (drivers / COM-related components). */
+export async function openWindowsOptionalFeatures(): Promise<void> {
+  return invoke("open_windows_optional_features");
+}
+
 export async function inspectPioProject(cwd: string): Promise<PioProjectInfo> {
   if (!isTauriRuntime()) {
     return { isProject: false, iniPath: null, envs: [] };
@@ -45,9 +74,11 @@ export async function inspectPioProject(cwd: string): Promise<PioProjectInfo> {
   return invoke<PioProjectInfo>("pio_inspect_project", { cwd });
 }
 
+export type PioRunTask = "build" | "upload" | "clean" | "compiledb";
+
 export async function runPioTask(options: {
   cwd: string;
-  task: PioTask;
+  task: PioRunTask;
   env?: string | null;
   uploadPort?: string | null;
 }): Promise<void> {

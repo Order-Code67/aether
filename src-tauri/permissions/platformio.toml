@@ -3,6 +3,9 @@ identifier = "allow-platformio"
 description = "Enables PlatformIO detect/inspect/run/cancel commands."
 commands.allow = [
   "pio_detect",
+  "python_detect",
+  "pio_install_core",
+  "open_windows_optional_features",
   "pio_inspect_project",
   "pio_run",
   "pio_cancel",

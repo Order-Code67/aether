@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5 — 2026-10-10
+
+- **Install missing tools** — Tools Doctor can install missing PlatformIO / toolchain pieces from the banner
+- **Upload progress & errors** — clearer upload progress plus friendly COM port / driver error decoding
+- **Libraries** — install progress, favorites / recent, and an ESP32Servo hint when the Servo library is a poor fit
+
 ## 0.2.4 — 2026-10-10
 
 - **New Project wizard** — guided project creation (board / framework) from Explorer and File menu

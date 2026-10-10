@@ -39,6 +39,7 @@ export function StatusBar() {
   const isProject = usePlatformIoStore((s) => s.isProject);
   const running = usePlatformIoStore((s) => s.running);
   const lastSuccess = usePlatformIoStore((s) => s.lastSuccess);
+  const progress = usePlatformIoStore((s) => s.progress);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
   const uploadPortByRoot = usePlatformIoStore((s) => s.uploadPortByRoot);
   const rootPath = useWorkspaceStore((s) => s.rootPath);
@@ -80,8 +81,21 @@ export function StatusBar() {
 
   let pioLabel = t("pio.none");
   if (!pioInstalled) pioLabel = t("pio.missing");
-  else if (running) pioLabel = t("pio.running");
-  else if (isProject) {
+  else if (running) {
+    const stageKey =
+      progress.stage === "compiling"
+        ? "pio.stage.compiling"
+        : progress.stage === "linking"
+          ? "pio.stage.linking"
+          : progress.stage === "uploading"
+            ? "pio.stage.uploading"
+            : progress.stage === "installing"
+              ? "pio.stage.installing"
+              : null;
+    const stage = stageKey ? t(stageKey) : t("pio.running");
+    pioLabel =
+      progress.percent != null ? `${stage} ${progress.percent}%` : stage;
+  } else if (isProject) {
     pioLabel =
       lastSuccess === false
         ? `${t("pio.failed")} · ${selectedEnv || "env"}`

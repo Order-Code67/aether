@@ -1,12 +1,24 @@
 import { useEffect } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  Loader2,
+  X,
+} from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { openWindowsOptionalFeatures } from "@/lib/platformio";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 
 const PIO_DOCS =
   "https://docs.platformio.org/en/latest/core/installation.html";
 const CLANGD_DOCS = "https://clangd.llvm.org/installation.html";
+const PYTHON_DOCS = "https://www.python.org/downloads/";
+const CH340_DRIVERS = "https://www.wch-ic.com/downloads/CH341SER_EXE.html";
+const CP210X_DRIVERS =
+  "https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers";
 
 async function openExternal(url: string) {
   try {
@@ -17,12 +29,17 @@ async function openExternal(url: string) {
   }
 }
 
-/** Non-blocking startup check for PlatformIO / clangd (desktop only). */
+const isWindows =
+  typeof navigator !== "undefined" &&
+  /windows/i.test(navigator.userAgent || navigator.platform || "");
+
+/** Non-blocking startup check for PlatformIO / Python / drivers (desktop only). */
 export function ToolsDoctorBanner() {
   const { t } = useI18n();
   const doctor = usePlatformIoStore((s) => s.doctor);
   const dismissed = usePlatformIoStore((s) => s.doctorDismissed);
   const runDoctor = usePlatformIoStore((s) => s.runDoctor);
+  const installMissing = usePlatformIoStore((s) => s.installMissing);
   const dismissDoctor = usePlatformIoStore((s) => s.dismissDoctor);
 
   useEffect(() => {
@@ -34,16 +51,18 @@ export function ToolsDoctorBanner() {
     return null;
   }
 
-  // Hide when healthy after first check (still available via Recheck from menu later).
-  if (doctor.ok) {
+  // Hide when PlatformIO is healthy after first check.
+  if (doctor.ok && !doctor.installing) {
     return null;
   }
 
   const pio = doctor.pio;
+  const python = doctor.python;
   const clangd = doctor.clangd;
   const pioMissing = !pio?.installed;
-  // clangd is optional — show warning style only when PIO is missing, else soft tip.
+  const pythonMissing = !python?.installed;
   const severity = pioMissing ? "warning" : "info";
+  const busy = doctor.checking || doctor.installing;
 
   return (
     <div
@@ -81,6 +100,14 @@ export function ToolsDoctorBanner() {
                   })}
             </li>
             <li>
+              {pythonMissing
+                ? t("doctor.pythonMissing")
+                : t("doctor.pythonOk", {
+                    version: python?.version ?? "OK",
+                  })}
+            </li>
+            <li>{t("doctor.driversHint")}</li>
+            <li>
               {!clangd?.installed
                 ? t("doctor.clangdMissing")
                 : t("doctor.clangdOk", {
@@ -89,10 +116,46 @@ export function ToolsDoctorBanner() {
             </li>
           </ul>
         )}
+
+        {doctor.installing && (
+          <p className="flex items-center gap-1.5 text-aether-fg-muted">
+            <Loader2 size={12} className="animate-spin" />
+            {t("doctor.installing")}
+          </p>
+        )}
+
+        {doctor.installError && (
+          <p className="text-aether-danger">{doctor.installError}</p>
+        )}
+
+        <p className="text-aether-fg-dim">{t("doctor.platformsNote")}</p>
+
         <div className="flex flex-wrap items-center gap-2 pt-1">
+          {pioMissing && (
+            <button
+              type="button"
+              disabled={busy || pythonMissing}
+              title={
+                pythonMissing
+                  ? t("doctor.pythonMissing")
+                  : t("doctor.installMissing")
+              }
+              onClick={() => {
+                void installMissing();
+              }}
+              className="inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2 py-0.5 text-[11px] text-white hover:opacity-90 disabled:opacity-40"
+            >
+              {doctor.installing ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <Download size={11} />
+              )}
+              {t("doctor.installMissing")}
+            </button>
+          )}
           <button
             type="button"
-            disabled={doctor.checking}
+            disabled={busy}
             onClick={() => {
               void runDoctor();
             }}
@@ -112,6 +175,52 @@ export function ToolsDoctorBanner() {
               {t("doctor.openDocs")}
             </button>
           )}
+          {pythonMissing && (
+            <button
+              type="button"
+              onClick={() => {
+                void openExternal(PYTHON_DOCS);
+              }}
+              className="inline-flex items-center gap-1 text-[11px] text-aether-accent hover:underline"
+            >
+              <ExternalLink size={11} />
+              {t("doctor.openPython")}
+            </button>
+          )}
+          {isWindows && (
+            <button
+              type="button"
+              onClick={() => {
+                void openWindowsOptionalFeatures().catch(() => {
+                  void openExternal("ms-settings:optionalfeatures");
+                });
+              }}
+              className="inline-flex items-center gap-1 text-[11px] text-aether-accent hover:underline"
+            >
+              <ExternalLink size={11} />
+              {t("doctor.openOptionalFeatures")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              void openExternal(CH340_DRIVERS);
+            }}
+            className="inline-flex items-center gap-1 text-[11px] text-aether-accent hover:underline"
+          >
+            <ExternalLink size={11} />
+            {t("doctor.openCh340")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void openExternal(CP210X_DRIVERS);
+            }}
+            className="inline-flex items-center gap-1 text-[11px] text-aether-accent hover:underline"
+          >
+            <ExternalLink size={11} />
+            {t("doctor.openCp210x")}
+          </button>
           {!clangd?.installed && (
             <button
               type="button"

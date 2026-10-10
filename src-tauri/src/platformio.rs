@@ -21,6 +21,14 @@ pub struct PioInfo {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct PythonInfo {
+    pub installed: bool,
+    pub command: Option<String>,
+    pub version: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PioProjectInfo {
     pub is_project: bool,
     pub ini_path: Option<String>,
@@ -189,6 +197,271 @@ pub fn pio_detect() -> PioInfo {
         installed: true,
         command: Some(command),
         version,
+    }
+}
+
+fn resolve_python_command() -> Option<String> {
+    for candidate in ["python", "python3", "py"] {
+        if let Ok(path) = which::which(candidate) {
+            return Some(path.to_string_lossy().to_string());
+        }
+    }
+    None
+}
+
+fn python_version(command: &str) -> Option<String> {
+    let mut cmd = Command::new(command);
+    // `py -3` needs a version flag; plain `python --version` works for python/python3.
+    if command.ends_with("py.exe") || command.ends_with("\\py") || command.ends_with("/py") {
+        cmd.args(["-3", "--version"]);
+    } else {
+        cmd.arg("--version");
+    }
+    cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+    configure_pio_command(&mut cmd);
+    let out = cmd.output().ok()?;
+    let mut text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if text.is_empty() {
+        text = String::from_utf8_lossy(&out.stderr).trim().to_string();
+    }
+    if text.is_empty() {
+        None
+    } else {
+        Some(text)
+    }
+}
+
+/// Detect a usable Python for `pip install platformio` (optional helper for Doctor).
+#[tauri::command]
+pub fn python_detect() -> PythonInfo {
+    let Some(command) = resolve_python_command() else {
+        return PythonInfo {
+            installed: false,
+            command: None,
+            version: None,
+        };
+    };
+    let version = python_version(&command);
+    PythonInfo {
+        installed: version.is_some(),
+        command: Some(command),
+        version,
+    }
+}
+
+/// Spawn a long-running process and stream stdout/stderr via pio-output / pio-status.
+fn spawn_streaming_task(
+    app: AppHandle,
+    state: &PioState,
+    program: String,
+    args: Vec<String>,
+    cwd: Option<PathBuf>,
+    task: String,
+) -> Result<(), String> {
+    if state.running.load(Ordering::SeqCst) {
+        return Err("A PlatformIO task is already running.".into());
+    }
+
+    {
+        let mut slot = state.child.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(mut child) = slot.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
+
+    state.running.store(true, Ordering::SeqCst);
+
+    emit_status(
+        &app,
+        PioStatusPayload {
+            running: true,
+            task: Some(task.clone()),
+            success: None,
+            code: None,
+            error: None,
+        },
+    );
+
+    emit_line(&app, "system", format!("> {program} {}", args.join(" ")));
+    if let Some(ref dir) = cwd {
+        emit_line(&app, "system", format!("cwd: {}", dir.display()));
+    }
+
+    let mut child_cmd = Command::new(&program);
+    child_cmd
+        .args(&args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .stdin(Stdio::null());
+    if let Some(ref dir) = cwd {
+        child_cmd.current_dir(dir);
+    }
+    configure_pio_command(&mut child_cmd);
+    let mut child = child_cmd.spawn().map_err(|e| {
+        state.running.store(false, Ordering::SeqCst);
+        format!("Failed to start process: {e}")
+    })?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+
+    {
+        let mut slot = state.child.lock().unwrap_or_else(|e| e.into_inner());
+        *slot = Some(child);
+    }
+
+    let app_out = app.clone();
+    if let Some(out) = stdout {
+        thread::spawn(move || {
+            let reader = BufReader::new(out);
+            for line in reader.lines().map_while(Result::ok) {
+                emit_line(&app_out, "stdout", line);
+            }
+        });
+    }
+
+    let app_err = app.clone();
+    if let Some(err) = stderr {
+        thread::spawn(move || {
+            let reader = BufReader::new(err);
+            for line in reader.lines().map_while(Result::ok) {
+                emit_line(&app_err, "stderr", line);
+            }
+        });
+    }
+
+    let app_wait = app.clone();
+    let child_slot = Arc::clone(&state.child);
+    let running = Arc::clone(&state.running);
+    let task_name = task;
+
+    thread::spawn(move || {
+        let status = loop {
+            let outcome = {
+                let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+                match slot.as_mut() {
+                    None => Some(None),
+                    Some(child) => match child.try_wait() {
+                        Ok(Some(s)) => {
+                            *slot = None;
+                            Some(Some(s))
+                        }
+                        Ok(None) => None,
+                        Err(_) => {
+                            *slot = None;
+                            Some(None)
+                        }
+                    },
+                }
+            };
+
+            if let Some(done) = outcome {
+                break done;
+            }
+
+            thread::sleep(std::time::Duration::from_millis(50));
+        };
+
+        if !running.swap(false, Ordering::SeqCst) && status.is_none() {
+            return;
+        }
+
+        let (success, code) = match status {
+            Some(s) => (Some(s.success()), s.code()),
+            None => (Some(false), None),
+        };
+
+        if let Some(ok) = success {
+            emit_line(
+                &app_wait,
+                "system",
+                if ok {
+                    format!("✔ {task_name} finished successfully")
+                } else {
+                    format!("✖ {task_name} failed (exit {code:?})")
+                },
+            );
+        }
+
+        emit_status(
+            &app_wait,
+            PioStatusPayload {
+                running: false,
+                task: Some(task_name),
+                success,
+                code,
+                error: None,
+            },
+        );
+    });
+
+    Ok(())
+}
+
+/// Non-interactive PlatformIO Core install via `python -m pip install -U platformio`.
+/// Does not download board toolchains (those install on first project build).
+#[tauri::command]
+pub fn pio_install_core(app: AppHandle, state: State<'_, PioState>) -> Result<(), String> {
+    if resolve_pio_command().is_some() {
+        emit_line(
+            &app,
+            "system",
+            "PlatformIO CLI already found — skipping install.".into(),
+        );
+        emit_status(
+            &app,
+            PioStatusPayload {
+                running: false,
+                task: Some("install-core".into()),
+                success: Some(true),
+                code: Some(0),
+                error: None,
+            },
+        );
+        return Ok(());
+    }
+
+    let python = resolve_python_command().ok_or_else(|| {
+        "Python not found. Install Python 3 from python.org, enable pip, then retry.".to_string()
+    })?;
+
+    let mut args = Vec::new();
+    if python.ends_with("py.exe") || python.ends_with("\\py") || python.ends_with("/py") {
+        args.push("-3".into());
+    }
+    args.extend([
+        "-m".into(),
+        "pip".into(),
+        "install".into(),
+        "-U".into(),
+        "platformio".into(),
+    ]);
+
+    spawn_streaming_task(
+        app,
+        &*state,
+        python,
+        args,
+        None,
+        "install-core".into(),
+    )
+}
+
+/// Open Windows Optional Features (driver / COM stack hints). No-op message on other OS.
+#[tauri::command]
+pub fn open_windows_optional_features() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        Command::new("cmd")
+            .args(["/C", "start", "", "ms-settings:optionalfeatures"])
+            .spawn()
+            .map_err(|e| format!("Failed to open Optional Features: {e}"))?;
+        return Ok(());
+    }
+    #[cfg(not(windows))]
+    {
+        Err("Optional Features is only available on Windows.".into())
     }
 }
 
@@ -1107,8 +1380,10 @@ fn parse_pkg_search_text(stdout: &[u8]) -> Vec<PioLibEntry> {
 }
 
 /// Install a library into the project (`pio pkg install -l …` → lib_deps).
+/// Emits progress lines to the PlatformIO output panel.
 #[tauri::command]
 pub fn pio_lib_install(
+    app: AppHandle,
     cwd: String,
     library: String,
     env: Option<String>,
@@ -1128,6 +1403,12 @@ pub fn pio_lib_install(
                 .into(),
         );
     }
+
+    emit_line(
+        &app,
+        "system",
+        format!("Installing library {lib} (pio pkg install)…"),
+    );
 
     // Try: pkg install -l (with env) → pkg install -l (no env) → legacy lib install.
     let mut attempts: Vec<Vec<String>> = Vec::new();
@@ -1163,15 +1444,35 @@ pub fn pio_lib_install(
 
     let mut last_err = String::new();
     for args in attempts {
+        emit_line(&app, "system", format!("> {command} {}", args.join(" ")));
         let output = run_pio(&command, &args, Some(&root))?;
         if output.status.success() {
             let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-            return Ok(if !stdout.is_empty() { stdout } else { stderr });
+            let detail = if !stdout.is_empty() {
+                stdout
+            } else {
+                stderr
+            };
+            for line in detail.lines().take(12) {
+                emit_line(&app, "stdout", line.to_string());
+            }
+            emit_line(
+                &app,
+                "system",
+                format!("✔ Library installed: {lib}"),
+            );
+            return Ok(detail);
         }
         last_err = command_failure_detail(&output, "Library install failed.");
+        emit_line(&app, "stderr", last_err.clone());
     }
 
+    emit_line(
+        &app,
+        "system",
+        format!("✖ Library install failed: {lib}"),
+    );
     Err(last_err)
 }
 
