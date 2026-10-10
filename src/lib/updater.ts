@@ -1,19 +1,31 @@
-import { check, type DownloadEvent, type Update } from "@tauri-apps/plugin-updater";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { isTauriRuntime } from "@/lib/tauri";
+
+export type UpdateChannel = "stable" | "beta";
 
 export type UpdateProgress = {
   downloaded: number;
   contentLength: number | null;
 };
 
+export type ChannelUpdateInfo = {
+  currentVersion: string;
+  version: string;
+  date?: string | null;
+  body?: string | null;
+};
+
 export type UpdateCheckResult =
   | { kind: "unavailable" }
   | { kind: "uptodate" }
-  | { kind: "available"; update: Update }
+  | { kind: "available"; info: ChannelUpdateInfo }
   | { kind: "error"; message: string };
 
-export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
+export async function checkForAppUpdate(
+  channel: UpdateChannel = "stable",
+): Promise<UpdateCheckResult> {
   if (!isTauriRuntime()) {
     return {
       kind: "error",
@@ -21,9 +33,11 @@ export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
     };
   }
   try {
-    const update = await check();
-    if (!update) return { kind: "uptodate" };
-    return { kind: "available", update };
+    const info = await invoke<ChannelUpdateInfo | null>("updater_check_channel", {
+      channel,
+    });
+    if (!info) return { kind: "uptodate" };
+    return { kind: "available", info };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to check for updates.";
@@ -37,29 +51,26 @@ export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
   }
 }
 
-export async function downloadAndInstallUpdate(
-  update: Update,
+export async function downloadAndInstallPendingUpdate(
   onProgress?: (p: UpdateProgress) => void,
-): Promise<void> {
-  let downloaded = 0;
-  let contentLength: number | null = null;
-
-  await update.downloadAndInstall((event: DownloadEvent) => {
-    switch (event.event) {
-      case "Started":
-        contentLength = event.data.contentLength ?? null;
-        downloaded = 0;
-        onProgress?.({ downloaded, contentLength });
-        break;
-      case "Progress":
-        downloaded += event.data.chunkLength;
-        onProgress?.({ downloaded, contentLength });
-        break;
-      case "Finished":
-        onProgress?.({ downloaded, contentLength });
-        break;
-    }
-  });
+): Promise<UnlistenFn | void> {
+  let unlisten: UnlistenFn | undefined;
+  if (onProgress) {
+    unlisten = await listen<{ downloaded: number; contentLength?: number | null }>(
+      "updater-download-progress",
+      (event) => {
+        onProgress({
+          downloaded: event.payload.downloaded,
+          contentLength: event.payload.contentLength ?? null,
+        });
+      },
+    );
+  }
+  try {
+    await invoke("updater_install_pending");
+  } finally {
+    unlisten?.();
+  }
 }
 
 export async function relaunchApp(): Promise<void> {

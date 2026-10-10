@@ -246,6 +246,11 @@ export const en = {
   "offline.missing": "not installed",
   "offline.prepare": "Prepare offline cache",
   "offline.preparing": "Preparing…",
+  "offline.import": "Import offline cache…",
+  "offline.importing": "Importing…",
+  "offline.importHint":
+    "Import a portable Aether_OfflineCache_*.zip (espressif32 + atmelavr) into ~/.platformio without wiping other packages. See docs/OFFLINE_INSTALLER.md.",
+  "offline.importNeedFile": "Choose an offline-cache .zip file.",
   "offline.needPio": "Install PlatformIO Core before preparing the offline cache.",
   "offline.reuseNote":
     "Tip: copy the ~/.platformio folder to another machine to reuse downloaded platforms and toolchains.",
@@ -434,8 +439,14 @@ export const en = {
   "updater.later": "Later",
   "updater.lastCheck": "Last check: {time}",
   "updater.neverChecked": "Not checked yet this session.",
+  "updater.channel": "Channel",
+  "updater.channel.stable": "Stable",
+  "updater.channel.beta": "Beta",
+  "updater.channelHint":
+    "Stable uses latest.json; Beta uses latest-beta.json from GitHub Releases (see docs/UPDATES.md).",
+  "updater.channelLabel": "Channel: {channel}",
   "updater.feedHint":
-    "Signed updates via Tauri updater. Feed: GitHub Releases latest.json (see docs/UPDATES.md).",
+    "Signed updates via Tauri updater. Channel feeds: latest.json (stable) and latest-beta.json (beta).",
 } as const;
 
 export type MessageKey = keyof typeof en;

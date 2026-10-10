@@ -31,7 +31,8 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **Libraries** — PlatformIO registry search/install (Arduino-like library manager)
 - **Command Palette / Quick Open** — `Ctrl+Shift+P` / `Ctrl+P`, native app menu wired to the same commands
 - **About** — live app version in Settings → About
-- **Auto-updater** — signed Tauri updates; Check for Updates in About / Help menu
+- **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
+- **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
 
 ## Not yet
 
@@ -99,7 +100,9 @@ Installers land under `src-tauri/target/release/bundle/` (copy to `release/` for
 
 Ready package for **0.1.0**: `release/Aether_0.1.0_x64-setup.exe`, `release/latest.json`, see [`CHANGELOG.md`](CHANGELOG.md).
 
-Publishing updates: [`docs/UPDATES.md`](docs/UPDATES.md) — regenerate feed with `.\scripts\make-latest-json.ps1`.
+Publishing updates: [`docs/UPDATES.md`](docs/UPDATES.md) — regenerate `latest.json` + `latest-beta.json` with `.\scripts\make-latest-json.ps1`.
+
+Offline toolchain pack (separate from the installer): `npm run build:offline-cache` → see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md).
 
 ## Serial Monitor
 

@@ -1,12 +1,13 @@
 import { create } from "zustand";
-import type { Update } from "@tauri-apps/plugin-updater";
 import {
   checkForAppUpdate,
-  downloadAndInstallUpdate,
+  downloadAndInstallPendingUpdate,
   relaunchApp,
+  type ChannelUpdateInfo,
   type UpdateProgress,
 } from "@/lib/updater";
 import { isTauriRuntime } from "@/lib/tauri";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 type UpdaterPhase =
   | "idle"
@@ -24,7 +25,7 @@ interface UpdaterState {
   notes: string | null;
   error: string | null;
   progress: UpdateProgress | null;
-  pending: Update | null;
+  pending: ChannelUpdateInfo | null;
   /** When true, show UpdateDialog (available / downloading / error after user action). */
   dialogOpen: boolean;
   lastCheckedAt: number | null;
@@ -73,6 +74,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   check: async (opts) => {
     const quiet = opts?.quiet === true;
     const openDialog = opts?.openDialog === true;
+    const channel = useSettingsStore.getState().updateChannel;
     set({
       phase: "checking",
       error: null,
@@ -83,7 +85,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       // Quiet up-to-date must not flash a modal.
       dialogOpen: quiet ? false : get().dialogOpen,
     });
-    const result = await checkForAppUpdate();
+    const result = await checkForAppUpdate(channel);
     const checkedAt = Date.now();
 
     if (result.kind === "uptodate") {
@@ -117,17 +119,16 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
     }
     set({
       phase: "available",
-      pending: result.update,
-      availableVersion: result.update.version,
-      notes: result.update.body ?? null,
+      pending: result.info,
+      availableVersion: result.info.version,
+      notes: result.info.body ?? null,
       lastCheckedAt: checkedAt,
       dialogOpen: openDialog || !quiet,
     });
   },
 
   installAndRelaunch: async () => {
-    const update = get().pending;
-    if (!update) {
+    if (!get().pending) {
       set({ phase: "error", error: "No update queued. Check for updates first." });
       return;
     }
@@ -138,7 +139,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       dialogOpen: true,
     });
     try {
-      await downloadAndInstallUpdate(update, (progress) => {
+      await downloadAndInstallPendingUpdate((progress) => {
         set({ progress });
       });
       set({ phase: "ready" });

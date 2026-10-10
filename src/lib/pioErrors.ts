@@ -34,6 +34,32 @@ export function friendlyPioError(message: string, locale: Locale): string {
       ? "Задача PlatformIO уже выполняется."
       : "A PlatformIO task is already running.";
   }
+  if (
+    lower.includes("invalid offline cache zip") ||
+    lower.includes("expected platforms/espressif32")
+  ) {
+    return ru
+      ? "Неверный архив офлайн-кэша. Нужен zip с platforms/espressif32 и/или platforms/atmelavr (см. docs/OFFLINE_INSTALLER.md)."
+      : "Invalid offline cache zip. Need platforms/espressif32 and/or platforms/atmelavr (see docs/OFFLINE_INSTALLER.md).";
+  }
+  if (
+    lower.includes("offline cache zip not found") ||
+    lower.includes("must be a .zip")
+  ) {
+    return ru
+      ? "Выберите файл .zip офлайн-кэша Aether."
+      : "Pick an Aether offline-cache .zip file.";
+  }
+  if (lower.includes("path traversal")) {
+    return ru
+      ? "Архив отклонён: небезопасные пути внутри zip."
+      : "Zip rejected: unsafe paths inside the archive.";
+  }
+  if (lower.includes("could not resolve platformio home")) {
+    return ru
+      ? "Не удалось определить папку ~/.platformio."
+      : "Could not resolve PlatformIO home (~/.platformio).";
+  }
 
   // Port busy / Access denied
   if (

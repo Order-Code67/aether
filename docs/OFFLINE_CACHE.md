@@ -2,6 +2,8 @@
 
 Aether can pre-download board platforms into the global PlatformIO home directory so the first real project build is faster.
 
+For a **portable zip** (separate from the NSIS installer) and **Import offline cache…**, see [`OFFLINE_INSTALLER.md`](./OFFLINE_INSTALLER.md).
+
 ## Where the cache lives
 
 By default:
@@ -21,6 +23,10 @@ Override with the `PLATFORMIO_CORE_DIR` environment variable if needed.
 This runs `pio pkg install -g -p espressif32` and `pio pkg install -g -p atmelavr` (with a `pio platform install …` fallback). Those cover the bundled ESP32 / Mega / Nano examples.
 
 Large toolchains are **not** bundled into the Windows NSIS installer.
+
+## Import a prebuilt zip
+
+**Settings → Tools → Import offline cache…** — pick `Aether_OfflineCache_*_windows-x64.zip`. Contents are merged into `~/.platformio` (platforms + packages only).
 
 ## Reuse across machines
 

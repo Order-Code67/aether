@@ -13,6 +13,7 @@ import {
   detectPython,
   installPioCore,
   inspectPioProject,
+  importOfflineCache,
   prepareOfflineCache,
   probeOfflineCache,
   runPioTask,
@@ -99,6 +100,7 @@ interface PlatformIoState {
   installMissing: () => Promise<void>;
   refreshOfflineCache: () => Promise<void>;
   prepareOfflineCache: () => Promise<void>;
+  importOfflineCacheZip: (zipPath: string) => Promise<void>;
   dismissDoctor: () => void;
   showDoctor: () => void;
 }
@@ -473,7 +475,11 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           }
         }
 
-        if (status.task === "offline-cache" && !status.running) {
+        if (
+          (status.task === "offline-cache" ||
+            status.task === "offline-cache-import") &&
+          !status.running
+        ) {
           void get().refreshOfflineCache();
         }
 
@@ -825,6 +831,51 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               error instanceof Error
                 ? error.message
                 : "Failed to prepare offline cache.",
+            ),
+          });
+        }
+      },
+
+      importOfflineCacheZip: async (zipPath: string) => {
+        if (!isTauriRuntime()) {
+          set({ error: t("doctor.needDesktop") });
+          return;
+        }
+        if (get().running) {
+          set({ error: t("pio.error.busy") });
+          return;
+        }
+        const path = zipPath.trim();
+        if (!path) {
+          set({ error: t("offline.importNeedFile") });
+          return;
+        }
+
+        useLayoutStore.getState().setBottomPanelTab("output");
+        set({
+          lines: [],
+          error: null,
+          lastTask: "offline-cache-import",
+          lastSuccess: null,
+          running: true,
+          progress: {
+            stage: "installing",
+            percent: null,
+            detail: null,
+          },
+        });
+
+        try {
+          await importOfflineCache(path);
+        } catch (error) {
+          set({
+            running: false,
+            lastSuccess: false,
+            progress: { stage: "failed", percent: null, detail: null },
+            error: localizeError(
+              error instanceof Error
+                ? error.message
+                : "Failed to import offline cache.",
             ),
           });
         }

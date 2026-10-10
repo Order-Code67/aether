@@ -9,7 +9,8 @@ export type PioTask =
   | "compiledb"
   | "install-core"
   | "lib-install"
-  | "offline-cache";
+  | "offline-cache"
+  | "offline-cache-import";
 
 export type PioStarter = "none" | "blink" | "servo";
 
@@ -196,6 +197,11 @@ export async function probeOfflineCache(): Promise<OfflineCacheStatus> {
 /** Download espressif32 + atmelavr platforms/toolchains into ~/.platformio (streams to Output). */
 export async function prepareOfflineCache(): Promise<void> {
   return invoke("pio_prepare_offline_cache");
+}
+
+/** Merge a portable offline-cache zip into ~/.platformio (streams progress to Output). */
+export async function importOfflineCache(zipPath: string): Promise<void> {
+  return invoke("pio_import_offline_cache", { zipPath });
 }
 
 export async function listenPioOutput(

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.15 — 2026-10-11
+
+- **Offline cache package** — separate `Aether_OfflineCache_*_windows-x64.zip` builder (`npm run build:offline-cache` / `scripts/build-offline-cache.ps1`); Settings → Tools → **Import offline cache…** merges into `~/.platformio`; docs in `docs/OFFLINE_INSTALLER.md` (toolchains still not in the main NSIS)
+- **Update channels** — Settings → About → Updates: **Stable** / **Beta** (persisted); Stable → `latest.json`, Beta → `latest-beta.json`; quiet check and update dialog respect the channel
+
 ## 0.2.14 — 2026-10-11
 
 - **ESP32-CAM Camera** — bottom-panel Camera view: HTTP JPEG/MJPEG snapshot (`/capture` or `/stream`), editable URL, Connect/Refresh, Serial IP autofill; bundled esp32-cam example serves Wi‑Fi + `/capture` (not RTSP studio)

@@ -56,6 +56,7 @@ export function SettingsDialog() {
   const running = usePlatformIoStore((s) => s.running);
   const refreshOfflineCache = usePlatformIoStore((s) => s.refreshOfflineCache);
   const prepareOfflineCache = usePlatformIoStore((s) => s.prepareOfflineCache);
+  const importOfflineCacheZip = usePlatformIoStore((s) => s.importOfflineCacheZip);
 
   const baseUrl = useAgentStore((s) => s.baseUrl);
   const apiKey = useAgentStore((s) => s.apiKey);
@@ -350,6 +351,28 @@ export function SettingsDialog() {
                   </button>
                   <button
                     type="button"
+                    disabled={running || !isTauriRuntime()}
+                    onClick={() => {
+                      void (async () => {
+                        const { open } = await import("@tauri-apps/plugin-dialog");
+                        const selected = await open({
+                          multiple: false,
+                          filters: [
+                            { name: "Offline cache", extensions: ["zip"] },
+                          ],
+                          title: t("offline.import"),
+                        });
+                        if (typeof selected === "string" && selected) {
+                          void importOfflineCacheZip(selected);
+                        }
+                      })();
+                    }}
+                    className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                  >
+                    {running ? t("offline.importing") : t("offline.import")}
+                  </button>
+                  <button
+                    type="button"
                     disabled={offlineCacheChecking}
                     onClick={() => {
                       void refreshOfflineCache();
@@ -359,6 +382,9 @@ export function SettingsDialog() {
                     {t("doctor.recheck")}
                   </button>
                 </div>
+                <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+                  {t("offline.importHint")}
+                </p>
                 <p className="text-[11px] leading-relaxed text-aether-fg-dim">
                   {t("offline.reuseNote")}
                 </p>
@@ -525,6 +551,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
   const check = useUpdaterStore((s) => s.check);
   const installAndRelaunch = useUpdaterStore((s) => s.installAndRelaunch);
   const openDialog = useUpdaterStore((s) => s.openDialog);
+  const updateChannel = useSettingsStore((s) => s.updateChannel);
+  const setUpdateChannel = useSettingsStore((s) => s.setUpdateChannel);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
   const [copying, setCopying] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -589,6 +617,42 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
       <div className="mt-3 space-y-2 rounded border border-aether-border bg-aether-bg/50 p-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-aether-fg-muted">
           {t("updater.section")}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-aether-fg-muted">
+            {t("updater.channel")}
+          </span>
+          <div className="inline-flex rounded border border-aether-border overflow-hidden">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setUpdateChannel("stable")}
+              className={cn(
+                "px-2.5 py-1 text-[11px]",
+                updateChannel === "stable"
+                  ? "bg-aether-accent text-white"
+                  : "bg-aether-bg text-aether-fg hover:bg-aether-surface-raised",
+              )}
+            >
+              {t("updater.channel.stable")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setUpdateChannel("beta")}
+              className={cn(
+                "px-2.5 py-1 text-[11px]",
+                updateChannel === "beta"
+                  ? "bg-aether-accent text-white"
+                  : "bg-aether-bg text-aether-fg hover:bg-aether-surface-raised",
+              )}
+            >
+              {t("updater.channel.beta")}
+            </button>
+          </div>
+        </div>
+        <p className="text-[10px] leading-relaxed text-aether-fg-dim">
+          {t("updater.channelHint")}
         </p>
         <p className="text-[11px] leading-relaxed text-aether-fg-dim">
           {statusLine}

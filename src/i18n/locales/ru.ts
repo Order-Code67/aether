@@ -253,6 +253,11 @@ export const ru: Record<MessageKey, string> = {
   "offline.missing": "нет",
   "offline.prepare": "Подготовить офлайн-кэш",
   "offline.preparing": "Подготовка…",
+  "offline.import": "Импорт офлайн-кэша…",
+  "offline.importing": "Импорт…",
+  "offline.importHint":
+    "Импорт портативного Aether_OfflineCache_*.zip (espressif32 + atmelavr) в ~/.platformio без удаления других пакетов. См. docs/OFFLINE_INSTALLER.md.",
+  "offline.importNeedFile": "Выберите файл .zip офлайн-кэша.",
   "offline.needPio": "Сначала установите PlatformIO Core, затем готовьте офлайн-кэш.",
   "offline.reuseNote":
     "Совет: скопируйте папку ~/.platformio на другой ПК, чтобы переиспользовать скачанные платформы и тулчейны.",
@@ -441,6 +446,12 @@ export const ru: Record<MessageKey, string> = {
   "updater.later": "Позже",
   "updater.lastCheck": "Последняя проверка: {time}",
   "updater.neverChecked": "В этой сессии ещё не проверялось.",
+  "updater.channel": "Канал",
+  "updater.channel.stable": "Stable",
+  "updater.channel.beta": "Beta",
+  "updater.channelHint":
+    "Stable — latest.json; Beta — latest-beta.json с GitHub Releases (см. docs/UPDATES.md).",
+  "updater.channelLabel": "Канал: {channel}",
   "updater.feedHint":
-    "Подписанные обновления через Tauri updater. Канал: GitHub Releases latest.json (см. docs/UPDATES.md).",
+    "Подписанные обновления через Tauri updater. Каналы: latest.json (stable) и latest-beta.json (beta).",
 };

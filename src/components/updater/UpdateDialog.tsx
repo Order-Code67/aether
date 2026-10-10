@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { localizeUpdateNotes } from "@/lib/updateNotes";
 import { isTauriRuntime } from "@/lib/tauri";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useUpdaterStore } from "@/stores/updaterStore";
 
 export function UpdateDialog() {
@@ -14,6 +15,11 @@ export function UpdateDialog() {
   const error = useUpdaterStore((s) => s.error);
   const closeDialog = useUpdaterStore((s) => s.closeDialog);
   const installAndRelaunch = useUpdaterStore((s) => s.installAndRelaunch);
+  const updateChannel = useSettingsStore((s) => s.updateChannel);
+  const channelLabel =
+    updateChannel === "beta"
+      ? t("updater.channel.beta")
+      : t("updater.channel.stable");
 
   if (!dialogOpen || !isTauriRuntime()) return null;
   if (phase !== "available" && phase !== "downloading" && phase !== "error") {
@@ -64,6 +70,9 @@ export function UpdateDialog() {
         <div className="space-y-3 p-4 text-xs text-aether-fg">
           <p className="text-aether-fg-muted">
             {t("updater.available", { version: availableVersion ?? "?" })}
+          </p>
+          <p className="text-[11px] text-aether-fg-dim">
+            {t("updater.channelLabel", { channel: channelLabel })}
           </p>
           <div className="max-h-40 overflow-auto whitespace-pre-wrap rounded border border-aether-border bg-aether-bg/60 p-2 text-[11px] leading-relaxed text-aether-fg-muted">
             {displayNotes}

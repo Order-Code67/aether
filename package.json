@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "scripts": {
@@ -14,7 +14,8 @@
     "smoke:ui": "node scripts/smoke-ui.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "build:offline-cache": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-offline-cache.ps1"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

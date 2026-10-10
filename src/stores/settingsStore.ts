@@ -1,10 +1,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { detectDefaultLocale, type Locale } from "@/i18n";
+import type { UpdateChannel } from "@/lib/updater";
 import { applyTheme, type ThemeId } from "@/lib/theme";
 
 export type WordWrapSetting = "on" | "off" | "wordWrapColumn";
 export type { ThemeId };
+export type { UpdateChannel };
 
 export type SettingsTabId =
   | "general"
@@ -30,6 +32,8 @@ interface SettingsState {
   showAllFiles: boolean;
   /** True after Quick Start finished or user dismissed it. */
   onboardingDone: boolean;
+  /** Stable = latest.json; Beta = latest-beta.json. */
+  updateChannel: UpdateChannel;
   fontSize: number;
   tabSize: number;
   minimap: boolean;
@@ -49,6 +53,7 @@ interface SettingsState {
   setSketchMode: (v: boolean) => void;
   setShowAllFiles: (v: boolean) => void;
   setOnboardingDone: (v: boolean) => void;
+  setUpdateChannel: (channel: UpdateChannel) => void;
   setFontSize: (n: number) => void;
   setTabSize: (n: number) => void;
   setMinimap: (v: boolean) => void;
@@ -84,6 +89,7 @@ export const useSettingsStore = create<SettingsState>()(
       sketchMode: true,
       showAllFiles: false,
       onboardingDone: false,
+      updateChannel: "stable",
       ...EDITOR_DEFAULTS,
       notice: null,
 
@@ -115,6 +121,8 @@ export const useSettingsStore = create<SettingsState>()(
       setSketchMode: (v) => set({ sketchMode: v }),
       setShowAllFiles: (v) => set({ showAllFiles: v }),
       setOnboardingDone: (v) => set({ onboardingDone: v }),
+      setUpdateChannel: (channel) =>
+        set({ updateChannel: channel === "beta" ? "beta" : "stable" }),
 
       clearNotice: () => set({ notice: null }),
       flashNotice: (message, ms = 2800) => {
@@ -146,6 +154,7 @@ export const useSettingsStore = create<SettingsState>()(
         sketchMode: state.sketchMode,
         showAllFiles: state.showAllFiles,
         onboardingDone: state.onboardingDone,
+        updateChannel: state.updateChannel,
         fontSize: state.fontSize,
         tabSize: state.tabSize,
         minimap: state.minimap,

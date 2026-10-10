@@ -8,6 +8,7 @@ mod platformio;
 mod search;
 mod serial;
 mod terminal;
+mod updater_channel;
 mod vscode;
 mod watcher;
 
@@ -25,6 +26,7 @@ pub fn run() {
         .manage(ai::AiState::default())
         .manage(lsp::LspState::default())
         .manage(debug::DebugState::default())
+        .manage(updater_channel::PendingUpdateState::default())
         .setup(|app| {
             #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
             {
@@ -62,6 +64,9 @@ pub fn run() {
             platformio::pio_lib_list,
             platformio::pio_cache_status,
             platformio::pio_prepare_offline_cache,
+            platformio::pio_import_offline_cache,
+            updater_channel::updater_check_channel,
+            updater_channel::updater_install_pending,
             ai::ai_chat_completion,
             ai::ai_chat_stream,
             ai::ai_cancel,

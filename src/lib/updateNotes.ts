@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.15": {
+    en: "Offline PlatformIO cache import zip, Stable/Beta update channels.",
+    ru: "Импорт офлайн-кэша PlatformIO из zip, каналы обновлений Stable/Beta.",
+  },
   "0.2.14": {
     en: "ESP32-CAM Camera panel, MAVLink telemetry in Plotter, firmware profiles.",
     ru: "Панель камеры ESP32-CAM, телеметрия MAVLink в плоттере, профили прошивки.",

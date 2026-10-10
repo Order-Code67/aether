@@ -1,5 +1,6 @@
+use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -7,6 +8,7 @@ use std::thread;
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
+use zip::ZipArchive;
 
 const PIO_OUTPUT_EVENT: &str = "pio-output";
 const PIO_STATUS_EVENT: &str = "pio-status";
@@ -1856,4 +1858,263 @@ pub fn pio_prepare_offline_cache(
     });
 
     Ok(())
+}
+
+/// Import a portable offline-cache zip into ~/.platformio (merge platforms/packages).
+#[tauri::command]
+pub fn pio_import_offline_cache(
+    app: AppHandle,
+    state: State<'_, PioState>,
+    zip_path: String,
+) -> Result<(), String> {
+    let zip_path = PathBuf::from(zip_path.trim());
+    if !zip_path.is_file() {
+        return Err("Offline cache zip not found.".into());
+    }
+    let ext = zip_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if ext != "zip" {
+        return Err("Offline cache must be a .zip file.".into());
+    }
+
+    let home = platformio_home().ok_or_else(|| {
+        "Could not resolve PlatformIO home (~/.platformio).".to_string()
+    })?;
+
+    if state.running.load(Ordering::SeqCst) {
+        return Err("A PlatformIO task is already running.".into());
+    }
+
+    {
+        let mut slot = state.child.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(mut child) = slot.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
+
+    state.running.store(true, Ordering::SeqCst);
+    emit_status(
+        &app,
+        PioStatusPayload {
+            running: true,
+            task: Some("offline-cache-import".into()),
+            success: None,
+            code: None,
+            error: None,
+        },
+    );
+    emit_line(
+        &app,
+        "system",
+        format!(
+            "Importing offline cache from {} → {} …",
+            zip_path.display(),
+            home.display()
+        ),
+    );
+
+    let app_bg = app.clone();
+    let running = Arc::clone(&state.running);
+
+    thread::spawn(move || {
+        let result = import_offline_cache_zip(&app_bg, &zip_path, &home);
+        let ok = result.is_ok();
+        if let Err(e) = result {
+            emit_line(&app_bg, "stderr", e);
+        } else {
+            emit_line(
+                &app_bg,
+                "system",
+                "✔ Offline cache imported (merged into ~/.platformio).".into(),
+            );
+        }
+        running.store(false, Ordering::SeqCst);
+        emit_status(
+            &app_bg,
+            PioStatusPayload {
+                running: false,
+                task: Some("offline-cache-import".into()),
+                success: Some(ok),
+                code: if ok { Some(0) } else { Some(1) },
+                error: None,
+            },
+        );
+    });
+
+    Ok(())
+}
+
+fn import_offline_cache_zip(
+    app: &AppHandle,
+    zip_path: &Path,
+    home: &Path,
+) -> Result<(), String> {
+    let file = File::open(zip_path).map_err(|e| format!("Failed to open zip: {e}"))?;
+    let mut archive =
+        ZipArchive::new(file).map_err(|e| format!("Invalid offline cache zip: {e}"))?;
+
+    let names: Vec<String> = (0..archive.len())
+        .filter_map(|i| archive.by_index(i).ok().map(|f| f.name().replace('\\', "/")))
+        .collect();
+
+    if names.is_empty() {
+        return Err("Offline cache zip is empty.".into());
+    }
+    for name in &names {
+        if name.split('/').any(|p| p == "..") {
+            return Err("Invalid offline cache zip (path traversal).".into());
+        }
+    }
+
+    let strip = detect_offline_cache_strip_prefix(&names).ok_or_else(|| {
+        "Invalid offline cache zip: expected platforms/espressif32 and/or platforms/atmelavr (see docs/OFFLINE_INSTALLER.md)."
+            .to_string()
+    })?;
+
+    let mut has_espressif = false;
+    let mut has_atmel = false;
+    let mut extract_count = 0usize;
+    let total_candidates = names
+        .iter()
+        .filter(|n| {
+            let rel = strip_zip_prefix(n, &strip);
+            is_offline_cache_member(rel)
+        })
+        .count()
+        .max(1);
+
+    emit_line(
+        app,
+        "system",
+        format!(
+            "Validated zip structure (strip_prefix={:?}). Extracting ~{total_candidates} entries…",
+            if strip.is_empty() { "<root>" } else { strip.as_str() }
+        ),
+    );
+
+    fs::create_dir_all(home).map_err(|e| format!("Failed to create {}: {e}", home.display()))?;
+
+    for i in 0..archive.len() {
+        let mut entry = archive
+            .by_index(i)
+            .map_err(|e| format!("Zip read error: {e}"))?;
+        let raw_name = entry.name().replace('\\', "/");
+        if raw_name.split('/').any(|p| p == "..") {
+            continue;
+        }
+        let rel = strip_zip_prefix(&raw_name, &strip);
+        if !is_offline_cache_member(rel) {
+            continue;
+        }
+        if rel.starts_with("platforms/espressif32") {
+            has_espressif = true;
+        }
+        if rel.starts_with("platforms/atmelavr") {
+            has_atmel = true;
+        }
+
+        let out_path = safe_join_under(home, rel)
+            .ok_or_else(|| format!("Refusing unsafe zip path: {rel}"))?;
+
+        if raw_name.ends_with('/') || entry.is_dir() {
+            fs::create_dir_all(&out_path)
+                .map_err(|e| format!("Failed to create {}: {e}", out_path.display()))?;
+        } else {
+            if let Some(parent) = out_path.parent() {
+                fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create {}: {e}", parent.display()))?;
+            }
+            let mut outfile = File::create(&out_path)
+                .map_err(|e| format!("Failed to write {}: {e}", out_path.display()))?;
+            std::io::copy(&mut entry, &mut outfile)
+                .map_err(|e| format!("Failed to extract {}: {e}", out_path.display()))?;
+        }
+
+        extract_count += 1;
+        if extract_count == 1
+            || extract_count % 50 == 0
+            || extract_count == total_candidates
+        {
+            let pct = (extract_count * 100) / total_candidates;
+            emit_line(
+                app,
+                "system",
+                format!("Extracting… {pct}% ({extract_count}/{total_candidates})"),
+            );
+        }
+    }
+
+    if !has_espressif && !has_atmel {
+        return Err(
+            "Invalid offline cache zip: no espressif32 or atmelavr platform found after extract."
+                .into(),
+        );
+    }
+
+    emit_line(
+        app,
+        "system",
+        format!(
+            "Merged {extract_count} entries. espressif32={} atmelavr={}",
+            if has_espressif { "yes" } else { "no" },
+            if has_atmel { "yes" } else { "no" }
+        ),
+    );
+    Ok(())
+}
+
+fn detect_offline_cache_strip_prefix(names: &[String]) -> Option<String> {
+    let markers = ["platforms/espressif32", "platforms/atmelavr"];
+    for name in names {
+        let n = name.trim_start_matches("./");
+        for marker in markers {
+            if let Some(idx) = n.find(marker) {
+                return Some(n[..idx].to_string());
+            }
+        }
+    }
+    // Manifest-only packs still need a platforms/ folder nearby
+    for name in names {
+        let n = name.trim_start_matches("./");
+        if let Some(idx) = n.find("platforms/") {
+            return Some(n[..idx].to_string());
+        }
+    }
+    None
+}
+
+fn strip_zip_prefix<'a>(name: &'a str, strip: &str) -> &'a str {
+    let n = name.trim_start_matches("./");
+    if strip.is_empty() {
+        return n;
+    }
+    n.strip_prefix(strip).unwrap_or(n)
+}
+
+fn is_offline_cache_member(rel: &str) -> bool {
+    let rel = rel.trim_start_matches('/');
+    if rel.is_empty() || rel == "aether-offline-cache.json" {
+        return rel == "aether-offline-cache.json";
+    }
+    rel.starts_with("platforms/") || rel.starts_with("packages/")
+}
+
+fn safe_join_under(base: &Path, relative: &str) -> Option<PathBuf> {
+    let relative = relative.trim_start_matches('/');
+    let mut out = base.to_path_buf();
+    for comp in Path::new(relative).components() {
+        match comp {
+            Component::Normal(part) => out.push(part),
+            Component::CurDir => {}
+            _ => return None,
+        }
+    }
+    if !out.starts_with(base) {
+        return None;
+    }
+    Some(out)
 }
