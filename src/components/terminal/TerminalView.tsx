@@ -19,11 +19,28 @@ interface TerminalViewProps {
   active?: boolean;
 }
 
+function setXtermStdinEnabled(host: HTMLElement | null, enabled: boolean) {
+  const textarea = host?.querySelector(
+    "textarea.xterm-helper-textarea",
+  ) as HTMLTextAreaElement | null;
+  if (!textarea) return;
+  if (enabled) {
+    textarea.readOnly = false;
+    textarea.tabIndex = 0;
+  } else {
+    textarea.readOnly = true;
+    textarea.tabIndex = -1;
+    textarea.blur();
+  }
+}
+
 export function TerminalView({ active = true }: TerminalViewProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const idRef = useRef<number | null>(null);
+  const activeRef = useRef(active);
+  activeRef.current = active;
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
@@ -76,6 +93,13 @@ export function TerminalView({ active = true }: TerminalViewProps) {
     term.loadAddon(fit);
     term.open(host);
     fit.fit();
+
+    // Race-safe: boot may finish while another bottom tab is active.
+    if (!activeRef.current) {
+      term.blur();
+      term.options.disableStdin = true;
+      setXtermStdinEnabled(host, false);
+    }
 
     termRef.current = term;
     fitRef.current = fit;
@@ -159,6 +183,7 @@ export function TerminalView({ active = true }: TerminalViewProps) {
 
   useEffect(() => {
     const term = termRef.current;
+    const host = hostRef.current;
     if (!term) return;
 
     // Hidden terminals must not keep the xterm helper textarea focused —
@@ -167,6 +192,11 @@ export function TerminalView({ active = true }: TerminalViewProps) {
       try {
         term.blur();
         term.options.disableStdin = true;
+        setXtermStdinEnabled(host, false);
+        const focused = document.activeElement;
+        if (focused instanceof HTMLElement && host?.contains(focused)) {
+          focused.blur();
+        }
       } catch {
         // ignore
       }
@@ -174,6 +204,7 @@ export function TerminalView({ active = true }: TerminalViewProps) {
     }
 
     term.options.disableStdin = false;
+    setXtermStdinEnabled(host, true);
     const timer = window.setTimeout(() => {
       try {
         fitRef.current?.fit();

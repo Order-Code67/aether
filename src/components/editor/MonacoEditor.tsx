@@ -124,6 +124,20 @@ export function MonacoEditor() {
     void editor.getAction(actionId)?.run();
   }, [findRequest]);
 
+  // Re-focus when switching tabs so WebView2 delivers keys to Monaco.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !activeTab) return;
+    const timer = window.setTimeout(() => {
+      try {
+        editor.focus();
+      } catch {
+        // ignore
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [activeTab?.id]);
+
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -241,7 +255,13 @@ export function MonacoEditor() {
   };
 
   return (
-    <div className="min-h-0 flex-1">
+    <div
+      className="min-h-0 flex-1"
+      onMouseDown={() => {
+        // Ensure click into the editor recovers focus from xterm / chrome.
+        window.setTimeout(() => editorRef.current?.focus(), 0);
+      }}
+    >
       <Editor
         key={activeTab.id}
         height="100%"
@@ -276,6 +296,8 @@ export function MonacoEditor() {
           smoothScrolling: true,
           padding: { top: 8 },
           bracketPairColorization: { enabled: true },
+          readOnly: false,
+          domReadOnly: false,
         }}
         loading={
           <div className="flex h-full items-center justify-center text-xs text-aether-fg-muted">

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Library, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
+import { errorMessage } from "@/lib/errors";
 import {
   installPioLibrary,
   listPioLibraries,
@@ -13,17 +14,19 @@ import { isTauriRuntime } from "@/lib/tauri";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
-type PlatformPreset = "all" | "esp32" | "nano" | "mega";
+type PlatformPreset = "all" | "arduino" | "esp32" | "nano" | "mega";
 
 interface PlatformChip {
   id: PlatformPreset;
   labelKey:
     | "libraries.chipAll"
+    | "libraries.chipArduino"
     | "libraries.chipEsp32"
     | "libraries.chipNano"
     | "libraries.chipMega";
   /** PlatformIO `--platform` filter */
   platform: string | null;
+  /** PlatformIO `--framework` filter (e.g. arduino across all platforms) */
   framework: string | null;
 }
 
@@ -33,6 +36,12 @@ const PLATFORM_CHIPS: PlatformChip[] = [
     labelKey: "libraries.chipAll",
     platform: null,
     framework: null,
+  },
+  {
+    id: "arduino",
+    labelKey: "libraries.chipArduino",
+    platform: null,
+    framework: "arduino",
   },
   {
     id: "esp32",
@@ -54,6 +63,10 @@ const PLATFORM_CHIPS: PlatformChip[] = [
   },
 ];
 
+function chipHasFilter(chip: PlatformChip): boolean {
+  return Boolean(chip.platform || chip.framework);
+}
+
 /** Curated popular registry specs (owner/name) — installed via real `pio pkg install`. */
 const POPULAR: Record<PlatformPreset, { spec: string; label: string }[]> = {
   all: [
@@ -65,6 +78,16 @@ const POPULAR: Record<PlatformPreset, { spec: string; label: string }[]> = {
     { spec: "milesburton/DallasTemperature", label: "DallasTemp" },
     { spec: "paulstoffregen/OneWire", label: "OneWire" },
     { spec: "adafruit/Adafruit SSD1306", label: "SSD1306" },
+  ],
+  arduino: [
+    { spec: "bblanchon/ArduinoJson", label: "ArduinoJson" },
+    { spec: "adafruit/Adafruit NeoPixel", label: "NeoPixel" },
+    { spec: "fastled/FastLED", label: "FastLED" },
+    { spec: "olikraus/U8g2", label: "U8g2" },
+    { spec: "knolleary/PubSubClient", label: "PubSubClient" },
+    { spec: "milesburton/DallasTemperature", label: "DallasTemp" },
+    { spec: "paulstoffregen/OneWire", label: "OneWire" },
+    { spec: "arduino-libraries/Servo", label: "Servo" },
   ],
   esp32: [
     { spec: "bblanchon/ArduinoJson", label: "ArduinoJson" },
@@ -121,6 +144,7 @@ export function LibrariesPanel() {
   const rootPath = useWorkspaceStore((s) => s.rootPath);
   const isProject = usePlatformIoStore((s) => s.isProject);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
+  const pioInfo = usePlatformIoStore((s) => s.info);
   const [query, setQuery] = useState("");
   const [preset, setPreset] = useState<PlatformPreset>("all");
   const [results, setResults] = useState<PioLibEntry[]>([]);
@@ -136,6 +160,28 @@ export function LibrariesPanel() {
 
   const popular = POPULAR[preset];
 
+  const mapLibError = useCallback(
+    (err: unknown) => {
+      const raw = errorMessage(err, t("common.error"));
+      const lower = raw.toLowerCase();
+      if (
+        lower.includes("platformio cli not found") ||
+        lower.includes("pio` is on path") ||
+        (lower.includes("not found") && lower.includes("platformio"))
+      ) {
+        return t("libraries.pioMissing");
+      }
+      if (
+        lower.includes("platformio.ini") ||
+        lower.includes("workspace root")
+      ) {
+        return t("libraries.needProject");
+      }
+      return raw;
+    },
+    [t],
+  );
+
   const refreshInstalled = useCallback(async () => {
     if (!rootPath || !isProject || !isTauriRuntime()) {
       setInstalled([]);
@@ -145,9 +191,9 @@ export function LibrariesPanel() {
       const list = await listPioLibraries(rootPath);
       setInstalled(list);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
+      setError(mapLibError(err));
     }
-  }, [rootPath, isProject, t]);
+  }, [rootPath, isProject, mapLibError]);
 
   useEffect(() => {
     void refreshInstalled();
@@ -156,13 +202,17 @@ export function LibrariesPanel() {
   const runSearch = useCallback(
     async (overrideQuery?: string) => {
       const q = (overrideQuery ?? query).trim();
-      if (!q && !chip.platform) {
+      if (!q && !chipHasFilter(chip)) {
         setResults([]);
         setHasSearched(false);
         return;
       }
       if (!isTauriRuntime()) {
         setError(t("libraries.needDesktop"));
+        return;
+      }
+      if (pioInfo && !pioInfo.installed) {
+        setError(t("libraries.pioMissing"));
         return;
       }
       setLoading(true);
@@ -176,23 +226,30 @@ export function LibrariesPanel() {
           pages: 3,
         });
         setResults(entries);
+        if (entries.length === 0) {
+          setError(null);
+        }
       } catch (err) {
         setResults([]);
-        setError(err instanceof Error ? err.message : t("common.error"));
+        setError(mapLibError(err));
       } finally {
         setLoading(false);
       }
     },
-    [query, chip, t],
+    [query, chip, t, pioInfo, mapLibError],
   );
 
   const selectPreset = (id: PlatformPreset) => {
     setPreset(id);
     setError(null);
     const next = PLATFORM_CHIPS.find((c) => c.id === id);
-    if (next?.platform) {
-      // Browse registry for that platform when switching chips.
+    if (next && chipHasFilter(next)) {
+      // Browse registry for that platform/framework when switching chips.
       void (async () => {
+        if (!isTauriRuntime()) {
+          setError(t("libraries.needDesktop"));
+          return;
+        }
         setLoading(true);
         setHasSearched(true);
         try {
@@ -205,7 +262,7 @@ export function LibrariesPanel() {
           setResults(entries);
         } catch (err) {
           setResults([]);
-          setError(err instanceof Error ? err.message : t("common.error"));
+          setError(mapLibError(err));
         } finally {
           setLoading(false);
         }
@@ -217,7 +274,14 @@ export function LibrariesPanel() {
   };
 
   const install = async (library: string, busyKey: string) => {
-    if (!rootPath) return;
+    if (!isTauriRuntime()) {
+      setError(t("libraries.needDesktop"));
+      return;
+    }
+    if (!rootPath || !isProject) {
+      setError(t("libraries.needProject"));
+      return;
+    }
     setBusyId(busyKey);
     setError(null);
     try {
@@ -228,26 +292,34 @@ export function LibrariesPanel() {
       const bare = library.includes("/")
         ? library.split("/").pop()!
         : library;
-      try {
-        await installPioLibrary(rootPath, bare, selectedEnv || null);
-        await refreshInstalled();
-      } catch (err2) {
-        setError(err2 instanceof Error ? err2.message : t("common.error"));
+      if (bare !== library) {
+        try {
+          await installPioLibrary(rootPath, bare, selectedEnv || null);
+          await refreshInstalled();
+          return;
+        } catch (err2) {
+          setError(mapLibError(err2));
+          return;
+        }
       }
+      setError(mapLibError(err));
     } finally {
       setBusyId(null);
     }
   };
 
   const uninstall = async (dep: string) => {
-    if (!rootPath) return;
+    if (!rootPath || !isProject) {
+      setError(t("libraries.needProject"));
+      return;
+    }
     setBusyId(`uninstall:${dep}`);
     setError(null);
     try {
       await uninstallPioLibrary(rootPath, dep, selectedEnv || null);
       await refreshInstalled();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
+      setError(mapLibError(err));
     } finally {
       setBusyId(null);
     }
@@ -280,10 +352,19 @@ export function LibrariesPanel() {
         </button>
       </header>
 
+      <p className="px-3 pb-2 text-[11px] leading-relaxed text-aether-fg-dim">
+        {t("libraries.hint")}
+      </p>
+
       {!isProject || !rootPath ? (
-        <p className="px-3 text-xs leading-relaxed text-aether-fg-dim">
-          {t("libraries.noProject")}
-        </p>
+        <div className="space-y-1.5 px-3">
+          <p className="text-xs leading-relaxed text-aether-fg">
+            {t("libraries.noProject")}
+          </p>
+          <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+            {t("libraries.noProjectHelp")}
+          </p>
+        </div>
       ) : (
         <>
           {selectedEnv ? (
@@ -297,12 +378,13 @@ export function LibrariesPanel() {
               <button
                 key={c.id}
                 type="button"
+                title={t(c.labelKey)}
                 onClick={() => selectPreset(c.id)}
                 className={cn(
-                  "rounded px-2 py-0.5 text-[11px]",
+                  "rounded border px-2 py-0.5 text-[11px]",
                   preset === c.id
-                    ? "bg-aether-accent-muted text-aether-fg"
-                    : "text-aether-fg-muted hover:text-aether-fg",
+                    ? "border-aether-accent bg-aether-accent-muted text-aether-fg"
+                    : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
                 )}
               >
                 {t(c.labelKey)}
@@ -331,7 +413,7 @@ export function LibrariesPanel() {
             </div>
             <button
               type="submit"
-              disabled={loading || (!query.trim() && !chip.platform)}
+              disabled={loading || (!query.trim() && !chipHasFilter(chip))}
               className="h-7 shrink-0 rounded border border-aether-accent bg-aether-accent px-2 text-[11px] text-white disabled:opacity-40"
             >
               {t("libraries.searchBtn")}
@@ -372,7 +454,12 @@ export function LibrariesPanel() {
           </div>
 
           {error && (
-            <p className="px-3 pb-2 text-[11px] text-aether-danger">{error}</p>
+            <p
+              role="alert"
+              className="mx-3 mb-2 rounded border border-aether-danger/40 bg-aether-danger/10 px-2 py-1.5 text-[11px] leading-relaxed text-aether-danger"
+            >
+              {error}
+            </p>
           )}
 
           <div className="aether-scroll min-h-0 flex-1 overflow-auto border-t border-aether-border">

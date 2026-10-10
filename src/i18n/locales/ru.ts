@@ -8,6 +8,7 @@ export const ru: Record<MessageKey, string> = {
   "activity.sourceControl": "Исходный код",
   "activity.boards": "Платы",
   "activity.libraries": "Библиотеки",
+  "activity.librariesTitle": "Библиотеки (книга) — поиск и установка",
   "activity.debug": "Отладка",
   "activity.agent": "ИИ-агент",
   "activity.extensions": "Расширения",
@@ -88,7 +89,9 @@ export const ru: Record<MessageKey, string> = {
     "Скетч зашифрован на диске. Редактируйте свободно; при сохранении шифрование сохранится.",
   "encrypt.needFolder": "Откройте папку проекта, чтобы шифровать скетчи.",
   "libraries.title": "Библиотеки",
-  "libraries.search": "Поиск в реестре PlatformIO…",
+  "libraries.hint":
+    "1) Откройте папку с platformio.ini. 2) Выберите ESP32 / Nano / Mega / Arduino. 3) Найдите библиотеку или нажмите «Популярные». 4) Нажмите «Установить».",
+  "libraries.search": "Поиск в реестре (напр. ArduinoJson)…",
   "libraries.searchBtn": "Найти",
   "libraries.install": "Установить",
   "libraries.installed": "Установлено",
@@ -96,22 +99,30 @@ export const ru: Record<MessageKey, string> = {
   "libraries.uninstall": "Удалить",
   "libraries.uninstalling": "Удаление…",
   "libraries.noProject":
-    "Откройте проект PlatformIO (platformio.ini), чтобы управлять библиотеками.",
+    "Откройте папку с файлом platformio.ini (Файл → Открыть папку).",
+  "libraries.noProjectHelp":
+    "Затем выберите плату, найдите библиотеку или нажмите «Популярные», потом «Установить». Пакеты попадают в lib_deps.",
   "libraries.empty":
-    "Выберите платформу или ищите в реестре PlatformIO (библиотеки Arduino).",
-  "libraries.noResults": "Библиотеки не найдены.",
-  "libraries.installedList": "Библиотеки проекта (lib_deps)",
+    "Выберите ESP32 / Nano / Mega / Arduino или введите имя и нажмите «Найти».",
+  "libraries.noResults":
+    "Ничего не найдено. Попробуйте другое имя или популярный чип выше.",
+  "libraries.installedList": "Установлено в проекте (lib_deps)",
   "libraries.installedEmpty":
-    "Пока нет lib_deps — установите из поиска или популярных чипов.",
+    "Пока пусто — найдите библиотеку или нажмите популярный чип, затем «Установить».",
   "libraries.refresh": "Обновить",
-  "libraries.popular": "Популярные",
+  "libraries.popular": "Популярные (установка в один клик)",
   "libraries.chipAll": "Все",
+  "libraries.chipArduino": "Arduino",
   "libraries.chipEsp32": "ESP32",
   "libraries.chipNano": "Nano",
   "libraries.chipMega": "Mega",
   "libraries.activeEnv": "Активное окружение: {env}",
   "libraries.needDesktop":
     "Поиск библиотек доступен в десктопном приложении (npm run tauri:dev).",
+  "libraries.needProject":
+    "Сначала откройте папку проекта PlatformIO (с platformio.ini).",
+  "libraries.pioMissing":
+    "Не найден PlatformIO CLI. Установите PlatformIO Core и перезапустите Aether.",
   "extensions.title": "Расширения",
   "extensions.installed": "Установленные",
   "extensions.marketplace": "Маркетплейс",
