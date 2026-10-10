@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-examples"
+description = "List and copy bundled PlatformIO example projects."
+commands.allow = ["list_bundled_examples", "materialize_bundled_example"]

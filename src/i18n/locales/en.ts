@@ -18,9 +18,17 @@ export const en = {
   "panel.terminal": "Terminal",
   "welcome.newProject": "New PlatformIO Project…",
   "welcome.openFolder": "Open Folder…",
+  "welcome.openExample": "Open Example…",
   "welcome.openDemo": "Open Demo Workspace",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
+  "examples.title": "Open Example",
+  "examples.hint":
+    "Copies a bundled PlatformIO sample into Documents/Aether/examples and opens it. ESP32, Mega, and Nano include common lib_deps presets.",
+  "examples.open": "Open",
+  "examples.copying": "Copying…",
+  "examples.needDesktop":
+    "Examples require the desktop app (npm run tauri:dev or the installed Aether).",
   "explorer.title": "Explorer",
   "explorer.noFolder": "No folder open",
   "explorer.openFolder": "Open Folder…",

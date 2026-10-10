@@ -20,9 +20,17 @@ export const ru: Record<MessageKey, string> = {
   "panel.terminal": "Терминал",
   "welcome.newProject": "Новый проект PlatformIO…",
   "welcome.openFolder": "Открыть папку…",
+  "welcome.openExample": "Примеры…",
   "welcome.openDemo": "Демо-рабочая область",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
+  "examples.title": "Примеры",
+  "examples.hint":
+    "Копирует встроенный пример PlatformIO в Documents/Aether/examples и открывает его. ESP32, Mega и Nano уже с популярными lib_deps.",
+  "examples.open": "Открыть",
+  "examples.copying": "Копирование…",
+  "examples.needDesktop":
+    "Примеры доступны в десктопном приложении (npm run tauri:dev или установленный Aether).",
   "explorer.title": "Проводник",
   "explorer.noFolder": "Папка не открыта",
   "explorer.openFolder": "Открыть папку…",

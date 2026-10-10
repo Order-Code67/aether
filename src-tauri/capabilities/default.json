@@ -32,6 +32,7 @@
     "allow-git",
     "allow-lsp",
     "allow-debug",
+    "allow-examples",
     "updater:default",
     "process:default"
   ]

@@ -1,5 +1,6 @@
 mod ai;
 mod debug;
+mod examples;
 mod git;
 mod lsp;
 mod menu;
@@ -96,6 +97,8 @@ pub fn run() {
             debug::debug_variables,
             debug::debug_eval,
             debug::debug_console_input,
+            examples::list_bundled_examples,
+            examples::materialize_bundled_example,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aether");

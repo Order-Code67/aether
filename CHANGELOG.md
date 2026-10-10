@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 — 2026-10-10
+
+- **Bundled examples** — ESP32 Blink, Arduino Mega Servo, and Arduino Nano ship with the install (File → Open Example… / welcome **Примеры**); copies into `Documents/Aether/examples`
+- **Library presets** — example `platformio.ini` files include common `lib_deps` (ArduinoJson, Servo / ESP32Servo, FastLED)
+- Includes prior library-manager and icon fixes from 0.2.x
+
 ## 0.2.2 — 2026-10-10
 
 - **App icon** — corrected branding: robot hand holding planet (not robot book); regenerated `src-tauri/icons/*` and About UI `public/aether-icon.png`

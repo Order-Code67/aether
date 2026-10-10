@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { FolderOpen, PackagePlus } from "lucide-react";
+import { BookOpen, FolderOpen, PackagePlus } from "lucide-react";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
+import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { useI18n } from "@/hooks/useI18n";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
@@ -12,12 +13,17 @@ export function WelcomeView() {
   const error = useWorkspaceStore((s) => s.error);
   const tauri = isTauriRuntime();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [examplesOpen, setExamplesOpen] = useState(false);
 
   return (
     <div className="relative flex flex-1 items-center justify-center">
       <NewProjectDialog
         open={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
+      />
+      <OpenExamplesDialog
+        open={examplesOpen}
+        onClose={() => setExamplesOpen(false)}
       />
       <div className="max-w-md px-8 text-center">
         <p className="text-3xl font-light tracking-[0.12em] text-aether-fg">
@@ -45,6 +51,14 @@ export function WelcomeView() {
           >
             <FolderOpen size={14} />
             {t("welcome.openFolder")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setExamplesOpen(true)}
+            className="flex w-64 items-center justify-center gap-2 rounded border border-aether-border bg-aether-surface px-3 py-2.5 text-xs text-aether-fg transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised"
+          >
+            <BookOpen size={14} />
+            {t("welcome.openExample")}
           </button>
           <button
             type="button"

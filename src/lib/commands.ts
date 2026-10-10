@@ -69,6 +69,15 @@ export function getCommands(): Command[] {
       },
     },
     {
+      id: "file.openExample",
+      title: "Open Example…",
+      category: "File",
+      keywords: "examples sample esp32 mega nano arduino примеры",
+      run: () => {
+        usePaletteStore.getState().requestOpenExample();
+      },
+    },
+    {
       id: "file.save",
       title: "Save",
       category: "File",

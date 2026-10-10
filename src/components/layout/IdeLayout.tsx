@@ -10,6 +10,7 @@ import { useScmBridge } from "@/hooks/useScmBridge";
 import { useWorkspaceWatcher } from "@/hooks/useWorkspaceWatcher";
 import { UnlockGate } from "@/components/editor/UnlockGate";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
+import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { CommandPalette } from "@/components/palette/CommandPalette";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { usePaletteStore } from "@/stores/paletteStore";
@@ -33,10 +34,15 @@ export function IdeLayout() {
   useMenuBridge();
 
   const newProjectSignal = usePaletteStore((s) => s.newProjectSignal);
+  const openExampleSignal = usePaletteStore((s) => s.openExampleSignal);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [examplesOpen, setExamplesOpen] = useState(false);
   useEffect(() => {
     if (newProjectSignal > 0) setNewProjectOpen(true);
   }, [newProjectSignal]);
+  useEffect(() => {
+    if (openExampleSignal > 0) setExamplesOpen(true);
+  }, [openExampleSignal]);
 
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const bottomPanelVisible = useLayoutStore((s) => s.bottomPanelVisible);
@@ -78,6 +84,10 @@ export function IdeLayout() {
       <NewProjectDialog
         open={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
+      />
+      <OpenExamplesDialog
+        open={examplesOpen}
+        onClose={() => setExamplesOpen(false)}
       />
     </div>
   );
