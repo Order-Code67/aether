@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { BookOpen, Code2, FolderOpen, PackagePlus } from "lucide-react";
+import { BookOpen, Code2, FolderOpen, PackagePlus, Rocket } from "lucide-react";
 import { CircuitBackground } from "@/components/welcome/CircuitBackground";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { useI18n } from "@/hooks/useI18n";
 import { errorMessage } from "@/lib/errors";
+import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
   formatGenerateSummary,
@@ -31,9 +33,11 @@ export function WelcomeView() {
   const rootPath = useWorkspaceStore((s) => s.rootPath);
   const error = useWorkspaceStore((s) => s.error);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const arduinoMode = useSettingsStore((s) => s.arduinoMode);
   const tauri = isTauriRuntime();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [vscodeBusy, setVscodeBusy] = useState(false);
 
   const runOpenVsCode = async () => {
@@ -97,8 +101,17 @@ export function WelcomeView() {
         open={examplesOpen}
         onClose={() => setExamplesOpen(false)}
       />
+      <OnboardingWizard
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+      />
       <div className="relative z-10 max-w-md px-8 text-center">
-        <p className="text-3xl font-light tracking-[0.12em] text-aether-fg">
+        <p
+          className={cn(
+            "font-light tracking-[0.12em] text-aether-fg",
+            arduinoMode ? "text-4xl" : "text-3xl",
+          )}
+        >
           {t("app.name")}
         </p>
         <p className="mt-3 text-sm leading-relaxed text-aether-fg-muted">
@@ -106,6 +119,19 @@ export function WelcomeView() {
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setOnboardingOpen(true)}
+            className={cn(
+              "flex items-center justify-center gap-2 rounded border border-aether-accent bg-aether-accent text-white backdrop-blur-sm transition-opacity hover:opacity-90",
+              arduinoMode
+                ? "w-72 px-3 py-3 text-sm"
+                : "w-64 px-3 py-2.5 text-xs",
+            )}
+          >
+            <Rocket size={14} />
+            {t("welcome.quickStart")}
+          </button>
           <button
             type="button"
             onClick={() => setNewProjectOpen(true)}

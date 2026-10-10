@@ -1,7 +1,9 @@
+import { useState } from "react";
 import {
   Blocks,
   Bug,
   Cpu,
+  Ellipsis,
   Files,
   GitBranch,
   Library,
@@ -27,11 +29,65 @@ const ACTIVITY_ICONS: Record<ActivityId, LucideIcon> = {
   extensions: Blocks,
 };
 
+/** Hidden behind "More" when Arduino simplified UI is on. */
+const ARDUINO_ADVANCED: ReadonlySet<ActivityId> = new Set([
+  "source-control",
+  "agent",
+  "extensions",
+]);
+
 export function ActivityBar() {
   const { t } = useI18n();
   const activeActivity = useLayoutStore((s) => s.activeActivity);
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const toggleActivity = useLayoutStore((s) => s.toggleActivity);
+  const arduinoMode = useSettingsStore((s) => s.arduinoMode);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const primary = arduinoMode
+    ? ACTIVITY_ITEMS.filter((item) => !ARDUINO_ADVANCED.has(item.id))
+    : ACTIVITY_ITEMS;
+  const advanced = arduinoMode
+    ? ACTIVITY_ITEMS.filter((item) => ARDUINO_ADVANCED.has(item.id))
+    : [];
+
+  const advancedActive =
+    arduinoMode &&
+    sidebarVisible &&
+    ARDUINO_ADVANCED.has(activeActivity);
+
+  const renderItem = (item: (typeof ACTIVITY_ITEMS)[number]) => {
+    const Icon = ACTIVITY_ICONS[item.id];
+    const isActive = sidebarVisible && activeActivity === item.id;
+    const label = t(item.labelKey);
+
+    return (
+      <button
+        key={item.id}
+        type="button"
+        title={t(item.titleKey)}
+        aria-label={label}
+        aria-pressed={isActive}
+        onClick={() => {
+          toggleActivity(item.id);
+          setMoreOpen(false);
+        }}
+        className={cn(
+          "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors",
+          "hover:text-aether-fg",
+          isActive && "text-aether-fg",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
+            isActive ? "opacity-100" : "opacity-0",
+          )}
+        />
+        <Icon size={22} strokeWidth={1.5} />
+      </button>
+    );
+  };
 
   return (
     <aside
@@ -39,35 +95,62 @@ export function ActivityBar() {
       aria-label={t("activity.bar")}
     >
       <nav data-aether-chrome className="flex flex-1 flex-col items-center gap-0.5">
-        {ACTIVITY_ITEMS.map((item) => {
-          const Icon = ACTIVITY_ICONS[item.id];
-          const isActive = sidebarVisible && activeActivity === item.id;
-          const label = t(item.labelKey);
+        {primary.map(renderItem)}
 
-          return (
+        {arduinoMode && advanced.length > 0 && (
+          <div className="relative">
             <button
-              key={item.id}
               type="button"
-              title={t(item.titleKey)}
-              aria-label={label}
-              aria-pressed={isActive}
-              onClick={() => toggleActivity(item.id)}
+              title={t("activity.moreTitle")}
+              aria-label={t("activity.more")}
+              aria-expanded={moreOpen}
+              onClick={() => setMoreOpen((v) => !v)}
               className={cn(
-                "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors",
-                "hover:text-aether-fg",
-                isActive && "text-aether-fg",
+                "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg",
+                (moreOpen || advancedActive) && "text-aether-fg",
               )}
             >
               <span
                 className={cn(
                   "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
-                  isActive ? "opacity-100" : "opacity-0",
+                  moreOpen || advancedActive ? "opacity-100" : "opacity-0",
                 )}
               />
-              <Icon size={22} strokeWidth={1.5} />
+              <Ellipsis size={22} strokeWidth={1.5} />
             </button>
-          );
-        })}
+            {moreOpen && (
+              <div
+                className="absolute left-full top-0 z-40 ml-1 flex flex-col gap-0.5 rounded border border-aether-border bg-aether-surface p-1 shadow-lg"
+                role="menu"
+              >
+                {advanced.map((item) => {
+                  const Icon = ACTIVITY_ICONS[item.id];
+                  const isActive =
+                    sidebarVisible && activeActivity === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="menuitem"
+                      title={t(item.titleKey)}
+                      onClick={() => {
+                        toggleActivity(item.id);
+                        setMoreOpen(false);
+                      }}
+                      className={cn(
+                        "flex h-9 items-center gap-2 rounded px-2 text-xs text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg",
+                        isActive && "bg-aether-accent-muted text-aether-fg",
+                      )}
+                    >
+                      <Icon size={16} strokeWidth={1.5} />
+                      {t(item.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       <button

@@ -23,6 +23,10 @@ export function SettingsDialog() {
   const open = useSettingsStore((s) => s.settingsOpen);
   const closeSettings = useSettingsStore((s) => s.closeSettings);
   const consumeInitialTab = useSettingsStore((s) => s.consumeInitialTab);
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
+  const arduinoMode = useSettingsStore((s) => s.arduinoMode);
+  const setArduinoMode = useSettingsStore((s) => s.setArduinoMode);
   const sketchMode = useSettingsStore((s) => s.sketchMode);
   const showAllFiles = useSettingsStore((s) => s.showAllFiles);
   const setSketchMode = useSettingsStore((s) => s.setSketchMode);
@@ -185,7 +189,43 @@ export function SettingsDialog() {
                     <option value="en">{t("settings.language.en")}</option>
                   </select>
                 </label>
-                <label className="flex items-start justify-between gap-3">
+
+                <div className="space-y-2 border-t border-aether-border pt-3">
+                  <p className="font-medium text-aether-fg">
+                    {t("settings.appearance")}
+                  </p>
+                  <label className="flex items-center justify-between gap-3">
+                    <span className="text-aether-fg">{t("settings.theme")}</span>
+                    <select
+                      value={theme}
+                      onChange={(e) =>
+                        setTheme(e.target.value === "light" ? "light" : "dark")
+                      }
+                      className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
+                    >
+                      <option value="dark">{t("settings.theme.dark")}</option>
+                      <option value="light">{t("settings.theme.light")}</option>
+                    </select>
+                  </label>
+                  <label className="flex items-start justify-between gap-3">
+                    <span className="space-y-0.5">
+                      <span className="block text-aether-fg">
+                        {t("settings.arduinoMode")}
+                      </span>
+                      <span className="block text-[11px] text-aether-fg-muted">
+                        {t("settings.arduinoModeHint")}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={arduinoMode}
+                      onChange={(e) => setArduinoMode(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                  </label>
+                </div>
+
+                <label className="flex items-start justify-between gap-3 border-t border-aether-border pt-3">
                   <span className="space-y-0.5">
                     <span className="block text-aether-fg">
                       {t("sketch.mode")}

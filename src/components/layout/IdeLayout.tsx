@@ -11,6 +11,7 @@ import { useWorkspaceWatcher } from "@/hooks/useWorkspaceWatcher";
 import { UnlockGate } from "@/components/editor/UnlockGate";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { CommandPalette } from "@/components/palette/CommandPalette";
 import { ToolsDoctorBanner } from "@/components/platformio/ToolsDoctorBanner";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
@@ -39,14 +40,19 @@ export function IdeLayout() {
 
   const newProjectSignal = usePaletteStore((s) => s.newProjectSignal);
   const openExampleSignal = usePaletteStore((s) => s.openExampleSignal);
+  const onboardingSignal = usePaletteStore((s) => s.onboardingSignal);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [examplesOpen, setExamplesOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   useEffect(() => {
     if (newProjectSignal > 0) setNewProjectOpen(true);
   }, [newProjectSignal]);
   useEffect(() => {
     if (openExampleSignal > 0) setExamplesOpen(true);
   }, [openExampleSignal]);
+  useEffect(() => {
+    if (onboardingSignal > 0) setOnboardingOpen(true);
+  }, [onboardingSignal]);
 
   // Quiet update check on desktop startup — dialog only if an update is available.
   useEffect(() => {
@@ -103,6 +109,10 @@ export function IdeLayout() {
       <OpenExamplesDialog
         open={examplesOpen}
         onClose={() => setExamplesOpen(false)}
+      />
+      <OnboardingWizard
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChartLine, Eraser, Plug, PlugZap, RefreshCw, Send } from "lucide-react";
+import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { useI18n } from "@/hooks/useI18n";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
@@ -163,6 +164,14 @@ export function SerialMonitor() {
           Autoscroll
         </label>
       </div>
+
+      {(ports.length === 0 || error) && (
+        <ComDriversHelp
+          compact
+          portsEmpty={ports.length === 0}
+          error={error}
+        />
+      )}
 
       <div
         ref={logRef}

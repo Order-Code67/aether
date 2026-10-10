@@ -30,8 +30,55 @@ export const en = {
   "welcome.openDemo": "Open Demo Workspace",
   "welcome.openInVsCode": "Open in VS Code",
   "welcome.generateVsCode": "Generate VS Code config…",
+  "welcome.quickStart": "Quick start (60s)",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
+  "onboarding.title": "Quick start",
+  "onboarding.subtitle": "Board → COM port → Blink → Upload in about a minute.",
+  "onboarding.step.board": "1. Choose board",
+  "onboarding.step.port": "2. Select COM port",
+  "onboarding.step.project": "3. Create or open Blink starter",
+  "onboarding.step.upload": "4. Build + Upload",
+  "onboarding.noPorts":
+    "No ports yet — plug in the board and refresh. See driver help if the list stays empty.",
+  "onboarding.projectHint":
+    "Create a Blink project for the selected board, or open the bundled example.",
+  "onboarding.projectReady": "Project ready: {path}",
+  "onboarding.createBlink": "Create Blink project…",
+  "onboarding.openExample": "Open Blink example",
+  "onboarding.uploadHint":
+    "Uses the selected COM port. Output opens so you can watch progress.",
+  "onboarding.buildUpload": "Build + Upload",
+  "onboarding.needDesktop": "Quick start needs the desktop app.",
+  "onboarding.needProject": "Create or open a Blink project first.",
+  "onboarding.needPort": "Select a COM port first.",
+  "onboarding.projectFailed": "Could not open the Blink starter.",
+  "onboarding.skip": "Skip",
+  "onboarding.finish": "Done",
+  "onboarding.progressHint": "Complete the steps above — checklist ticks as you go.",
+  "onboarding.completedNotice": "Quick start complete.",
+  "drivers.portExistsWontOpen": "port listed, will not open",
+  "drivers.portMissing": "port not visible to the OS",
+  "activity.more": "More",
+  "activity.moreTitle": "Advanced panels (Extensions, AI, Source Control…)",
+  "settings.appearance": "Appearance",
+  "settings.theme": "Theme",
+  "settings.theme.dark": "Dark",
+  "settings.theme.light": "Light",
+  "settings.arduinoMode": "Arduino simplified UI",
+  "settings.arduinoModeHint":
+    "Hides advanced activity icons behind More, keeps Sketch mode on, emphasizes Serial and Output.",
+  "libraries.tab.platformio": "PlatformIO",
+  "libraries.tab.arduino": "Arduino",
+  "libraries.tab.github": "GitHub",
+  "libraries.arduinoHint":
+    "Arduino Library Manager style — PlatformIO registry filtered to framework=arduino, plus popular Arduino libs.",
+  "libraries.arduinoEmpty":
+    "Search for an Arduino library (e.g. Servo, Adafruit GFX) or tap a popular chip.",
+  "libraries.githubTabHint":
+    "Install a library from GitHub into lib_deps via pio pkg install.",
+  "libraries.githubEmptyState":
+    "Paste owner/repo or a GitHub HTTPS URL, then Install.",
   "vscode.needDesktop": "VS Code integration requires the desktop app.",
   "vscode.needFolder": "Open a project folder first.",
   "vscode.needFolderHint":

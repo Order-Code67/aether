@@ -7,8 +7,12 @@ import {
   MergeConflictEditor,
 } from "@/components/merge/MergeConflictEditor";
 import { BuildToolbar } from "@/components/platformio/BuildToolbar";
+import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { conflictCount, hasConflictMarkers } from "@/lib/mergeConflict";
 import { useEditorStore } from "@/stores/editorStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSerialStore } from "@/stores/serialStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function EditorArea() {
   const hasTabs = useEditorStore((s) => s.tabs.length > 0);
@@ -16,6 +20,10 @@ export function EditorArea() {
     const id = s.activeTabId;
     return s.tabs.find((t) => t.id === id) ?? null;
   });
+  const isProject = usePlatformIoStore((s) => s.isProject);
+  const pioError = usePlatformIoStore((s) => s.error);
+  const ports = useSerialStore((s) => s.ports);
+  const kind = useWorkspaceStore((s) => s.kind);
   const [showResolver, setShowResolver] = useState(true);
 
   const conflicts = activeTab ? conflictCount(activeTab.content) : 0;
@@ -37,6 +45,13 @@ export function EditorArea() {
     >
       <EditorTabs />
       <BuildToolbar />
+      {kind === "folder" && isProject && (ports.length === 0 || pioError) && (
+        <ComDriversHelp
+          compact
+          portsEmpty={ports.length === 0}
+          error={pioError}
+        />
+      )}
       <DebugToolbar />
       {hasTabs && <EditorEncryptBar />}
       {hasTabs && conflicted && (

@@ -8,8 +8,21 @@ import { SerialPlotter } from "@/components/serial/SerialPlotter";
 import { TerminalView } from "@/components/terminal/TerminalView";
 import { useI18n } from "@/hooks/useI18n";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { BOTTOM_PANEL_TABS, type BottomPanelTab } from "@/types/layout";
 import { cn } from "@/lib/cn";
+
+const ARDUINO_PRIMARY: ReadonlySet<BottomPanelTab> = new Set([
+  "serial",
+  "output",
+]);
+
+function orderedTabs(arduinoMode: boolean) {
+  if (!arduinoMode) return [...BOTTOM_PANEL_TABS];
+  const primary = BOTTOM_PANEL_TABS.filter((t) => ARDUINO_PRIMARY.has(t.id));
+  const rest = BOTTOM_PANEL_TABS.filter((t) => !ARDUINO_PRIMARY.has(t.id));
+  return [...primary, ...rest];
+}
 
 export function BottomPanel() {
   const { t } = useI18n();
@@ -19,6 +32,8 @@ export function BottomPanel() {
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
   const setBottomPanelVisible = useLayoutStore((s) => s.setBottomPanelVisible);
   const toggleBottomPanel = useLayoutStore((s) => s.toggleBottomPanel);
+  const arduinoMode = useSettingsStore((s) => s.arduinoMode);
+  const tabs = orderedTabs(arduinoMode);
 
   // Keep heavy panels mounted after first visit so PTY/serial sessions survive tab switches
   // and panel collapse (hidden ≠ unmounted).
@@ -38,12 +53,17 @@ export function BottomPanel() {
       {!visible && (
         <div className="flex h-8 shrink-0 items-center border-t border-aether-border bg-aether-surface px-2">
           <div className="flex items-center gap-1">
-            {BOTTOM_PANEL_TABS.map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => visit(tab.id)}
-                className="px-2 py-1 text-[11px] uppercase tracking-wide text-aether-fg-muted transition-colors hover:text-aether-fg"
+                className={cn(
+                  "px-2 py-1 text-[11px] uppercase tracking-wide transition-colors hover:text-aether-fg",
+                  arduinoMode && ARDUINO_PRIMARY.has(tab.id)
+                    ? "font-semibold text-aether-fg-muted"
+                    : "text-aether-fg-dim",
+                )}
               >
                 {t(tab.labelKey)}
               </button>
@@ -72,8 +92,10 @@ export function BottomPanel() {
       >
         <header className="flex h-8 shrink-0 items-center border-b border-aether-border px-2">
           <div className="flex items-center gap-0.5" role="tablist">
-            {BOTTOM_PANEL_TABS.map((tab) => {
+            {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
+              const primary =
+                arduinoMode && ARDUINO_PRIMARY.has(tab.id);
               return (
                 <button
                   key={tab.id}
@@ -85,7 +107,9 @@ export function BottomPanel() {
                     "relative px-2.5 py-1 text-[11px] uppercase tracking-wide transition-colors",
                     isActive
                       ? "text-aether-fg"
-                      : "text-aether-fg-muted hover:text-aether-fg",
+                      : primary
+                        ? "font-semibold text-aether-fg-muted hover:text-aether-fg"
+                        : "text-aether-fg-dim hover:text-aether-fg-muted",
                   )}
                 >
                   {t(tab.labelKey)}

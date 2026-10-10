@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.2.12 — 2026-10-11
+
+- **Quick start (60s)** — guided onboarding: board → COM port → Blink starter → Build+Upload; Welcome CTA + Help / Command Palette («Быстрый старт»); dismiss/complete persisted
+- **COM drivers help** — banner when ports are empty or open/upload hits access-denied / device-not-found; CH340, CP210x, Windows Optional Features links (no silent unsigned driver install); Serial, Upload/Output, Build toolbar
+- **Libraries tabs** — PlatformIO | Arduino | GitHub; Arduino tab uses framework=arduino registry search + popular Arduino libs
+- **Light theme** — Settings → Appearance Light/Dark (default remains dark); applied via `data-theme` on `<html>`
+- **Arduino simplified UI** — Settings toggle: advanced activity icons behind More, Sketch mode preferred, Serial + Output emphasized
+- Updater Windows install mode set to **quiet** (silent)
+
 ## 0.2.11 — 2026-10-11
 
 - **Open in VS Code (Windows)** — stop using `CREATE_NO_WINDOW` for `Code.exe`; launch via `cmd /C start "" Code.exe folder` so the GUI appears

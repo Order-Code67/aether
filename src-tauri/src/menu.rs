@@ -106,6 +106,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
         "Help",
         true,
         &[
+            &MenuItem::with_id(app, "help.quickStart", "Quick start", true, None::<&str>)?,
             &MenuItem::with_id(app, "pio.doctor", "Check Tools…", true, None::<&str>)?,
             &MenuItem::with_id(
                 app,

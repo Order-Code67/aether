@@ -1,19 +1,35 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { detectDefaultLocale, type Locale } from "@/i18n";
+import { applyTheme, type ThemeId } from "@/lib/theme";
 
 export type WordWrapSetting = "on" | "off" | "wordWrapColumn";
+export type { ThemeId };
 
-export type SettingsTabId = "general" | "editor" | "agent" | "tools" | "about";
+export type SettingsTabId =
+  | "general"
+  | "editor"
+  | "agent"
+  | "tools"
+  | "about";
 
 interface SettingsState {
   settingsOpen: boolean;
   initialTab: SettingsTabId | null;
   locale: Locale;
+  /** UI theme. Default dark for existing users. */
+  theme: ThemeId;
+  /**
+   * Simplified Arduino-oriented density: hide advanced activity items,
+   * prefer Sketch mode, emphasize Serial + Output.
+   */
+  arduinoMode: boolean;
   /** Arduino-like Explorer: emphasize main sketch, hide .pio clutter. Default ON. */
   sketchMode: boolean;
   /** When Sketch mode is on, still show the full file tree. */
   showAllFiles: boolean;
+  /** True after Quick Start finished or user dismissed it. */
+  onboardingDone: boolean;
   fontSize: number;
   tabSize: number;
   minimap: boolean;
@@ -28,8 +44,11 @@ interface SettingsState {
   toggleSettings: () => void;
   consumeInitialTab: () => SettingsTabId | null;
   setLocale: (locale: Locale) => void;
+  setTheme: (theme: ThemeId) => void;
+  setArduinoMode: (v: boolean) => void;
   setSketchMode: (v: boolean) => void;
   setShowAllFiles: (v: boolean) => void;
+  setOnboardingDone: (v: boolean) => void;
   setFontSize: (n: number) => void;
   setTabSize: (n: number) => void;
   setMinimap: (v: boolean) => void;
@@ -60,8 +79,11 @@ export const useSettingsStore = create<SettingsState>()(
       settingsOpen: false,
       initialTab: null,
       locale: detectDefaultLocale(),
+      theme: "dark",
+      arduinoMode: false,
       sketchMode: true,
       showAllFiles: false,
+      onboardingDone: false,
       ...EDITOR_DEFAULTS,
       notice: null,
 
@@ -80,8 +102,19 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setLocale: (locale) => set({ locale }),
+      setTheme: (theme) => {
+        applyTheme(theme);
+        set({ theme });
+      },
+      setArduinoMode: (v) =>
+        set((s) => ({
+          arduinoMode: v,
+          // Prefer Sketch mode when entering Arduino simplified UI.
+          sketchMode: v ? true : s.sketchMode,
+        })),
       setSketchMode: (v) => set({ sketchMode: v }),
       setShowAllFiles: (v) => set({ showAllFiles: v }),
+      setOnboardingDone: (v) => set({ onboardingDone: v }),
 
       clearNotice: () => set({ notice: null }),
       flashNotice: (message, ms = 2800) => {
@@ -108,8 +141,11 @@ export const useSettingsStore = create<SettingsState>()(
       name: "aether-settings",
       partialize: (state) => ({
         locale: state.locale,
+        theme: state.theme,
+        arduinoMode: state.arduinoMode,
         sketchMode: state.sketchMode,
         showAllFiles: state.showAllFiles,
+        onboardingDone: state.onboardingDone,
         fontSize: state.fontSize,
         tabSize: state.tabSize,
         minimap: state.minimap,
@@ -118,6 +154,10 @@ export const useSettingsStore = create<SettingsState>()(
         lineNumbers: state.lineNumbers,
         renderWhitespace: state.renderWhitespace,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.theme) applyTheme(state.theme);
+      },
     },
   ),
 );
+

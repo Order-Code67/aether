@@ -12,12 +12,15 @@ interface PaletteState {
   newProjectSignal: number;
   /** One-shot flag consumed by IdeLayout for Open Examples dialog */
   openExampleSignal: number;
+  /** One-shot flag consumed by IdeLayout for Quick Start onboarding */
+  onboardingSignal: number;
   open: (mode?: PaletteMode) => void;
   close: () => void;
   setQuery: (query: string) => void;
   rememberCommand: (id: string) => void;
   requestNewProject: () => void;
   requestOpenExample: () => void;
+  requestOnboarding: () => void;
 }
 
 export const usePaletteStore = create<PaletteState>()(
@@ -29,6 +32,7 @@ export const usePaletteStore = create<PaletteState>()(
       recentCommandIds: [],
       newProjectSignal: 0,
       openExampleSignal: 0,
+      onboardingSignal: 0,
 
       open: (mode = "commands") => set({ isOpen: true, mode, query: "" }),
 
@@ -49,6 +53,9 @@ export const usePaletteStore = create<PaletteState>()(
 
       requestOpenExample: () =>
         set((s) => ({ openExampleSignal: s.openExampleSignal + 1 })),
+
+      requestOnboarding: () =>
+        set((s) => ({ onboardingSignal: s.onboardingSignal + 1 })),
     }),
     {
       name: "aether-palette",

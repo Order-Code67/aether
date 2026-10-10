@@ -69,6 +69,18 @@ export function getCommands(): Command[] {
       },
     },
     {
+      id: "help.quickStart",
+      title:
+        useSettingsStore.getState().locale === "ru"
+          ? "Быстрый старт"
+          : "Quick start",
+      category: "Settings",
+      keywords: "onboarding wizard 60s быстрый старт quick start",
+      run: () => {
+        usePaletteStore.getState().requestOnboarding();
+      },
+    },
+    {
       id: "file.openExample",
       title: "Examples…",
       category: "File",

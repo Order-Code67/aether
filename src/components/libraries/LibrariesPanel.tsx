@@ -155,6 +155,8 @@ function entrySpec(entry: PioLibEntry): string {
   return entry.owner ? `${entry.owner}/${entry.name}` : entry.name;
 }
 
+type LibManagerTab = "platformio" | "arduino" | "github";
+
 export function LibrariesPanel() {
   const { t } = useI18n();
   const locale = useSettingsStore((s) => s.locale);
@@ -167,6 +169,7 @@ export function LibrariesPanel() {
   const toggleFavorite = useLibrariesPrefsStore((s) => s.toggleFavorite);
   const isFavorite = useLibrariesPrefsStore((s) => s.isFavorite);
   const pushRecent = useLibrariesPrefsStore((s) => s.pushRecent);
+  const [managerTab, setManagerTab] = useState<LibManagerTab>("platformio");
   const [query, setQuery] = useState("");
   const [githubInput, setGithubInput] = useState("");
   const [preset, setPreset] = useState<PlatformPreset>("all");
@@ -178,11 +181,16 @@ export function LibrariesPanel() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const chip: PlatformChip = useMemo(() => {
-    return PLATFORM_CHIPS.find((c) => c.id === preset) ?? PLATFORM_CHIPS[0]!;
-  }, [preset]);
+  const effectivePreset: PlatformPreset =
+    managerTab === "arduino" ? "arduino" : preset;
 
-  const popular = POPULAR[preset];
+  const chip: PlatformChip = useMemo(() => {
+    return (
+      PLATFORM_CHIPS.find((c) => c.id === effectivePreset) ?? PLATFORM_CHIPS[0]!
+    );
+  }, [effectivePreset]);
+
+  const popular = POPULAR[effectivePreset];
 
   const isEsp32Context =
     preset === "esp32" || /esp32/i.test(selectedEnv || "");
@@ -462,8 +470,61 @@ export function LibrariesPanel() {
         </button>
       </header>
 
+      <div className="mx-3 mb-2 flex rounded border border-aether-border p-0.5">
+        {(
+          [
+            ["platformio", "libraries.tab.platformio"],
+            ["arduino", "libraries.tab.arduino"],
+            ["github", "libraries.tab.github"],
+          ] as const
+        ).map(([id, labelKey]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setManagerTab(id);
+              setError(null);
+              if (id === "arduino") {
+                setPreset("arduino");
+                void (async () => {
+                  if (!isTauriRuntime()) return;
+                  setLoading(true);
+                  setHasSearched(true);
+                  try {
+                    const entries = await searchPioLibraries({
+                      query: query.trim(),
+                      platform: null,
+                      framework: "arduino",
+                      pages: 2,
+                    });
+                    setResults(entries);
+                  } catch (err) {
+                    setResults([]);
+                    setError(mapLibError(err));
+                  } finally {
+                    setLoading(false);
+                  }
+                })();
+              }
+            }}
+            className={cn(
+              "min-w-0 flex-1 rounded px-1.5 py-1 text-[11px]",
+              managerTab === id
+                ? "bg-aether-accent-muted text-aether-fg"
+                : "text-aether-fg-muted hover:text-aether-fg",
+            )}
+          >
+            {t(labelKey)}
+          </button>
+        ))}
+      </div>
+
       <p className="px-3 pb-2 text-[11px] leading-relaxed text-aether-fg-dim">
-        {t("libraries.hint")}
+        {managerTab === "arduino"
+          ? t("libraries.arduinoHint")
+          : managerTab === "github"
+            ? t("libraries.githubTabHint")
+            : t("libraries.hint")}
       </p>
 
       {!isProject || !rootPath ? (
@@ -483,93 +544,101 @@ export function LibrariesPanel() {
             </p>
           ) : null}
 
-          <div className="flex flex-wrap gap-1 px-3 pb-2">
-            {PLATFORM_CHIPS.map((c) => (
+          {managerTab === "platformio" && (
+            <div className="flex flex-wrap gap-1 px-3 pb-2">
+              {PLATFORM_CHIPS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  title={t(c.labelKey)}
+                  onClick={() => selectPreset(c.id)}
+                  className={cn(
+                    "rounded border px-2 py-0.5 text-[11px]",
+                    preset === c.id
+                      ? "border-aether-accent bg-aether-accent-muted text-aether-fg"
+                      : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
+                  )}
+                >
+                  {t(c.labelKey)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {managerTab !== "github" && (
+            <form
+              className="flex gap-1 px-3 pb-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void runSearch();
+              }}
+            >
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  size={12}
+                  className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-aether-fg-dim"
+                />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t("libraries.search")}
+                  className="h-7 w-full rounded border border-aether-border bg-aether-bg py-1 pl-7 pr-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
+                />
+              </div>
               <button
-                key={c.id}
-                type="button"
-                title={t(c.labelKey)}
-                onClick={() => selectPreset(c.id)}
-                className={cn(
-                  "rounded border px-2 py-0.5 text-[11px]",
-                  preset === c.id
-                    ? "border-aether-accent bg-aether-accent-muted text-aether-fg"
-                    : "border-aether-border text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
-                )}
+                type="submit"
+                disabled={loading || (!query.trim() && !chipHasFilter(chip))}
+                className="h-7 shrink-0 rounded border border-aether-accent bg-aether-accent px-2 text-[11px] text-white disabled:opacity-40"
               >
-                {t(c.labelKey)}
+                {t("libraries.searchBtn")}
               </button>
-            ))}
-          </div>
+            </form>
+          )}
 
-          <form
-            className="flex gap-1 px-3 pb-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void runSearch();
-            }}
-          >
-            <div className="relative min-w-0 flex-1">
-              <Search
-                size={12}
-                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-aether-fg-dim"
-              />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("libraries.search")}
-                className="h-7 w-full rounded border border-aether-border bg-aether-bg py-1 pl-7 pr-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading || (!query.trim() && !chipHasFilter(chip))}
-              className="h-7 shrink-0 rounded border border-aether-accent bg-aether-accent px-2 text-[11px] text-white disabled:opacity-40"
-            >
-              {t("libraries.searchBtn")}
-            </button>
-          </form>
-
-          <form
-            className="flex gap-1 px-3 pb-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              installFromGithub();
-            }}
-          >
-            <div className="relative min-w-0 flex-1">
-              <GitBranch
-                size={12}
-                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-aether-fg-dim"
-              />
-              <input
-                value={githubInput}
-                onChange={(e) => setGithubInput(e.target.value)}
-                placeholder={t("libraries.githubPlaceholder")}
-                title={t("libraries.githubHint")}
-                className="h-7 w-full rounded border border-aether-border bg-aether-bg py-1 pl-7 pr-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={
-                busyId?.startsWith("github:") || !githubInput.trim()
-              }
-              className="h-7 shrink-0 rounded border border-aether-border bg-aether-surface px-2 text-[11px] text-aether-fg hover:border-aether-accent disabled:opacity-40"
-            >
-              {busyId?.startsWith("github:") ? (
-                <span className="inline-flex items-center gap-1">
-                  <Loader2 size={10} className="animate-spin" />
-                  {t("libraries.installing")}
-                </span>
-              ) : (
-                t("libraries.githubInstall")
-              )}
-            </button>
-          </form>
-          <p className="px-3 pb-2 text-[10px] leading-relaxed text-aether-fg-dim">
-            {t("libraries.githubHint")}
-          </p>
+          {managerTab === "github" && (
+            <>
+              <form
+                className="flex gap-1 px-3 pb-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  installFromGithub();
+                }}
+              >
+                <div className="relative min-w-0 flex-1">
+                  <GitBranch
+                    size={12}
+                    className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-aether-fg-dim"
+                  />
+                  <input
+                    value={githubInput}
+                    onChange={(e) => setGithubInput(e.target.value)}
+                    placeholder={t("libraries.githubPlaceholder")}
+                    title={t("libraries.githubHint")}
+                    className="h-7 w-full rounded border border-aether-border bg-aether-bg py-1 pl-7 pr-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={
+                    busyId?.startsWith("github:") || !githubInput.trim()
+                  }
+                  className="h-7 shrink-0 rounded border border-aether-border bg-aether-surface px-2 text-[11px] text-aether-fg hover:border-aether-accent disabled:opacity-40"
+                >
+                  {busyId?.startsWith("github:") ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Loader2 size={10} className="animate-spin" />
+                      {t("libraries.installing")}
+                    </span>
+                  ) : (
+                    t("libraries.githubInstall")
+                  )}
+                </button>
+              </form>
+              <p className="px-3 pb-2 text-[10px] leading-relaxed text-aether-fg-dim">
+                {t("libraries.githubEmptyState")}
+              </p>
+            </>
+          )}
 
           {showServoHint && (
             <div className="mx-3 mb-2 rounded border border-aether-accent/40 bg-aether-accent-muted/40 px-2 py-1.5 text-[11px] leading-relaxed text-aether-fg">
@@ -620,6 +689,7 @@ export function LibrariesPanel() {
             </div>
           )}
 
+          {managerTab !== "github" && (
           <div className="px-3 pb-2">
             <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
               {t("libraries.popular")}
@@ -684,6 +754,7 @@ export function LibrariesPanel() {
               })}
             </div>
           </div>
+          )}
 
           {error && (
             <p
@@ -765,15 +836,18 @@ export function LibrariesPanel() {
               </p>
             )}
 
-            {!loading && results.length === 0 && (
+            {managerTab !== "github" && !loading && results.length === 0 && (
               <p className="px-3 py-3 text-xs text-aether-fg-dim">
                 {hasSearched || query.trim()
                   ? t("libraries.noResults")
-                  : t("libraries.empty")}
+                  : managerTab === "arduino"
+                    ? t("libraries.arduinoEmpty")
+                    : t("libraries.empty")}
               </p>
             )}
 
-            {results.map((entry) => {
+            {managerTab !== "github" &&
+            results.map((entry) => {
               const spec = entrySpec(entry);
               const installedHit = isInstalledEntry(entry);
               const installBusy = busyId === entry.id;
@@ -880,3 +954,4 @@ export function LibrariesPanel() {
     </div>
   );
 }
+

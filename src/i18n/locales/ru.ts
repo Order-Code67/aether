@@ -33,8 +33,57 @@ export const ru: Record<MessageKey, string> = {
   "welcome.openDemo": "Демо-рабочая область",
   "welcome.openInVsCode": "Открыть в VS Code",
   "welcome.generateVsCode": "Создать конфиг VS Code…",
+  "welcome.quickStart": "Быстрый старт (60 с)",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
+  "onboarding.title": "Быстрый старт",
+  "onboarding.subtitle":
+    "Плата → COM-порт → Blink → загрузка примерно за минуту.",
+  "onboarding.step.board": "1. Выберите плату",
+  "onboarding.step.port": "2. Выберите COM-порт",
+  "onboarding.step.project": "3. Создайте или откройте Blink",
+  "onboarding.step.upload": "4. Сборка + загрузка",
+  "onboarding.noPorts":
+    "Портов пока нет — подключите плату и обновите список. Если пусто — см. подсказку по драйверам.",
+  "onboarding.projectHint":
+    "Создайте проект Blink для выбранной платы или откройте встроенный пример.",
+  "onboarding.projectReady": "Проект готов: {path}",
+  "onboarding.createBlink": "Создать проект Blink…",
+  "onboarding.openExample": "Открыть пример Blink",
+  "onboarding.uploadHint":
+    "Используется выбранный COM-порт. Откроется Вывод, чтобы следить за прогрессом.",
+  "onboarding.buildUpload": "Сборка + загрузка",
+  "onboarding.needDesktop": "Быстрый старт доступен в десктопном приложении.",
+  "onboarding.needProject": "Сначала создайте или откройте проект Blink.",
+  "onboarding.needPort": "Сначала выберите COM-порт.",
+  "onboarding.projectFailed": "Не удалось открыть стартовый Blink.",
+  "onboarding.skip": "Пропустить",
+  "onboarding.finish": "Готово",
+  "onboarding.progressHint":
+    "Выполните шаги выше — галочки появляются по мере готовности.",
+  "onboarding.completedNotice": "Быстрый старт завершён.",
+  "drivers.portExistsWontOpen": "порт в списке, но не открывается",
+  "drivers.portMissing": "порт не виден системе",
+  "activity.more": "Ещё",
+  "activity.moreTitle": "Дополнительно (расширения, ИИ, Git…)",
+  "settings.appearance": "Оформление",
+  "settings.theme": "Тема",
+  "settings.theme.dark": "Тёмная",
+  "settings.theme.light": "Светлая",
+  "settings.arduinoMode": "Упрощённый режим Arduino",
+  "settings.arduinoModeHint":
+    "Прячет расширенные иконки за «Ещё», включает режим скетча, выделяет Serial и Вывод.",
+  "libraries.tab.platformio": "PlatformIO",
+  "libraries.tab.arduino": "Arduino",
+  "libraries.tab.github": "GitHub",
+  "libraries.arduinoHint":
+    "Как Arduino Library Manager — реестр PlatformIO с framework=arduino и популярные Arduino-библиотеки.",
+  "libraries.arduinoEmpty":
+    "Найдите библиотеку Arduino (например Servo, Adafruit GFX) или нажмите популярный чип.",
+  "libraries.githubTabHint":
+    "Установка библиотеки с GitHub в lib_deps через pio pkg install.",
+  "libraries.githubEmptyState":
+    "Вставьте owner/repo или HTTPS URL GitHub, затем «Установить».",
   "vscode.needDesktop": "Интеграция с VS Code доступна в десктопном приложении.",
   "vscode.needFolder": "Сначала откройте папку проекта.",
   "vscode.needFolderHint":

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Eraser, Square } from "lucide-react";
+import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
@@ -100,6 +101,7 @@ export function OutputPanel() {
           {error}
         </div>
       )}
+      {error && <ComDriversHelp compact error={error} />}
     </div>
   );
 }

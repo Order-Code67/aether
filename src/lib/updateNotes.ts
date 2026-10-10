@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.12": {
+    en: "Quick start wizard, COM driver help, Arduino library tab, light theme and Arduino simplified UI.",
+    ru: "Быстрый старт, подсказки по драйверам COM, вкладка Arduino в библиотеках, светлая тема и упрощённый режим Arduino.",
+  },
+  "0.2.11": {
+    en: "Open in VS Code launch fix, generate .vscode config, Serial status bar clarity.",
+    ru: "Исправление запуска Open in VS Code, генерация .vscode, понятнее статус Serial в строке состояния.",
+  },
   "0.2.10": {
     en: "VS Code install/launch fix on Windows, detect status in Settings, clearer missing-install hints.",
     ru: "Исправление установки/запуска VS Code на Windows, статус в Настройках, понятные подсказки если не установлен.",

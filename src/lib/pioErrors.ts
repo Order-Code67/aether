@@ -64,11 +64,16 @@ export function friendlyPioError(message: string, locale: Locale): string {
     (lower.includes("the system cannot find the file specified") &&
       (lower.includes("com") || lower.includes("port"))) ||
     lower.includes("cannot configure port") ||
-    lower.includes("device not configured")
+    lower.includes("device not configured") ||
+    lower.includes("the device does not recognize the command") ||
+    lower.includes("a device attached to the system is not functioning") ||
+    lower.includes("device cannot be started") ||
+    lower.includes("error code 43") ||
+    lower.includes("error code 10")
   ) {
     return ru
-      ? "Не удалось открыть COM-порт. Проверьте кабель, установите драйвер CH340/CP210x (см. подсказку в баннере инструментов) и выберите правильный порт."
-      : "Could not open the serial port. Check the cable, install CH340/CP210x drivers (see Tools Doctor), and select the correct port.";
+      ? "Не удалось открыть COM-порт. Проверьте кабель, установите драйвер CH340/CP210x (см. подсказку у Serial / при загрузке) и выберите правильный порт."
+      : "Could not open the serial port. Check the cable, install CH340/CP210x drivers (see the help near Serial / Upload), and select the correct port.";
   }
 
   // Port not found
