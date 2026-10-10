@@ -239,6 +239,32 @@ export const en = {
   "common.error": "Error",
   "common.loading": "Loading…",
   "common.refresh": "Refresh",
+  "settings.stack":
+    "Stack: Tauri 2 · React 19 · TypeScript · Monaco · PlatformIO · clangd · GDB MI · Git",
+  "settings.shortcutsHint":
+    "Command Palette: Ctrl+Shift+P · Quick Open: Ctrl+P",
+  "support.copyReport": "Copy support report",
+  "support.copied": "Support report copied",
+  "support.copyFailed": "Could not copy support report",
+  "updater.section": "Updates",
+  "updater.title": "Update available",
+  "updater.version": "Version {version}",
+  "updater.hint": "Click Check for Updates to query the release feed.",
+  "updater.check": "Check for Updates",
+  "updater.checking": "Checking for updates…",
+  "updater.uptodate": "You are on the latest version.",
+  "updater.unavailable": "Update feed not available yet.",
+  "updater.available": "Update available: v{version}",
+  "updater.downloading": "Downloading…",
+  "updater.downloadingPct": "Downloading… {pct}%",
+  "updater.ready": "Installed. Relaunching…",
+  "updater.failed": "Update failed.",
+  "updater.install": "Download & Install",
+  "updater.later": "Later",
+  "updater.lastCheck": "Last check: {time}",
+  "updater.neverChecked": "Not checked yet this session.",
+  "updater.feedHint":
+    "Signed updates via Tauri updater. Feed: GitHub Releases latest.json (see docs/UPDATES.md).",
 } as const;
 
 export type MessageKey = keyof typeof en;

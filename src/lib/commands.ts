@@ -377,8 +377,25 @@ export function getCommands(): Command[] {
       run: () => {
         useSettingsStore.getState().openSettings("about");
         void import("@/stores/updaterStore").then(({ useUpdaterStore }) => {
-          void useUpdaterStore.getState().check();
+          void useUpdaterStore.getState().check({ openDialog: true });
         });
+      },
+    },
+    {
+      id: "help.copySupportReport",
+      title: "Help: Copy Support Report",
+      category: "Settings",
+      keywords: "support report clipboard диагностический отчёт",
+      run: async () => {
+        const { buildSupportReportText } = await import("@/lib/supportReport");
+        const { copyTextToClipboard } = await import("@/lib/clipboard");
+        const { t } = await import("@/hooks/useI18n");
+        const locale = useSettingsStore.getState().locale;
+        const text = await buildSupportReportText(locale);
+        const ok = await copyTextToClipboard(text);
+        useSettingsStore
+          .getState()
+          .flashNotice(ok ? t("support.copied") : t("support.copyFailed"));
       },
     },
   ];

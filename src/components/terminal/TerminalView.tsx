@@ -4,6 +4,10 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import { RotateCcw } from "lucide-react";
 import {
+  applyXtermStdinEnabled,
+  terminalFocusOptions,
+} from "@/lib/focusPolicy";
+import {
   canUseNativeTerminal,
   closeTerminal,
   createTerminal,
@@ -15,23 +19,8 @@ import {
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 interface TerminalViewProps {
-  /** When false, keep session alive but skip fit churn. */
+  /** When false, keep session alive but skip fit churn / stdin. */
   active?: boolean;
-}
-
-function setXtermStdinEnabled(host: HTMLElement | null, enabled: boolean) {
-  const textarea = host?.querySelector(
-    "textarea.xterm-helper-textarea",
-  ) as HTMLTextAreaElement | null;
-  if (!textarea) return;
-  if (enabled) {
-    textarea.readOnly = false;
-    textarea.tabIndex = 0;
-  } else {
-    textarea.readOnly = true;
-    textarea.tabIndex = -1;
-    textarea.blur();
-  }
 }
 
 export function TerminalView({ active = true }: TerminalViewProps) {
@@ -94,11 +83,11 @@ export function TerminalView({ active = true }: TerminalViewProps) {
     term.open(host);
     fit.fit();
 
-    // Race-safe: boot may finish while another bottom tab is active.
+    // Race-safe: boot may finish while another bottom tab is active / panel hidden.
     if (!activeRef.current) {
       term.blur();
-      term.options.disableStdin = true;
-      setXtermStdinEnabled(host, false);
+      term.options.disableStdin = terminalFocusOptions(false).disableStdin;
+      applyXtermStdinEnabled(host, false);
     }
 
     termRef.current = term;
@@ -186,13 +175,14 @@ export function TerminalView({ active = true }: TerminalViewProps) {
     const host = hostRef.current;
     if (!term) return;
 
-    // Hidden terminals must not keep the xterm helper textarea focused —
-    // otherwise keystrokes never reach Monaco / other inputs.
-    if (!active) {
+    // Hidden / inactive terminals must not keep the xterm helper focused —
+    // otherwise keystrokes never reach Monaco / Search.
+    const policy = terminalFocusOptions(active);
+    if (policy.disableStdin) {
       try {
         term.blur();
         term.options.disableStdin = true;
-        setXtermStdinEnabled(host, false);
+        applyXtermStdinEnabled(host, false);
         const focused = document.activeElement;
         if (focused instanceof HTMLElement && host?.contains(focused)) {
           focused.blur();
@@ -204,7 +194,7 @@ export function TerminalView({ active = true }: TerminalViewProps) {
     }
 
     term.options.disableStdin = false;
-    setXtermStdinEnabled(host, true);
+    applyXtermStdinEnabled(host, true);
     const timer = window.setTimeout(() => {
       try {
         fitRef.current?.fit();
@@ -220,7 +210,10 @@ export function TerminalView({ active = true }: TerminalViewProps) {
   }, [active]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-aether-bg">
+    <div
+      className="flex h-full min-h-0 flex-col bg-aether-bg"
+      data-aether-focus-surface="terminal"
+    >
       <div className="flex h-7 shrink-0 items-center justify-between border-b border-aether-border px-2">
         <span className="truncate text-[11px] text-aether-fg-muted">
           {ready ? "PowerShell" : "Terminal"}

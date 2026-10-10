@@ -18,12 +18,14 @@ import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useProblemsStore } from "@/stores/problemsStore";
 import { useScmStore } from "@/stores/scmStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function StatusBar() {
   const { t } = useI18n();
   const cursor = useEditorStore((s) => s.cursor);
   const saveStatus = useEditorStore((s) => s.saveStatus);
+  const notice = useSettingsStore((s) => s.notice);
   const activeTab = useEditorStore((s) => {
     const id = s.activeTabId;
     return s.tabs.find((tab) => tab.id === id) ?? null;
@@ -226,6 +228,11 @@ export function StatusBar() {
             title={saveLabel}
           >
             {saveLabel}
+          </span>
+        )}
+        {notice && (
+          <span className="truncate opacity-95" title={notice}>
+            {notice}
           </span>
         )}
       </div>

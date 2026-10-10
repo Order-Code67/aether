@@ -19,7 +19,8 @@ export function BottomPanel() {
   const setBottomPanelVisible = useLayoutStore((s) => s.setBottomPanelVisible);
   const toggleBottomPanel = useLayoutStore((s) => s.toggleBottomPanel);
 
-  // Keep heavy panels mounted after first visit so PTY/serial sessions survive tab switches.
+  // Keep heavy panels mounted after first visit so PTY/serial sessions survive tab switches
+  // and panel collapse (hidden ≠ unmounted).
   const [visited, setVisited] = useState<Record<string, boolean>>({
     [activeTab]: true,
   });
@@ -29,160 +30,167 @@ export function BottomPanel() {
     setBottomPanelTab(tab);
   };
 
-  if (!visible) {
-    return (
-      <div className="flex h-8 shrink-0 items-center border-t border-aether-border bg-aether-surface px-2">
-        <div className="flex items-center gap-1">
-          {BOTTOM_PANEL_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => visit(tab.id)}
-              className="px-2 py-1 text-[11px] uppercase tracking-wide text-aether-fg-muted transition-colors hover:text-aether-fg"
-            >
-              {t(tab.labelKey)}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          title="Show Panel"
-          aria-label="Show Panel"
-          onClick={toggleBottomPanel}
-          className="ml-auto flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
-        >
-          <ChevronUp size={14} />
-        </button>
-      </div>
-    );
-  }
+  const terminalActive = visible && activeTab === "terminal";
 
   return (
-    <section
-      className="flex shrink-0 flex-col bg-aether-surface"
-      style={{ height }}
-      aria-label="Bottom Panel"
-    >
-      <header className="flex h-8 shrink-0 items-center border-b border-aether-border px-2">
-        <div className="flex items-center gap-0.5" role="tablist">
-          {BOTTOM_PANEL_TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
+    <>
+      {!visible && (
+        <div className="flex h-8 shrink-0 items-center border-t border-aether-border bg-aether-surface px-2">
+          <div className="flex items-center gap-1">
+            {BOTTOM_PANEL_TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
-                role="tab"
-                aria-selected={isActive}
                 onClick={() => visit(tab.id)}
-                className={cn(
-                  "relative px-2.5 py-1 text-[11px] uppercase tracking-wide transition-colors",
-                  isActive
-                    ? "text-aether-fg"
-                    : "text-aether-fg-muted hover:text-aether-fg",
-                )}
+                className="px-2 py-1 text-[11px] uppercase tracking-wide text-aether-fg-muted transition-colors hover:text-aether-fg"
               >
                 {t(tab.labelKey)}
-                {isActive && (
-                  <span className="absolute inset-x-2 bottom-0 h-px bg-aether-accent" />
-                )}
               </button>
-            );
-          })}
-        </div>
-
-        <div className="ml-auto flex items-center gap-0.5">
+            ))}
+          </div>
           <button
             type="button"
-            title="Hide Panel"
-            aria-label="Hide Panel"
-            onClick={() => setBottomPanelVisible(false)}
-            className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
+            title="Show Panel"
+            aria-label="Show Panel"
+            onClick={toggleBottomPanel}
+            className="ml-auto flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
           >
-            <ChevronDown size={14} />
-          </button>
-          <button
-            type="button"
-            title="Close Panel"
-            aria-label="Close Panel"
-            onClick={() => setBottomPanelVisible(false)}
-            className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
-          >
-            <X size={14} />
+            <ChevronUp size={14} />
           </button>
         </div>
-      </header>
+      )}
 
-      <div className="relative min-h-0 flex-1 overflow-hidden" role="tabpanel">
-        {visited.problems && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "problems" ? "z-10" : "hidden",
-            )}
-            aria-hidden={activeTab !== "problems"}
-          >
-            <ProblemsPanel />
-          </div>
+      <section
+        className={cn(
+          "flex shrink-0 flex-col bg-aether-surface",
+          !visible && "hidden",
         )}
-
-        {visited.output && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "output" ? "z-10" : "hidden",
-            )}
-            aria-hidden={activeTab !== "output"}
-          >
-            <OutputPanel />
+        style={visible ? { height } : undefined}
+        aria-label="Bottom Panel"
+        aria-hidden={!visible}
+      >
+        <header className="flex h-8 shrink-0 items-center border-b border-aether-border px-2">
+          <div className="flex items-center gap-0.5" role="tablist">
+            {BOTTOM_PANEL_TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => visit(tab.id)}
+                  className={cn(
+                    "relative px-2.5 py-1 text-[11px] uppercase tracking-wide transition-colors",
+                    isActive
+                      ? "text-aether-fg"
+                      : "text-aether-fg-muted hover:text-aether-fg",
+                  )}
+                >
+                  {t(tab.labelKey)}
+                  {isActive && (
+                    <span className="absolute inset-x-2 bottom-0 h-px bg-aether-accent" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        {visited.serial && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "serial" ? "z-10" : "hidden",
-            )}
-            aria-hidden={activeTab !== "serial"}
-          >
-            <SerialMonitor />
+          <div className="ml-auto flex items-center gap-0.5">
+            <button
+              type="button"
+              title="Hide Panel"
+              aria-label="Hide Panel"
+              onClick={() => setBottomPanelVisible(false)}
+              className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
+            >
+              <ChevronDown size={14} />
+            </button>
+            <button
+              type="button"
+              title="Close Panel"
+              aria-label="Close Panel"
+              onClick={() => setBottomPanelVisible(false)}
+              className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
+            >
+              <X size={14} />
+            </button>
           </div>
-        )}
+        </header>
 
-        {visited.debug && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "debug" ? "z-10" : "hidden",
-            )}
-            aria-hidden={activeTab !== "debug"}
-          >
-            <DebugConsole />
-          </div>
-        )}
-
-        {visited.terminal && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "terminal" ? "z-10" : "hidden",
-            )}
-            aria-hidden={activeTab !== "terminal"}
-          >
-            <TerminalView active={activeTab === "terminal"} />
-          </div>
-        )}
-
-        {activeTab !== "serial" &&
-          activeTab !== "terminal" &&
-          activeTab !== "output" &&
-          activeTab !== "problems" &&
-          activeTab !== "debug" && (
-            <div className="aether-scroll h-full overflow-auto px-3 py-2 font-mono text-xs text-aether-fg-muted">
-              Panel placeholder.
+        <div className="relative min-h-0 flex-1 overflow-hidden" role="tabpanel">
+          {visited.problems && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "problems" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "problems"}
+            >
+              <ProblemsPanel />
             </div>
           )}
-      </div>
-    </section>
+
+          {visited.output && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "output" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "output"}
+            >
+              <OutputPanel />
+            </div>
+          )}
+
+          {visited.serial && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "serial" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "serial"}
+            >
+              <SerialMonitor />
+            </div>
+          )}
+
+          {visited.debug && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "debug" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "debug"}
+            >
+              <DebugConsole />
+            </div>
+          )}
+
+          {visited.terminal && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "terminal" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!terminalActive}
+            >
+              <TerminalView active={terminalActive} />
+            </div>
+          )}
+
+          {visible &&
+            activeTab !== "serial" &&
+            activeTab !== "terminal" &&
+            activeTab !== "output" &&
+            activeTab !== "problems" &&
+            activeTab !== "debug" && (
+              <div className="aether-scroll h-full overflow-auto px-3 py-2 font-mono text-xs text-aether-fg-muted">
+                Panel placeholder.
+              </div>
+            )}
+        </div>
+      </section>
+    </>
   );
 }

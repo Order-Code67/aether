@@ -99,6 +99,13 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
                 true,
                 None::<&str>,
             )?,
+            &MenuItem::with_id(
+                app,
+                "help.copySupportReport",
+                "Copy Support Report",
+                true,
+                None::<&str>,
+            )?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(
                 app,

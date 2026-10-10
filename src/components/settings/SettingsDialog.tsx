@@ -12,6 +12,9 @@ import {
   type WordWrapSetting,
 } from "@/stores/settingsStore";
 import { useUpdaterStore } from "@/stores/updaterStore";
+import { copyTextToClipboard } from "@/lib/clipboard";
+import { buildSupportReportText } from "@/lib/supportReport";
+import { localizeUpdateNotes } from "@/lib/updateNotes";
 
 type SettingsTab = SettingsTabId;
 
@@ -403,13 +406,18 @@ export function SettingsDialog() {
 }
 
 function AboutPanel({ appVersion }: { appVersion: string }) {
+  const { t, locale } = useI18n();
   const phase = useUpdaterStore((s) => s.phase);
   const availableVersion = useUpdaterStore((s) => s.availableVersion);
   const notes = useUpdaterStore((s) => s.notes);
   const error = useUpdaterStore((s) => s.error);
   const progress = useUpdaterStore((s) => s.progress);
+  const lastCheckedAt = useUpdaterStore((s) => s.lastCheckedAt);
   const check = useUpdaterStore((s) => s.check);
   const installAndRelaunch = useUpdaterStore((s) => s.installAndRelaunch);
+  const openDialog = useUpdaterStore((s) => s.openDialog);
+  const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const [copying, setCopying] = useState(false);
 
   const busy = phase === "checking" || phase === "downloading";
   const pct =
@@ -420,23 +428,34 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
         )
       : null;
 
-  let statusLine = "Click Check for Updates to query the release feed.";
-  if (phase === "checking") statusLine = "Checking for updates…";
-  else if (phase === "uptodate") statusLine = "You are on the latest version.";
+  let statusLine = t("updater.hint");
+  if (phase === "checking") statusLine = t("updater.checking");
+  else if (phase === "uptodate") statusLine = t("updater.uptodate");
   else if (phase === "unavailable")
-    statusLine = error ?? "Update feed not available yet.";
+    statusLine = error ?? t("updater.unavailable");
   else if (phase === "available")
-    statusLine = `Update available: v${availableVersion}`;
+    statusLine = t("updater.available", { version: availableVersion ?? "?" });
   else if (phase === "downloading")
     statusLine =
       pct != null
-        ? `Downloading… ${pct}%`
-        : `Downloading… ${progress?.downloaded ?? 0} bytes`;
-  else if (phase === "ready") statusLine = "Installed. Relaunching…";
-  else if (phase === "error") statusLine = error ?? "Update failed.";
+        ? t("updater.downloadingPct", { pct })
+        : t("updater.downloading");
+  else if (phase === "ready") statusLine = t("updater.ready");
+  else if (phase === "error") statusLine = error ?? t("updater.failed");
+
+  const lastCheckLabel =
+    lastCheckedAt != null
+      ? t("updater.lastCheck", {
+          time: new Date(lastCheckedAt).toLocaleString(
+            locale === "ru" ? "ru-RU" : "en-US",
+          ),
+        })
+      : t("updater.neverChecked");
+
+  const displayNotes = localizeUpdateNotes(availableVersion, notes, locale);
 
   return (
-    <div className="space-y-2 text-aether-fg">
+    <div className="space-y-2 text-aether-fg" data-aether-focus-surface="dialog">
       <div className="flex items-center gap-3">
         <img
           src="/aether-icon.png"
@@ -446,28 +465,28 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
           className="h-10 w-10 shrink-0 rounded-sm"
         />
         <div className="min-w-0">
-          <p className="text-sm font-medium">Aether</p>
-          <p className="text-aether-fg-muted">Version {appVersion}</p>
+          <p className="text-sm font-medium">{t("app.name")}</p>
+          <p className="text-aether-fg-muted">
+            {t("updater.version", { version: appVersion })}
+          </p>
         </div>
       </div>
-      <p className="text-aether-fg-dim leading-relaxed">
-        IDE for robots, drones, and embedded systems.
-      </p>
+      <p className="text-aether-fg-dim leading-relaxed">{t("app.tagline")}</p>
       <p className="text-[11px] leading-relaxed text-aether-fg-dim">
-        Stack: Tauri 2 · React 19 · TypeScript · Monaco · PlatformIO · clangd ·
-        GDB MI · Git
+        {t("settings.stack")}
       </p>
 
       <div className="mt-3 space-y-2 rounded border border-aether-border bg-aether-bg/50 p-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-aether-fg-muted">
-          Updates
+          {t("updater.section")}
         </p>
         <p className="text-[11px] leading-relaxed text-aether-fg-dim">
           {statusLine}
         </p>
-        {notes && phase === "available" && (
+        <p className="text-[10px] text-aether-fg-dim">{lastCheckLabel}</p>
+        {phase === "available" && (
           <p className="max-h-24 overflow-auto whitespace-pre-wrap text-[11px] text-aether-fg-muted">
-            {notes}
+            {displayNotes}
           </p>
         )}
         {phase === "downloading" && pct != null && (
@@ -482,10 +501,16 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
           <button
             type="button"
             disabled={busy || !isTauriRuntime()}
-            onClick={() => void check()}
+            onClick={() => {
+              void check({ openDialog: true }).then(() => {
+                if (useUpdaterStore.getState().phase === "available") {
+                  openDialog();
+                }
+              });
+            }}
             className="rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
           >
-            {phase === "checking" ? "Checking…" : "Check for Updates"}
+            {phase === "checking" ? t("updater.checking") : t("updater.check")}
           </button>
           {phase === "available" && (
             <button
@@ -494,21 +519,39 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
               onClick={() => void installAndRelaunch()}
               className="rounded bg-aether-accent px-2.5 py-1.5 text-[11px] font-medium text-white hover:opacity-90 disabled:opacity-40"
             >
-              Download & Install
+              {t("updater.install")}
             </button>
           )}
         </div>
         <p className="text-[10px] leading-relaxed text-aether-fg-dim">
-          Signed updates via Tauri updater. Feed: GitHub Releases{" "}
-          <span className="font-mono">latest.json</span> (see docs/UPDATES.md).
+          {t("updater.feedHint")}
         </p>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={copying}
+          onClick={() => {
+            setCopying(true);
+            void (async () => {
+              try {
+                const text = await buildSupportReportText(locale);
+                const ok = await copyTextToClipboard(text);
+                flashNotice(ok ? t("support.copied") : t("support.copyFailed"));
+              } finally {
+                setCopying(false);
+              }
+            })();
+          }}
+          className="rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+        >
+          {t("support.copyReport")}
+        </button>
+      </div>
+
       <p className="text-[11px] text-aether-fg-dim">
-        Command Palette:{" "}
-        <kbd className="text-aether-fg">Ctrl+Shift+P</kbd>
-        {" · "}
-        Quick Open: <kbd className="text-aether-fg">Ctrl+P</kbd>
+        {t("settings.shortcutsHint")}
       </p>
     </div>
   );

@@ -21,6 +21,8 @@ interface SettingsState {
   fontLigatures: boolean;
   lineNumbers: boolean;
   renderWhitespace: "none" | "selection" | "all";
+  /** Ephemeral status-bar notice (not persisted). */
+  notice: string | null;
   openSettings: (tab?: SettingsTabId) => void;
   closeSettings: () => void;
   toggleSettings: () => void;
@@ -36,6 +38,8 @@ interface SettingsState {
   setLineNumbers: (v: boolean) => void;
   setRenderWhitespace: (v: "none" | "selection" | "all") => void;
   resetEditorDefaults: () => void;
+  flashNotice: (message: string, ms?: number) => void;
+  clearNotice: () => void;
 }
 
 const EDITOR_DEFAULTS = {
@@ -48,6 +52,8 @@ const EDITOR_DEFAULTS = {
   renderWhitespace: "selection" as const,
 };
 
+let noticeTimer: ReturnType<typeof setTimeout> | null = null;
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
@@ -57,6 +63,7 @@ export const useSettingsStore = create<SettingsState>()(
       sketchMode: true,
       showAllFiles: false,
       ...EDITOR_DEFAULTS,
+      notice: null,
 
       openSettings: (tab) =>
         set({ settingsOpen: true, initialTab: tab ?? null }),
@@ -75,6 +82,16 @@ export const useSettingsStore = create<SettingsState>()(
       setLocale: (locale) => set({ locale }),
       setSketchMode: (v) => set({ sketchMode: v }),
       setShowAllFiles: (v) => set({ showAllFiles: v }),
+
+      clearNotice: () => set({ notice: null }),
+      flashNotice: (message, ms = 2800) => {
+        if (noticeTimer) clearTimeout(noticeTimer);
+        set({ notice: message });
+        noticeTimer = setTimeout(() => {
+          set({ notice: null });
+          noticeTimer = null;
+        }, ms);
+      },
 
       setFontSize: (n) =>
         set({ fontSize: Math.min(28, Math.max(10, Math.round(n))) }),

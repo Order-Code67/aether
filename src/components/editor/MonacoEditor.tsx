@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { editor as MonacoEditorNs } from "monaco-editor";
 import { registerExtensionSnippetProviders } from "@/lib/extensionSnippets";
+import { shouldMonacoClaimFocus } from "@/lib/focusPolicy";
 import { AETHER_THEME, defineAetherTheme } from "@/lib/monaco";
 import { registerLspMonacoProviders } from "@/lib/lspMonaco";
 import { useDebugStore } from "@/stores/debugStore";
@@ -124,12 +125,14 @@ export function MonacoEditor() {
     void editor.getAction(actionId)?.run();
   }, [findRequest]);
 
-  // Re-focus when switching tabs so WebView2 delivers keys to Monaco.
+  // Re-focus when switching tabs so WebView2 delivers keys to Monaco —
+  // but never yank focus from Search / Terminal / dialogs.
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor || !activeTab) return;
     const timer = window.setTimeout(() => {
       try {
+        if (!shouldMonacoClaimFocus()) return;
         editor.focus();
       } catch {
         // ignore
@@ -232,8 +235,11 @@ export function MonacoEditor() {
     monaco.editor.setTheme(AETHER_THEME);
     registerLspMonacoProviders(monaco);
     registerExtensionSnippetProviders(monaco);
-    // Ensure the editor can accept keystrokes after mount (WebView2 focus quirks).
-    window.setTimeout(() => editor.focus(), 0);
+    // Ensure the editor can accept keystrokes after mount (WebView2 focus quirks),
+    // without stealing Search / Terminal focus.
+    window.setTimeout(() => {
+      if (shouldMonacoClaimFocus()) editor.focus();
+    }, 0);
 
     editor.onDidChangeCursorPosition((event) => {
       setCursor({

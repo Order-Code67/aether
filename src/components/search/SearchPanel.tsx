@@ -48,7 +48,10 @@ export function SearchPanel() {
   }, [query, caseSensitive, includeExtensions, kind, folderCount, run]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div
+      className="flex h-full min-h-0 flex-col"
+      data-aether-focus-surface="search"
+    >
       <header className="flex h-9 shrink-0 items-center px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
           Search

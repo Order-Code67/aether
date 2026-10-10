@@ -6,6 +6,7 @@ import {
   relaunchApp,
   type UpdateProgress,
 } from "@/lib/updater";
+import { isTauriRuntime } from "@/lib/tauri";
 
 type UpdaterPhase =
   | "idle"
@@ -24,8 +25,16 @@ interface UpdaterState {
   error: string | null;
   progress: UpdateProgress | null;
   pending: Update | null;
-  check: () => Promise<void>;
+  /** When true, show UpdateDialog (available / downloading / error after user action). */
+  dialogOpen: boolean;
+  lastCheckedAt: number | null;
+  /** Quiet startup check already ran this session. */
+  quietChecked: boolean;
+  check: (opts?: { quiet?: boolean; openDialog?: boolean }) => Promise<void>;
+  quietCheckOnStartup: () => Promise<void>;
   installAndRelaunch: () => Promise<void>;
+  closeDialog: () => void;
+  openDialog: () => void;
   reset: () => void;
 }
 
@@ -36,6 +45,9 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   error: null,
   progress: null,
   pending: null,
+  dialogOpen: false,
+  lastCheckedAt: null,
+  quietChecked: false,
 
   reset: () =>
     set({
@@ -45,9 +57,22 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       error: null,
       progress: null,
       pending: null,
+      dialogOpen: false,
     }),
 
-  check: async () => {
+  closeDialog: () => set({ dialogOpen: false }),
+
+  openDialog: () => set({ dialogOpen: true }),
+
+  quietCheckOnStartup: async () => {
+    if (!isTauriRuntime() || get().quietChecked) return;
+    set({ quietChecked: true });
+    await get().check({ quiet: true, openDialog: true });
+  },
+
+  check: async (opts) => {
+    const quiet = opts?.quiet === true;
+    const openDialog = opts?.openDialog === true;
     set({
       phase: "checking",
       error: null,
@@ -55,22 +80,39 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       availableVersion: null,
       notes: null,
       pending: null,
+      // Quiet up-to-date must not flash a modal.
+      dialogOpen: quiet ? false : get().dialogOpen,
     });
     const result = await checkForAppUpdate();
+    const checkedAt = Date.now();
+
     if (result.kind === "uptodate") {
-      set({ phase: "uptodate" });
+      set({
+        phase: "uptodate",
+        lastCheckedAt: checkedAt,
+        dialogOpen: false,
+      });
       return;
     }
     if (result.kind === "unavailable") {
       set({
         phase: "unavailable",
-        error:
-          "Update server not reachable yet (no release feed). Publish latest.json to enable updates.",
+        lastCheckedAt: checkedAt,
+        dialogOpen: false,
+        error: quiet
+          ? null
+          : "Update server not reachable yet (no release feed). Publish latest.json to enable updates.",
       });
       return;
     }
     if (result.kind === "error") {
-      set({ phase: "error", error: result.message });
+      set({
+        phase: "error",
+        lastCheckedAt: checkedAt,
+        error: result.message,
+        // Manual check: surface error in Settings; quiet startup stays silent.
+        dialogOpen: quiet ? false : openDialog,
+      });
       return;
     }
     set({
@@ -78,6 +120,8 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       pending: result.update,
       availableVersion: result.update.version,
       notes: result.update.body ?? null,
+      lastCheckedAt: checkedAt,
+      dialogOpen: openDialog || !quiet,
     });
   },
 
@@ -87,7 +131,12 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
       set({ phase: "error", error: "No update queued. Check for updates first." });
       return;
     }
-    set({ phase: "downloading", error: null, progress: { downloaded: 0, contentLength: null } });
+    set({
+      phase: "downloading",
+      error: null,
+      progress: { downloaded: 0, contentLength: null },
+      dialogOpen: true,
+    });
     try {
       await downloadAndInstallUpdate(update, (progress) => {
         set({ progress });
@@ -101,6 +150,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
           error instanceof Error
             ? error.message
             : "Failed to download or install the update.",
+        dialogOpen: true,
       });
     }
   },

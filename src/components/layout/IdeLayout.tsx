@@ -14,8 +14,11 @@ import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { CommandPalette } from "@/components/palette/CommandPalette";
 import { ToolsDoctorBanner } from "@/components/platformio/ToolsDoctorBanner";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
+import { UpdateDialog } from "@/components/updater/UpdateDialog";
+import { isTauriRuntime } from "@/lib/tauri";
 import { usePaletteStore } from "@/stores/paletteStore";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { useUpdaterStore } from "@/stores/updaterStore";
 import { ActivityBar } from "./ActivityBar";
 import { Sidebar } from "./Sidebar";
 import { EditorArea } from "./EditorArea";
@@ -44,6 +47,15 @@ export function IdeLayout() {
   useEffect(() => {
     if (openExampleSignal > 0) setExamplesOpen(true);
   }, [openExampleSignal]);
+
+  // Quiet update check on desktop startup — dialog only if an update is available.
+  useEffect(() => {
+    if (!isTauriRuntime()) return;
+    const timer = window.setTimeout(() => {
+      void useUpdaterStore.getState().quietCheckOnStartup();
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const sidebarVisible = useLayoutStore((s) => s.sidebarVisible);
   const bottomPanelVisible = useLayoutStore((s) => s.bottomPanelVisible);
@@ -81,6 +93,7 @@ export function IdeLayout() {
       </div>
       <StatusBar />
       <SettingsDialog />
+      <UpdateDialog />
       <CommandPalette />
       <UnlockGate />
       <NewProjectDialog

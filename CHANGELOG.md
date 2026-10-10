@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.7 — 2026-10-10
+
+- **Focus reliability** — Monaco / Search / Terminal focus policy; bottom panel stays mounted when collapsed; Vitest guards + `docs/FOCUS_SMOKE.md`
+- **Support report** — Help / About / Command Palette: Copy Support Report to clipboard (RU/EN)
+- **Quiet updates** — startup check without modal spam when up-to-date; update dialog with RU changelog notes; Settings shows last check result
+
 ## 0.2.6 — 2026-10-10
 
 - **Sketch mode** — Arduino-like Explorer (default ON for PlatformIO): emphasize main sketch, hide `.pio` clutter, optional “Show all files”, auto-open `src/main.cpp`
