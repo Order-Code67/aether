@@ -38,17 +38,19 @@ export function friendlyPioError(message: string, locale: Locale): string {
   // Port busy / Access denied
   if (
     lower.includes("access is denied") ||
+    lower.includes("access denied") ||
     lower.includes("permission denied") ||
     lower.includes("resource busy") ||
     lower.includes("device or resource busy") ||
     lower.includes("being used by another") ||
     lower.includes("oserror: [errno 13]") ||
     lower.includes("errno 16") ||
-    (lower.includes("could not open") && lower.includes("busy"))
+    (lower.includes("could not open") && lower.includes("busy")) ||
+    lower.includes("port busy")
   ) {
     return ru
-      ? "Порт занят или доступ запрещён. Закройте Serial Monitor и другие программы, использующие этот COM-порт, затем повторите загрузку."
-      : "Port busy or access denied. Close Serial Monitor and other apps using this COM port, then retry upload.";
+      ? "Порт занят или доступ запрещён. Закройте Arduino IDE, другие Serial Monitor и программы, использующие этот COM-порт, затем повторите загрузку. Если ошибка остаётся — проверьте кабель и баннер с драйверами CH340/CP210x."
+      : "Port busy or access denied. Close Arduino IDE, other Serial Monitors, and apps using this COM port, then retry upload. If it persists, check the cable and the CH340/CP210x driver banner.";
   }
 
   // Failed to open serial / no driver
@@ -72,8 +74,8 @@ export function friendlyPioError(message: string, locale: Locale): string {
     lower.includes("error code 10")
   ) {
     return ru
-      ? "Не удалось открыть COM-порт. Проверьте кабель, установите драйвер CH340/CP210x (см. подсказку у Serial / при загрузке) и выберите правильный порт."
-      : "Could not open the serial port. Check the cable, install CH340/CP210x drivers (see the help near Serial / Upload), and select the correct port.";
+      ? "Не удалось открыть COM-порт. Закройте Arduino IDE и другие Serial Monitor, проверьте кабель, установите драйвер CH340/CP210x (баннер у Serial / при загрузке) и выберите правильный порт."
+      : "Could not open the serial port. Close Arduino IDE and other Serial Monitors, check the cable, install CH340/CP210x drivers (banner near Serial / Upload), and select the correct port.";
   }
 
   // Port not found

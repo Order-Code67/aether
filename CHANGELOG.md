@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.13 — 2026-10-11
+
+- **E2E / smoke suite** — Vitest integration coverage for focus policy, upload/serial gate, support report, PIO Access denied hints, VS Code error mapping; `npm run test:e2e` / `npm run smoke:ui`; docs moved to `docs/E2E_SMOKE.md`
+- **Upload Access denied retry** — disconnect Serial before upload; on port busy / access denied / failed to open, wait, disconnect again, retry once; clearer RU/EN hints (Arduino IDE, other Serial Monitors, cable/driver banner)
+- **Save Support Report** — Help / About / Command Palette: Save report… to a chosen path (default `Documents/Aether/logs/…`); auto-write `last-error.txt` on build/upload failure
+
 ## 0.2.12 — 2026-10-11
 
 - **Quick start (60s)** — guided onboarding: board → COM port → Blink starter → Build+Upload; Welcome CTA + Help / Command Palette («Быстрый старт»); dismiss/complete persisted

@@ -13,7 +13,10 @@ import {
 } from "@/stores/settingsStore";
 import { useUpdaterStore } from "@/stores/updaterStore";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { buildSupportReportText } from "@/lib/supportReport";
+import {
+  buildSupportReportText,
+  saveSupportReportToDisk,
+} from "@/lib/supportReport";
 import { localizeUpdateNotes } from "@/lib/updateNotes";
 
 type SettingsTab = SettingsTabId;
@@ -521,6 +524,7 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
   const openDialog = useUpdaterStore((s) => s.openDialog);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
   const [copying, setCopying] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const busy = phase === "checking" || phase === "downloading";
   const pct =
@@ -650,6 +654,28 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
           className="rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
         >
           {t("support.copyReport")}
+        </button>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => {
+            setSaving(true);
+            void (async () => {
+              try {
+                const path = await saveSupportReportToDisk(locale);
+                if (path) {
+                  flashNotice(t("support.saved", { path }), 4500);
+                }
+              } catch {
+                flashNotice(t("support.saveFailed"));
+              } finally {
+                setSaving(false);
+              }
+            })();
+          }}
+          className="rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+        >
+          {t("support.saveReport")}
         </button>
       </div>
 

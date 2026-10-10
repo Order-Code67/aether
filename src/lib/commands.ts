@@ -486,6 +486,26 @@ export function getCommands(): Command[] {
           .flashNotice(ok ? t("support.copied") : t("support.copyFailed"));
       },
     },
+    {
+      id: "help.saveSupportReport",
+      title: "Help: Save Support Report",
+      category: "Settings",
+      keywords: "support report save disk сохранить отчёт лог",
+      run: async () => {
+        const { saveSupportReportToDisk } = await import("@/lib/supportReport");
+        const { t } = await import("@/hooks/useI18n");
+        const locale = useSettingsStore.getState().locale;
+        try {
+          const path = await saveSupportReportToDisk(locale);
+          if (!path) return;
+          useSettingsStore
+            .getState()
+            .flashNotice(t("support.saved", { path }), 4500);
+        } catch {
+          useSettingsStore.getState().flashNotice(t("support.saveFailed"));
+        }
+      },
+    },
   ];
 }
 

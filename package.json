@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "scripts": {
@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "vitest run src/lib/focusPolicy.test.ts src/lib/uploadGate.test.ts src/lib/supportReport.test.ts src/lib/pioErrors.test.ts src/lib/vscodeIntegration.test.ts src/lib/comDrivers.test.ts",
+    "smoke:ui": "node scripts/smoke-ui.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

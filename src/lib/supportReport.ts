@@ -1,3 +1,6 @@
+import { documentDir, join } from "@tauri-apps/api/path";
+import { save } from "@tauri-apps/plugin-dialog";
+import { mkdir, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { Locale } from "@/i18n";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLspStore } from "@/stores/lspStore";
@@ -168,4 +171,66 @@ export async function collectSupportReport(
 
 export async function buildSupportReportText(locale: Locale): Promise<string> {
   return formatSupportReport(await collectSupportReport(locale));
+}
+
+function reportTimestamp(): string {
+  return new Date().toISOString().replace(/[:.]/g, "-");
+}
+
+/** Default path: Documents/Aether/logs/aether-report-TIMESTAMP.txt */
+export async function defaultSupportReportPath(): Promise<string> {
+  const docs = await documentDir();
+  return await join(
+    docs,
+    "Aether",
+    "logs",
+    `aether-report-${reportTimestamp()}.txt`,
+  );
+}
+
+async function ensureAetherLogsDir(): Promise<string> {
+  const docs = await documentDir();
+  const dir = await join(docs, "Aether", "logs");
+  await mkdir(dir, { recursive: true });
+  return dir;
+}
+
+/** Write support report (+ output tail) via save dialog; default under Documents/Aether/logs. */
+export async function saveSupportReportToDisk(
+  locale: Locale,
+): Promise<string | null> {
+  if (!isTauriRuntime()) {
+    throw new Error("Saving a support report requires the desktop app.");
+  }
+  const text = await buildSupportReportText(locale);
+  const suggested = await defaultSupportReportPath();
+  const chosen = await save({
+    title: locale === "ru" ? "Сохранить отчёт поддержки" : "Save support report",
+    defaultPath: suggested,
+    filters: [{ name: "Text", extensions: ["txt"] }],
+  });
+  if (typeof chosen !== "string" || !chosen) return null;
+  const parent = chosen.replace(/[/\\][^/\\]+$/, "");
+  if (parent && parent !== chosen) {
+    try {
+      await mkdir(parent, { recursive: true });
+    } catch {
+      // parent may already exist
+    }
+  }
+  await writeTextFile(chosen, text);
+  return chosen;
+}
+
+/** Best-effort: overwrite Documents/Aether/logs/last-error.txt after build/upload failure. */
+export async function persistLastErrorReport(locale: Locale): Promise<void> {
+  if (!isTauriRuntime()) return;
+  try {
+    const text = await buildSupportReportText(locale);
+    const dir = await ensureAetherLogsDir();
+    const path = await join(dir, "last-error.txt");
+    await writeTextFile(path, text);
+  } catch {
+    // best-effort — never surface as a secondary failure
+  }
 }

@@ -163,6 +163,8 @@ export const en = {
   "pio.uploadNeedPort": "Select a serial port before upload",
   "pio.uploadWillDisconnect":
     "Upload will disconnect Serial Monitor so the port is free",
+  "pio.uploadRetryPort":
+    "Port busy / access denied — disconnected Serial and retrying upload once…",
   "pio.error.needFolder": "Open a PlatformIO project folder first.",
   "pio.error.noIni": "No platformio.ini found in the workspace root.",
   "pio.error.busy": "A PlatformIO task is already running.",
@@ -370,8 +372,11 @@ export const en = {
   "settings.shortcutsHint":
     "Command Palette: Ctrl+Shift+P · Quick Open: Ctrl+P",
   "support.copyReport": "Copy support report",
+  "support.saveReport": "Save report…",
   "support.copied": "Support report copied",
   "support.copyFailed": "Could not copy support report",
+  "support.saved": "Support report saved: {path}",
+  "support.saveFailed": "Could not save support report",
   "updater.section": "Updates",
   "updater.title": "Update available",
   "updater.version": "Version {version}",

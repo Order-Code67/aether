@@ -168,6 +168,8 @@ export const ru: Record<MessageKey, string> = {
   "pio.uploadNeedPort": "Выберите COM-порт перед загрузкой",
   "pio.uploadWillDisconnect":
     "Перед загрузкой Serial Monitor будет отключён, чтобы освободить порт",
+  "pio.uploadRetryPort":
+    "Порт занят / доступ запрещён — Serial отключён, повторная попытка загрузки…",
   "pio.error.needFolder": "Сначала откройте папку проекта PlatformIO.",
   "pio.error.noIni": "В корне рабочей папки нет platformio.ini.",
   "pio.error.busy": "Задача PlatformIO уже выполняется.",
@@ -375,8 +377,11 @@ export const ru: Record<MessageKey, string> = {
   "settings.shortcutsHint":
     "Палитра команд: Ctrl+Shift+P · Быстрое открытие: Ctrl+P",
   "support.copyReport": "Скопировать отчёт",
+  "support.saveReport": "Сохранить отчёт…",
   "support.copied": "Отчёт скопирован",
   "support.copyFailed": "Не удалось скопировать отчёт",
+  "support.saved": "Отчёт сохранён: {path}",
+  "support.saveFailed": "Не удалось сохранить отчёт",
   "updater.section": "Обновления",
   "updater.title": "Доступно обновление",
   "updater.version": "Версия {version}",

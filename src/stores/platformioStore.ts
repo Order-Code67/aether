@@ -27,6 +27,11 @@ import { matchEnvForBoard, pickPreferredPort } from "@/lib/pioPorts";
 import { findMainSketchPath } from "@/lib/sketchMode";
 import { lspDetect, type LspInfo } from "@/lib/lsp";
 import { isTauriRuntime } from "@/lib/tauri";
+import {
+  releaseSerialBeforeUpload,
+  shouldRetryUploadOnPortError,
+  sleepMs,
+} from "@/lib/uploadGate";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useProblemsStore } from "@/stores/problemsStore";
 import { useSerialStore } from "@/stores/serialStore";
@@ -34,6 +39,9 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 const MAX_LINES = 4000;
+
+/** One automatic reconnect-style upload retry after Access denied / port busy. */
+let uploadPortRetryUsed = false;
 
 export interface OutputLine {
   id: number;
@@ -303,6 +311,10 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       },
 
       applyStatus: (status) => {
+        const recent = get()
+          .lines.slice(-40)
+          .map((l) => l.text)
+          .join("\n");
         let nextError = status.error ? localizeError(status.error) : null;
         if (
           !status.running &&
@@ -312,10 +324,6 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             status.task === "build" ||
             status.task === "install-core")
         ) {
-          const recent = get()
-            .lines.slice(-40)
-            .map((l) => l.text)
-            .join("\n");
           nextError = localizeError(
             recent ||
               (status.task === "install-core"
@@ -325,6 +333,98 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         }
 
         const task = (status.task as PioTask | null) ?? get().lastTask;
+        const portProbe = [status.error ?? "", nextError ?? "", recent]
+          .filter(Boolean)
+          .join("\n");
+
+        // Access denied / port busy / failed to open: disconnect again and retry once.
+        if (
+          shouldRetryUploadOnPortError({
+            task,
+            running: status.running,
+            success: status.success,
+            alreadyRetried: uploadPortRetryUsed,
+            errorText: portProbe,
+          })
+        ) {
+          uploadPortRetryUsed = true;
+          set({
+            running: true,
+            lastTask: "upload",
+            lastSuccess: null,
+            error: null,
+            progress: {
+              stage: "uploading",
+              percent: get().progress.percent,
+              detail: get().progress.detail,
+            },
+          });
+          get().appendOutput({
+            stream: "system",
+            line: t("pio.uploadRetryPort"),
+          });
+          void (async () => {
+            await sleepMs(450);
+            await releaseSerialBeforeUpload(useSerialStore.getState());
+            await sleepMs(250);
+            const { kind, rootPath } = useWorkspaceStore.getState();
+            if (kind !== "folder" || !rootPath) {
+              set({
+                running: false,
+                lastSuccess: false,
+                progress: {
+                  stage: "failed",
+                  percent: null,
+                  detail: null,
+                },
+                error: t("pio.error.needFolder"),
+              });
+              return;
+            }
+            const uploadPort = get().getUploadPort().trim();
+            if (!uploadPort) {
+              set({
+                running: false,
+                lastSuccess: false,
+                progress: {
+                  stage: "failed",
+                  percent: null,
+                  detail: null,
+                },
+                error: t("pio.error.needPort"),
+              });
+              return;
+            }
+            try {
+              await runPioTask({
+                cwd: rootPath,
+                task: "upload",
+                env: get().selectedEnv || null,
+                uploadPort,
+              });
+            } catch (error) {
+              set({
+                running: false,
+                lastSuccess: false,
+                progress: {
+                  stage: "failed",
+                  percent: null,
+                  detail: null,
+                },
+                error: localizeError(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to start PlatformIO task.",
+                ),
+              });
+              void import("@/lib/supportReport").then(({ persistLastErrorReport }) => {
+                void persistLastErrorReport(useSettingsStore.getState().locale);
+              });
+            }
+          })();
+          return;
+        }
+
         let progress = get().progress;
         if (status.running) {
           progress = {
@@ -385,6 +485,18 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         ) {
           useLayoutStore.getState().setBottomPanelTab("problems");
         }
+
+        // Persist last support report on build/upload failure (best-effort).
+        if (
+          !status.running &&
+          status.success === false &&
+          (task === "build" || task === "upload")
+        ) {
+          void import("@/lib/supportReport").then(({ persistLastErrorReport }) => {
+            void persistLastErrorReport(useSettingsStore.getState().locale);
+          });
+        }
+
         // After compiledb (or first build without a DB), restart clangd so it
         // picks up newly generated compile_commands.json.
         if (!status.running && status.success === true) {
@@ -441,15 +553,11 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         // Release the serial port so upload can open it.
         let releasedSerial = false;
         if (task === "upload") {
-          const serial = useSerialStore.getState();
-          if (serial.connected) {
-            try {
-              await serial.disconnect();
-              releasedSerial = true;
-            } catch {
-              // continue — upload error mapping covers busy ports
-            }
-          }
+          uploadPortRetryUsed = false;
+          const release = await releaseSerialBeforeUpload(
+            useSerialStore.getState(),
+          );
+          releasedSerial = release === "released";
         }
 
         useProblemsStore.getState().clear();

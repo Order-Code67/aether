@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.13": {
+    en: "E2E smoke suite, upload Access denied retry, Save Support Report to disk and last-error log.",
+    ru: "E2E smoke-набор, повтор загрузки при Access denied, сохранение отчёта поддержки на диск и last-error лог.",
+  },
   "0.2.12": {
     en: "Quick start wizard, COM driver help, Arduino library tab, light theme and Arduino simplified UI.",
     ru: "Быстрый старт, подсказки по драйверам COM, вкладка Arduino в библиотеках, светлая тема и упрощённый режим Arduino.",

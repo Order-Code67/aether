@@ -28,6 +28,9 @@ describe("formatSupportReport", () => {
     expect(text).toContain("COM3");
     expect(text).toContain("port busy");
     expect(text).toContain("clangd");
+    expect(text).toContain("Output tail");
+    expect(text).toContain("error: port busy");
+    expect(text).toContain("failure");
   });
 
   it("uses Russian labels for ru locale", () => {
@@ -35,5 +38,20 @@ describe("formatSupportReport", () => {
     expect(text).toContain("Отчёт поддержки Aether");
     expect(text).toContain("Версия Aether");
     expect(text).toContain("Порт загрузки");
+    expect(text).toContain("Хвост вывода");
+    expect(text).toContain("ошибка");
+  });
+
+  it("includes last task and env for triage", () => {
+    const text = formatSupportReport({
+      ...base,
+      lastTask: "build",
+      lastSuccess: true,
+      lastError: null,
+      lastOutputTail: "SUCCESS",
+    });
+    expect(text).toContain("Last task: build");
+    expect(text).toContain("success");
+    expect(text).toContain("SUCCESS");
   });
 });
