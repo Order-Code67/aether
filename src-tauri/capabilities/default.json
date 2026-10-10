@@ -33,6 +33,7 @@
     "allow-lsp",
     "allow-debug",
     "allow-examples",
+    "allow-vscode",
     "updater:default",
     "process:default"
   ]

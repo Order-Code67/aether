@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Download,
+  GitBranch,
   Library,
   Loader2,
   RefreshCw,
@@ -11,6 +12,7 @@ import {
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { errorMessage } from "@/lib/errors";
+import { parseGithubLibSpec } from "@/lib/githubLibSpec";
 import { friendlyPioError } from "@/lib/pioErrors";
 import {
   installPioLibrary,
@@ -166,6 +168,7 @@ export function LibrariesPanel() {
   const isFavorite = useLibrariesPrefsStore((s) => s.isFavorite);
   const pushRecent = useLibrariesPrefsStore((s) => s.pushRecent);
   const [query, setQuery] = useState("");
+  const [githubInput, setGithubInput] = useState("");
   const [preset, setPreset] = useState<PlatformPreset>("all");
   const [results, setResults] = useState<PioLibEntry[]>([]);
   const [installed, setInstalled] = useState<string[]>([]);
@@ -284,7 +287,11 @@ export function LibrariesPanel() {
     }
   };
 
-  const install = async (library: string, busyKey: string) => {
+  const install = async (
+    library: string,
+    busyKey: string,
+    options?: { git?: boolean; displayName?: string },
+  ) => {
     if (!isTauriRuntime()) {
       setError(t("libraries.needDesktop"));
       return;
@@ -293,38 +300,71 @@ export function LibrariesPanel() {
       setError(t("libraries.needProject"));
       return;
     }
+    const display = options?.displayName ?? library;
     setBusyId(busyKey);
     setError(null);
-    setInstallStatus(t("libraries.installProgress", { name: library }));
+    setInstallStatus(
+      options?.git
+        ? t("libraries.githubProgress", { name: display })
+        : t("libraries.installProgress", { name: display }),
+    );
     try {
       await installPioLibrary(rootPath, library, selectedEnv || null);
       pushRecent(library);
-      setInstallStatus(t("libraries.installDone", { name: library }));
+      setInstallStatus(t("libraries.installDone", { name: display }));
       await refreshInstalled();
     } catch (err) {
+      // Registry fallback: owner/name → bare name (not for git URLs).
+      const isGit = options?.git || /^https?:\/\//i.test(library);
       const bare = library.includes("/")
-        ? library.split("/").pop()!
+        ? library.split("/").pop()!.replace(/\.git(#.*)?$/i, "")
         : library;
-      if (bare !== library) {
+      if (!isGit && bare !== library) {
         try {
           setInstallStatus(t("libraries.installProgress", { name: bare }));
           await installPioLibrary(rootPath, bare, selectedEnv || null);
           pushRecent(library);
-          setInstallStatus(t("libraries.installDone", { name: library }));
+          setInstallStatus(t("libraries.installDone", { name: display }));
           await refreshInstalled();
           return;
         } catch (err2) {
           setInstallStatus(null);
-          setError(mapLibError(err2));
+          setError(
+            options?.git
+              ? t("libraries.githubCloneFailed", {
+                  detail: mapLibError(err2),
+                })
+              : mapLibError(err2),
+          );
           return;
         }
       }
       setInstallStatus(null);
-      setError(mapLibError(err));
+      setError(
+        options?.git
+          ? t("libraries.githubCloneFailed", { detail: mapLibError(err) })
+          : mapLibError(err),
+      );
     } finally {
       setBusyId(null);
       window.setTimeout(() => setInstallStatus(null), 4000);
     }
+  };
+
+  const installFromGithub = () => {
+    const parsed = parseGithubLibSpec(githubInput);
+    if (!parsed.ok) {
+      setError(
+        parsed.error === "empty"
+          ? t("libraries.githubEmpty")
+          : t("libraries.githubInvalid"),
+      );
+      return;
+    }
+    void install(parsed.spec, `github:${parsed.spec}`, {
+      git: true,
+      displayName: parsed.label,
+    });
   };
 
   const uninstall = async (dep: string) => {
@@ -489,6 +529,47 @@ export function LibrariesPanel() {
               {t("libraries.searchBtn")}
             </button>
           </form>
+
+          <form
+            className="flex gap-1 px-3 pb-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              installFromGithub();
+            }}
+          >
+            <div className="relative min-w-0 flex-1">
+              <GitBranch
+                size={12}
+                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-aether-fg-dim"
+              />
+              <input
+                value={githubInput}
+                onChange={(e) => setGithubInput(e.target.value)}
+                placeholder={t("libraries.githubPlaceholder")}
+                title={t("libraries.githubHint")}
+                className="h-7 w-full rounded border border-aether-border bg-aether-bg py-1 pl-7 pr-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={
+                busyId?.startsWith("github:") || !githubInput.trim()
+              }
+              className="h-7 shrink-0 rounded border border-aether-border bg-aether-surface px-2 text-[11px] text-aether-fg hover:border-aether-accent disabled:opacity-40"
+            >
+              {busyId?.startsWith("github:") ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 size={10} className="animate-spin" />
+                  {t("libraries.installing")}
+                </span>
+              ) : (
+                t("libraries.githubInstall")
+              )}
+            </button>
+          </form>
+          <p className="px-3 pb-2 text-[10px] leading-relaxed text-aether-fg-dim">
+            {t("libraries.githubHint")}
+          </p>
 
           {showServoHint && (
             <div className="mx-3 mb-2 rounded border border-aether-accent/40 bg-aether-accent-muted/40 px-2 py-1.5 text-[11px] leading-relaxed text-aether-fg">

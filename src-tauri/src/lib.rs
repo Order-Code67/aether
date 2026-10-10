@@ -8,6 +8,7 @@ mod platformio;
 mod search;
 mod serial;
 mod terminal;
+mod vscode;
 mod watcher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -104,6 +105,7 @@ pub fn run() {
             debug::debug_console_input,
             examples::list_bundled_examples,
             examples::materialize_bundled_example,
+            vscode::open_external_vscode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aether");

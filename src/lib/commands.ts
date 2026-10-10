@@ -98,6 +98,67 @@ export function getCommands(): Command[] {
       run: () => useWorkspaceStore.getState().closeWorkspace(),
     },
     {
+      id: "file.openInVsCode",
+      title: "Open in VS Code",
+      category: "File",
+      keywords: "vscode visual studio code открыть",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { openInVsCode, vscodeErrorKey } = await import(
+          "@/lib/vscodeIntegration"
+        );
+        const folder = useWorkspaceStore.getState().rootPath;
+        if (!folder) {
+          useSettingsStore.getState().flashNotice(t("vscode.needFolder"));
+          return;
+        }
+        try {
+          await openInVsCode(folder);
+          useSettingsStore.getState().flashNotice(t("vscode.opened"));
+        } catch (err) {
+          useSettingsStore.getState().flashNotice(t(vscodeErrorKey(err)));
+        }
+      },
+    },
+    {
+      id: "file.generateVsCodeConfig",
+      title: "Generate VS Code Config",
+      category: "File",
+      keywords: "vscode extensions.json intellisense конфиг",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { errorMessage } = await import("@/lib/errors");
+        const { generateVsCodeConfig } = await import(
+          "@/lib/vscodeIntegration"
+        );
+        const folder = useWorkspaceStore.getState().rootPath;
+        if (!folder) {
+          useSettingsStore.getState().flashNotice(t("vscode.needFolder"));
+          return;
+        }
+        try {
+          const result = await generateVsCodeConfig(folder, {
+            confirmOverwrite: (rel) =>
+              window.confirm(t("vscode.overwriteConfirm", { file: rel })),
+          });
+          const parts = [
+            ...result.created.map((f) => t("vscode.created", { file: f })),
+            ...result.merged.map((f) => t("vscode.merged", { file: f })),
+            ...result.skipped.map((f) => t("vscode.skipped", { file: f })),
+          ];
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              parts.length > 0 ? parts.join(" · ") : t("vscode.generateDone"),
+            );
+        } catch (err) {
+          useSettingsStore
+            .getState()
+            .flashNotice(errorMessage(err, t("vscode.generateFailed")));
+        }
+      },
+    },
+    {
       id: "file.quickOpen",
       title: "Go to File…",
       category: "File",

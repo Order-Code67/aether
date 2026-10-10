@@ -998,11 +998,45 @@ pub struct PioLibEntry {
 
 fn validate_lib_spec(library: &str) -> Result<&str, String> {
     let lib = library.trim();
-    if lib.is_empty() || lib.len() > 200 {
+    if lib.is_empty() || lib.len() > 400 {
         return Err("Invalid library id.".into());
     }
     if lib.contains("..") || lib.contains('\\') || lib.contains('\0') {
         return Err("Invalid library id.".into());
+    }
+    // Reject shell / path injection characters in specs.
+    if lib.chars().any(|c| {
+        matches!(
+            c,
+            ';' | '|' | '&' | '`' | '$' | '\n' | '\r' | '<' | '>' | '"' | '\''
+        )
+    }) {
+        return Err("Invalid library id.".into());
+    }
+    // Git specs: only https://github.com/... (+ optional #ref) or registry ids.
+    if lib.contains("://") {
+        let (base, _ref) = lib
+            .split_once('#')
+            .map(|(b, r)| (b, Some(r)))
+            .unwrap_or((lib, None));
+        let ok = base.starts_with("https://github.com/")
+            && base.len() > "https://github.com/".len()
+            && !base[("https://github.com/".len())..].contains("://");
+        if !ok {
+            return Err(
+                "Only https://github.com/… git library URLs are allowed.".into(),
+            );
+        }
+        if let Some(r) = _ref {
+            if r.is_empty()
+                || r.len() > 120
+                || !r
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '/' | '~' | '+' | '-'))
+            {
+                return Err("Invalid git library branch/tag.".into());
+            }
+        }
     }
     Ok(lib)
 }

@@ -195,6 +195,42 @@ export function SettingsDialog() {
             )}
             {tab === "tools" && (
               <div className="space-y-3">
+                <div className="space-y-2 border-b border-aether-border pb-3">
+                  <div>
+                    <p className="font-medium text-aether-fg">
+                      {t("vscode.settingsTitle")}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-aether-fg-muted">
+                      {t("vscode.settingsHint")}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={!isTauriRuntime()}
+                      onClick={() => {
+                        void import("@/lib/commands").then(({ runCommandById }) => {
+                          runCommandById("file.openInVsCode");
+                        });
+                      }}
+                      className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white hover:opacity-90 disabled:opacity-40"
+                    >
+                      {t("vscode.openAction")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!isTauriRuntime()}
+                      onClick={() => {
+                        void import("@/lib/commands").then(({ runCommandById }) => {
+                          runCommandById("file.generateVsCodeConfig");
+                        });
+                      }}
+                      className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                    >
+                      {t("vscode.generateAction")}
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <p className="font-medium text-aether-fg">
                     {t("offline.title")}

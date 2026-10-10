@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.9": {
+    en: "Animated PCB welcome background, install libraries from GitHub, Open in VS Code with .vscode helpers.",
+    ru: "Анимированный PCB-фон Welcome, установка библиотек с GitHub, Open in VS Code и генерация .vscode.",
+  },
+  "0.2.8": {
+    en: "Serial Plotter, hardware profile examples, debug gutter/toolbar, multi-env switcher.",
+    ru: "Serial Plotter, примеры профилей железа, отладочный gutter/toolbar, переключатель multi-env.",
+  },
   "0.2.7": {
     en: "Focus stability with Vitest guards, Copy Support Report, quiet update check and RU changelog dialog.",
     ru: "Стабильность фокуса с Vitest-проверками, копирование отчёта поддержки, тихая проверка обновлений и RU changelog в диалоге.",

@@ -28,8 +28,28 @@ export const en = {
   "welcome.openFolder": "Open Folder…",
   "welcome.openExample": "Examples…",
   "welcome.openDemo": "Open Demo Workspace",
+  "welcome.openInVsCode": "Open in VS Code",
+  "welcome.generateVsCode": "Generate VS Code config…",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
+  "vscode.needDesktop": "VS Code integration requires the desktop app.",
+  "vscode.needFolder": "Open a project folder first.",
+  "vscode.opened": "Opened folder in VS Code.",
+  "vscode.cliMissing":
+    "VS Code CLI (`code`) not found. Install VS Code and enable “Shell Command: Install 'code' command in PATH”, then restart Aether.",
+  "vscode.openFailed": "Could not launch VS Code.",
+  "vscode.generateDone": "VS Code config written.",
+  "vscode.generateFailed": "Could not generate VS Code config.",
+  "vscode.overwriteConfirm":
+    "{file} already exists and could not be merged safely. Overwrite?",
+  "vscode.created": "Created {file}",
+  "vscode.merged": "Updated {file}",
+  "vscode.skipped": "Skipped {file}",
+  "vscode.settingsTitle": "Visual Studio Code",
+  "vscode.settingsHint":
+    "Open the current folder in VS Code, or generate .vscode helpers (PlatformIO extension + IntelliSense hints). Existing files are merged or confirmed before overwrite.",
+  "vscode.openAction": "Open in VS Code",
+  "vscode.generateAction": "Generate VS Code config",
   "wizard.title": "New Project",
   "wizard.parent": "Location",
   "wizard.name": "Project name",
@@ -269,6 +289,17 @@ export const en = {
     "Open a PlatformIO project folder (with platformio.ini) first.",
   "libraries.pioMissing":
     "PlatformIO CLI not found. Install PlatformIO Core and restart Aether.",
+  "libraries.githubPlaceholder":
+    "GitHub: owner/repo or https://github.com/… (#branch)",
+  "libraries.githubHint":
+    "Install from GitHub into lib_deps via pio pkg install (HTTPS git URL).",
+  "libraries.githubInstall": "Install from GitHub",
+  "libraries.githubProgress": "Cloning / installing {name}…",
+  "libraries.githubEmpty": "Enter a GitHub URL or owner/repo.",
+  "libraries.githubInvalid":
+    "Invalid GitHub library. Use owner/repo, owner/repo#branch, or https://github.com/owner/repo.git",
+  "libraries.githubCloneFailed":
+    "GitHub library install failed: {detail}",
   "extensions.title": "Extensions",
   "extensions.installed": "Installed",
   "extensions.marketplace": "Marketplace",

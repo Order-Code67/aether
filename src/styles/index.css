@@ -119,4 +119,101 @@
   body.aether-resizing * {
     cursor: inherit !important;
   }
+
+  /* Welcome PCB backdrop — subtle; paused when tab hidden / reduced motion */
+  .aether-circuit-pan {
+    animation: aether-circuit-pan 48s linear infinite;
+    will-change: transform;
+  }
+
+  .aether-circuit-pulse path {
+    stroke-dasharray: 12 48;
+    animation: aether-circuit-trace 7s linear infinite;
+  }
+
+  .aether-circuit-pulse path:nth-child(2) {
+    animation-duration: 9s;
+    animation-delay: -2s;
+  }
+
+  .aether-circuit-pulse path:nth-child(3) {
+    animation-duration: 6s;
+    animation-delay: -1s;
+  }
+
+  .aether-circuit-node {
+    animation: aether-circuit-glow 4.5s ease-in-out infinite;
+  }
+
+  .aether-circuit-node-core {
+    animation: aether-circuit-glow 4.5s ease-in-out infinite;
+  }
+
+  .aether-circuit-vias circle:nth-child(odd) {
+    animation: aether-circuit-via 5s ease-in-out infinite;
+  }
+
+  .aether-circuit-vias circle:nth-child(even) {
+    animation: aether-circuit-via 6.5s ease-in-out infinite reverse;
+  }
+
+  .aether-circuit-paused .aether-circuit-pan,
+  .aether-circuit-paused .aether-circuit-pulse path,
+  .aether-circuit-paused .aether-circuit-node,
+  .aether-circuit-paused .aether-circuit-node-core,
+  .aether-circuit-paused .aether-circuit-vias circle {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aether-circuit-pan,
+    .aether-circuit-pulse path,
+    .aether-circuit-node,
+    .aether-circuit-node-core,
+    .aether-circuit-vias circle {
+      animation: none !important;
+    }
+  }
+
+  @keyframes aether-circuit-pan {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+    50% {
+      transform: translate3d(-1.5%, -1%, 0) scale(1.04);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+  }
+
+  @keyframes aether-circuit-trace {
+    to {
+      stroke-dashoffset: -120;
+    }
+  }
+
+  @keyframes aether-circuit-glow {
+    0%,
+    100% {
+      opacity: 0.45;
+      filter: drop-shadow(0 0 0 transparent);
+    }
+    50% {
+      opacity: 1;
+      filter: drop-shadow(0 0 6px color-mix(in srgb, #5ec8d4 45%, transparent));
+    }
+  }
+
+  @keyframes aether-circuit-via {
+    0%,
+    100% {
+      fill: #3d6a74;
+      opacity: 0.7;
+    }
+    50% {
+      fill: #5ec8d4;
+      opacity: 1;
+    }
+  }
 }

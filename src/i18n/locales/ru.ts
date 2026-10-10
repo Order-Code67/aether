@@ -31,8 +31,28 @@ export const ru: Record<MessageKey, string> = {
   "welcome.openFolder": "Открыть папку…",
   "welcome.openExample": "Примеры…",
   "welcome.openDemo": "Демо-рабочая область",
+  "welcome.openInVsCode": "Открыть в VS Code",
+  "welcome.generateVsCode": "Создать конфиг VS Code…",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
+  "vscode.needDesktop": "Интеграция с VS Code доступна в десктопном приложении.",
+  "vscode.needFolder": "Сначала откройте папку проекта.",
+  "vscode.opened": "Папка открыта в VS Code.",
+  "vscode.cliMissing":
+    "Не найден CLI VS Code (`code`). Установите VS Code и команду «Shell Command: Install 'code' command in PATH», затем перезапустите Aether.",
+  "vscode.openFailed": "Не удалось запустить VS Code.",
+  "vscode.generateDone": "Конфиг VS Code записан.",
+  "vscode.generateFailed": "Не удалось создать конфиг VS Code.",
+  "vscode.overwriteConfirm":
+    "{file} уже существует и не удалось безопасно объединить. Перезаписать?",
+  "vscode.created": "Создано: {file}",
+  "vscode.merged": "Обновлено: {file}",
+  "vscode.skipped": "Пропущено: {file}",
+  "vscode.settingsTitle": "Visual Studio Code",
+  "vscode.settingsHint":
+    "Откройте текущую папку в VS Code или создайте файлы .vscode (расширение PlatformIO и подсказки IntelliSense). Существующие файлы объединяются или запрашивается подтверждение.",
+  "vscode.openAction": "Открыть в VS Code",
+  "vscode.generateAction": "Создать конфиг VS Code",
   "wizard.title": "Новый проект",
   "wizard.parent": "Папка",
   "wizard.name": "Имя проекта",
@@ -272,6 +292,17 @@ export const ru: Record<MessageKey, string> = {
     "Сначала откройте папку проекта PlatformIO (с platformio.ini).",
   "libraries.pioMissing":
     "Не найден PlatformIO CLI. Установите PlatformIO Core и перезапустите Aether.",
+  "libraries.githubPlaceholder":
+    "GitHub: owner/repo или https://github.com/… (#ветка)",
+  "libraries.githubHint":
+    "Установка из GitHub в lib_deps через pio pkg install (HTTPS git URL).",
+  "libraries.githubInstall": "Установить с GitHub",
+  "libraries.githubProgress": "Клонирование / установка {name}…",
+  "libraries.githubEmpty": "Введите URL GitHub или owner/repo.",
+  "libraries.githubInvalid":
+    "Неверный GitHub-репозиторий. Используйте owner/repo, owner/repo#ветка или https://github.com/owner/repo.git",
+  "libraries.githubCloneFailed":
+    "Не удалось установить библиотеку с GitHub: {detail}",
   "extensions.title": "Расширения",
   "extensions.installed": "Установленные",
   "extensions.marketplace": "Маркетплейс",

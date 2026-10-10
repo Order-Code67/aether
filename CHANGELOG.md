@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.9 — 2026-10-11
+
+- **Welcome PCB backdrop** — subtle animated circuit / microchip background on the Welcome screen (paused when the tab is hidden)
+- **GitHub libraries** — Libraries panel: install from `owner/repo` or `https://github.com/…` (#branch) via PlatformIO `lib_deps` / `pio pkg install`
+- **VS Code integration** — Open folder in VS Code; generate / merge `.vscode` helpers (PlatformIO extension + IntelliSense hints); File menu, Command Palette, Settings → Tools, Welcome
+
 ## 0.2.8 — 2026-10-10
 
 - **Serial Plotter** — live numeric charts from serial (`temp:23.5`, `value=12`, or CSV); pause / clear / per-channel toggles in the bottom panel
