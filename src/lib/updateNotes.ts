@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.14": {
+    en: "ESP32-CAM Camera panel, MAVLink telemetry in Plotter, firmware profiles.",
+    ru: "Панель камеры ESP32-CAM, телеметрия MAVLink в плоттере, профили прошивки.",
+  },
   "0.2.13": {
     en: "E2E smoke suite, upload Access denied retry, Save Support Report to disk and last-error log.",
     ru: "E2E smoke-набор, повтор загрузки при Access denied, сохранение отчёта поддержки на диск и last-error лог.",

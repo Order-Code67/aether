@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import {
+  BookmarkPlus,
   FileCode2,
   Hammer,
   Loader2,
@@ -11,8 +12,10 @@ import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
 import type { PioStage } from "@/lib/pioProgress";
+import { useFirmwareProfileStore } from "@/stores/firmwareProfileStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 const STAGE_KEYS: Partial<Record<PioStage, MessageKey>> = {
@@ -44,6 +47,8 @@ export function BuildToolbar() {
   const ports = useSerialStore((s) => s.ports);
   const serialPath = useSerialStore((s) => s.selectedPath);
   const serialConnected = useSerialStore((s) => s.connected);
+  const saveCurrentAs = useFirmwareProfileStore((s) => s.saveCurrentAs);
+  const flashNotice = useSettingsStore((s) => s.flashNotice);
 
   const selectedPort =
     (rootPath && uploadPortByRoot[rootPath]) || serialPath || "";
@@ -202,6 +207,33 @@ export function BuildToolbar() {
       >
         <FileCode2 size={13} />
         {t("pio.compiledb")}
+      </button>
+
+      <button
+        type="button"
+        title={t("profiles.saveCurrent")}
+        aria-label={t("profiles.saveCurrent")}
+        disabled={running}
+        onClick={() => {
+          const defaultName =
+            (selectedEnv || "env") +
+            (selectedPort ? ` · ${selectedPort}` : "");
+          const name = window.prompt(t("profiles.namePlaceholder"), defaultName);
+          if (!name?.trim()) return;
+          const id = saveCurrentAs(name.trim());
+          if (!id) {
+            flashNotice(t("profiles.needProject"));
+            return;
+          }
+          flashNotice(t("profiles.saved", { name: name.trim() }));
+        }}
+        className={cn(
+          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
+          "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+        )}
+      >
+        <BookmarkPlus size={13} />
+        {t("profiles.saveCurrentShort")}
       </button>
 
       {showProgress && stageText && (

@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { DebugConsole } from "@/components/debug/DebugConsole";
 import { OutputPanel } from "@/components/platformio/OutputPanel";
 import { ProblemsPanel } from "@/components/problems/ProblemsPanel";
+import { CameraPanel } from "@/components/camera/CameraPanel";
 import { SerialMonitor } from "@/components/serial/SerialMonitor";
 import { SerialPlotter } from "@/components/serial/SerialPlotter";
 import { TerminalView } from "@/components/terminal/TerminalView";
@@ -192,6 +193,18 @@ export function BottomPanel() {
             </div>
           )}
 
+          {visited.camera && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "camera" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "camera"}
+            >
+              <CameraPanel />
+            </div>
+          )}
+
           {visited.debug && (
             <div
               className={cn(
@@ -219,6 +232,7 @@ export function BottomPanel() {
           {visible &&
             activeTab !== "serial" &&
             activeTab !== "plotter" &&
+            activeTab !== "camera" &&
             activeTab !== "terminal" &&
             activeTab !== "output" &&
             activeTab !== "problems" &&

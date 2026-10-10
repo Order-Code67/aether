@@ -18,6 +18,7 @@ import {
   saveSupportReportToDisk,
 } from "@/lib/supportReport";
 import { localizeUpdateNotes } from "@/lib/updateNotes";
+import { FirmwareProfilesSection } from "@/components/settings/FirmwareProfilesSection";
 
 type SettingsTab = SettingsTabId;
 
@@ -254,6 +255,8 @@ export function SettingsDialog() {
                     />
                   </label>
                 )}
+
+                <FirmwareProfilesSection />
               </>
             )}
             {tab === "tools" && (

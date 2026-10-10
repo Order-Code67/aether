@@ -8,6 +8,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
 const SERIAL_DATA_EVENT: &str = "serial-data";
+const SERIAL_BYTES_EVENT: &str = "serial-bytes";
 const SERIAL_STATUS_EVENT: &str = "serial-status";
 
 #[derive(Debug, Clone, Serialize)]
@@ -31,6 +32,12 @@ pub struct SerialStatus {
 #[serde(rename_all = "camelCase")]
 pub struct SerialDataPayload {
     pub data: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialBytesPayload {
+    pub bytes: Vec<u8>,
 }
 
 struct OpenPort {
@@ -149,6 +156,14 @@ pub fn serial_open(
             match reader_port.read(&mut buffer) {
                 Ok(0) => thread::sleep(Duration::from_millis(10)),
                 Ok(n) => {
+                    // Raw bytes for MAVLink / binary telemetry (before UTF-8 lossy).
+                    let _ = app_handle.emit(
+                        SERIAL_BYTES_EVENT,
+                        SerialBytesPayload {
+                            bytes: buffer[..n].to_vec(),
+                        },
+                    );
+
                     let chunk = String::from_utf8_lossy(&buffer[..n]);
                     pending.push_str(&chunk);
 

@@ -40,10 +40,10 @@ const LOCALIZED: Record<
   },
   "esp32-cam": {
     descEn:
-      "AI-Thinker ESP32-CAM (board esp32cam). Status LED + plotter sample lines. Camera init left for you.",
+      "AI-Thinker ESP32-CAM: Wi‑Fi + HTTP /capture JPEG for Aether Camera panel. Set SSID/password first.",
     descRu:
-      "AI-Thinker ESP32-CAM (плата esp32cam). Светодиод + строки для плоттера. Инициализацию камеры добавляйте сами.",
-    tags: ["ESP32", "CAM"],
+      "AI-Thinker ESP32-CAM: Wi‑Fi + HTTP /capture JPEG для панели Камера. Сначала укажите SSID/пароль.",
+    tags: ["ESP32", "CAM", "Wi-Fi"],
   },
   "pixhawk-ardupilot-stub": {
     descEn:

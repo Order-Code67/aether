@@ -306,10 +306,83 @@ export function getCommands(): Command[] {
       run: () => bottom("plotter"),
     },
     {
+      id: "view.camera",
+      title: "Show Camera",
+      category: "View",
+      keywords: "esp32-cam mjpeg jpeg stream камера",
+      run: () => bottom("camera"),
+    },
+    {
       id: "view.debugConsole",
       title: "Show Debug Console",
       category: "View",
       run: () => bottom("debug"),
+    },
+    {
+      id: "pio.saveFirmwareProfile",
+      title: "PlatformIO: Save Firmware Profile…",
+      category: "PlatformIO",
+      keywords: "profile preset board port профиль прошивка",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { useFirmwareProfileStore } = await import(
+          "@/stores/firmwareProfileStore"
+        );
+        const pio = usePlatformIoStore.getState();
+        const { useSerialStore } = await import("@/stores/serialStore");
+        const root = useWorkspaceStore.getState().rootPath;
+        const port =
+          (root && pio.uploadPortByRoot[root]) ||
+          useSerialStore.getState().selectedPath ||
+          "";
+        const defaultName =
+          (pio.selectedEnv || "env") + (port ? ` · ${port}` : "");
+        const name = window.prompt(t("profiles.namePlaceholder"), defaultName);
+        if (!name?.trim()) return;
+        const id = useFirmwareProfileStore.getState().saveCurrentAs(name.trim());
+        if (!id) {
+          useSettingsStore.getState().flashNotice(t("profiles.needProject"));
+          return;
+        }
+        useSettingsStore
+          .getState()
+          .flashNotice(t("profiles.saved", { name: name.trim() }));
+      },
+    },
+    {
+      id: "pio.applyFirmwareProfile",
+      title: "PlatformIO: Apply Firmware Profile…",
+      category: "PlatformIO",
+      keywords: "profile apply профиль применить",
+      run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const { useFirmwareProfileStore } = await import(
+          "@/stores/firmwareProfileStore"
+        );
+        const profiles = useFirmwareProfileStore.getState().profiles;
+        if (profiles.length === 0) {
+          useSettingsStore.getState().flashNotice(t("profiles.empty"));
+          return;
+        }
+        const list = profiles
+          .map((p, i) => `${i + 1}. ${p.name} (${p.env || "—"} · ${p.uploadPort || "—"})`)
+          .join("\n");
+        const answer = window.prompt(
+          `${t("profiles.title")}\n${list}\n\n#`,
+          "1",
+        );
+        const idx = Number(answer) - 1;
+        const profile = profiles[idx];
+        if (!profile) return;
+        await useFirmwareProfileStore.getState().applyProfile(profile.id);
+      },
+    },
+    {
+      id: "settings.firmwareProfiles",
+      title: "Preferences: Firmware Profiles",
+      category: "Settings",
+      keywords: "firmware profile preset профили",
+      run: () => useSettingsStore.getState().openSettings("general"),
     },
     {
       id: "pio.build",

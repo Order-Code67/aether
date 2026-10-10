@@ -19,6 +19,10 @@ export interface SerialDataPayload {
   data: string;
 }
 
+export interface SerialBytesPayload {
+  bytes: number[];
+}
+
 export const BAUD_RATES = [
   9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600,
 ] as const;
@@ -55,6 +59,14 @@ export async function listenSerialData(
 ): Promise<UnlistenFn> {
   return listen<SerialDataPayload>("serial-data", (event) => {
     handler(event.payload.data);
+  });
+}
+
+export async function listenSerialBytes(
+  handler: (bytes: number[]) => void,
+): Promise<UnlistenFn> {
+  return listen<SerialBytesPayload>("serial-bytes", (event) => {
+    handler(event.payload.bytes);
   });
 }
 

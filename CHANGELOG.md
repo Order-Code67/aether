@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.14 — 2026-10-11
+
+- **ESP32-CAM Camera** — bottom-panel Camera view: HTTP JPEG/MJPEG snapshot (`/capture` or `/stream`), editable URL, Connect/Refresh, Serial IP autofill; bundled esp32-cam example serves Wi‑Fi + `/capture` (not RTSP studio)
+- **MAVLink Telemetry** — Plotter Text / MAVLink mode; minimal pure-TS parser for HEARTBEAT + ATTITUDE (+ SYS_STATUS voltage); vehicle type/armed from heartbeat; raw `serial-bytes` bridge; unit tests
+- **Firmware profiles** — named presets (env, upload port, project/sketch hint, monitor baud); Save / Apply / Delete in Settings + Build toolbar + Command Palette; persisted per machine
+
 ## 0.2.13 — 2026-10-11
 
 - **E2E / smoke suite** — Vitest integration coverage for focus policy, upload/serial gate, support report, PIO Access denied hints, VS Code error mapping; `npm run test:e2e` / `npm run smoke:ui`; docs moved to `docs/E2E_SMOKE.md`

@@ -1,6 +1,12 @@
 import { useEffect } from "react";
+import { suggestCameraUrlFromSerialLine } from "@/lib/cameraIp";
 import { isTauriRuntime } from "@/lib/tauri";
-import { listenSerialData, listenSerialStatus } from "@/lib/serial";
+import {
+  listenSerialBytes,
+  listenSerialData,
+  listenSerialStatus,
+} from "@/lib/serial";
+import { useCameraStore } from "@/stores/cameraStore";
 import { usePlotterStore } from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
 
@@ -19,6 +25,7 @@ export function useSerialBridge(): void {
 
     let disposed = false;
     let unlistenData: (() => void) | undefined;
+    let unlistenBytes: (() => void) | undefined;
     let unlistenStatus: (() => void) | undefined;
 
     void (async () => {
@@ -26,6 +33,14 @@ export function useSerialBridge(): void {
         if (disposed) return;
         appendLine(line);
         usePlotterStore.getState().ingestLine(line);
+        const suggested = suggestCameraUrlFromSerialLine(line);
+        if (suggested) {
+          useCameraStore.getState().applySuggestedUrl(suggested);
+        }
+      });
+      unlistenBytes = await listenSerialBytes((bytes) => {
+        if (disposed) return;
+        usePlotterStore.getState().ingestBytes(bytes);
       });
       unlistenStatus = await listenSerialStatus((status) => {
         if (!disposed) applyStatus(status);
@@ -35,6 +50,7 @@ export function useSerialBridge(): void {
     return () => {
       disposed = true;
       unlistenData?.();
+      unlistenBytes?.();
       unlistenStatus?.();
     };
   }, [appendLine, applyStatus, hydrateStatus, refreshPorts]);

@@ -10,10 +10,13 @@ export function SerialPlotter() {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paused = usePlotterStore((s) => s.paused);
+  const parseMode = usePlotterStore((s) => s.parseMode);
   const points = usePlotterStore((s) => s.points);
   const channels = usePlotterStore((s) => s.channels);
   const visibility = usePlotterStore((s) => s.visibility);
+  const vehicle = usePlotterStore((s) => s.vehicle);
   const setPaused = usePlotterStore((s) => s.setPaused);
+  const setParseMode = usePlotterStore((s) => s.setParseMode);
   const toggleChannel = usePlotterStore((s) => s.toggleChannel);
   const clear = usePlotterStore((s) => s.clear);
   const connected = useSerialStore((s) => s.connected);
@@ -59,7 +62,11 @@ export function SerialPlotter() {
         ctx.fillStyle = "rgba(255,255,255,0.35)";
         ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(
-          connected ? t("plotter.waiting") : t("plotter.connectHint"),
+          connected
+            ? parseMode === "mavlink"
+              ? t("plotter.waitingMavlink")
+              : t("plotter.waiting")
+            : t("plotter.connectHint"),
           pad.l + 8,
           pad.t + 18,
         );
@@ -118,11 +125,41 @@ export function SerialPlotter() {
     const ro = new ResizeObserver(() => draw());
     ro.observe(parent);
     return () => ro.disconnect();
-  }, [points, channels, visibility, connected, t]);
+  }, [points, channels, visibility, connected, parseMode, t]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-1.5 border-b border-aether-border px-2 py-1.5">
+        <div
+          className="flex h-7 items-center rounded border border-aether-border p-0.5 text-[11px]"
+          role="group"
+          aria-label={t("plotter.mode")}
+        >
+          <button
+            type="button"
+            onClick={() => setParseMode("text")}
+            className={cn(
+              "rounded px-2 py-0.5",
+              parseMode === "text"
+                ? "bg-aether-accent-muted text-aether-fg"
+                : "text-aether-fg-muted hover:text-aether-fg",
+            )}
+          >
+            {t("plotter.modeText")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setParseMode("mavlink")}
+            className={cn(
+              "rounded px-2 py-0.5",
+              parseMode === "mavlink"
+                ? "bg-aether-accent-muted text-aether-fg"
+                : "text-aether-fg-muted hover:text-aether-fg",
+            )}
+          >
+            {t("plotter.modeMavlink")}
+          </button>
+        </div>
         <button
           type="button"
           title={paused ? t("plotter.resume") : t("plotter.pause")}
@@ -143,8 +180,18 @@ export function SerialPlotter() {
           <Eraser size={13} />
         </button>
         <span className="ml-1 text-[11px] text-aether-fg-dim">
-          {t("plotter.hint")}
+          {parseMode === "mavlink" ? t("plotter.hintMavlink") : t("plotter.hint")}
         </span>
+        {parseMode === "mavlink" && vehicle && (
+          <span className="text-[11px] text-aether-fg-muted">
+            {t("plotter.vehicle", {
+              type: vehicle.vehicleType,
+              armed: vehicle.armed
+                ? t("plotter.armed")
+                : t("plotter.disarmed"),
+            })}
+          </span>
+        )}
         <div className="ml-auto flex max-w-full flex-wrap items-center gap-1">
           {channels.map((ch, i) => {
             const on = visibility[ch] !== false;
