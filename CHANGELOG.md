@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 — 2026-10-10
+
+- **App icon** — corrected branding: robot hand holding planet (not robot book); regenerated `src-tauri/icons/*` and About UI `public/aether-icon.png`
+
 ## 0.2.1 — 2026-10-10
 
 - **App icon** — new robot-book / planet branding (Tauri `src-tauri/icons/*`)
