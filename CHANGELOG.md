@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.19 — 2026-10-11
+
+- **Playwright E2E** — `@playwright/test` smoke against Vite preview (Welcome, Settings, Command Palette); `npm run test:e2e`; Vitest contracts moved to `npm run test:contracts`; expanded `docs/E2E_SMOKE.md` checklist (Monaco, Search, Terminal, VS Code, Upload/Serial, Quick Start, Libraries, Camera/Plotter)
+
 ## 0.2.18 — 2026-10-11
 
 - **Firmware profiles export/import** — Settings + Command Palette: export selected/all profiles to JSON (`Documents/Aether/profiles`); import with replace or merge; schema validation; RU/EN errors; localStorage unchanged

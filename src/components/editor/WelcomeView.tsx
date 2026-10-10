@@ -91,7 +91,10 @@ export function WelcomeView() {
     : t("vscode.needFolderHint");
 
   return (
-    <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+    <div
+      data-testid="welcome-screen"
+      className="relative flex flex-1 items-center justify-center overflow-hidden"
+    >
       <CircuitBackground />
       <NewProjectDialog
         open={newProjectOpen}
@@ -107,6 +110,7 @@ export function WelcomeView() {
       />
       <div className="relative z-10 max-w-md px-8 text-center">
         <p
+          data-testid="welcome-brand"
           className={cn(
             "font-light tracking-[0.12em] text-aether-fg",
             arduinoMode ? "text-4xl" : "text-3xl",
@@ -121,6 +125,7 @@ export function WelcomeView() {
         <div className="mt-8 flex flex-col items-center gap-2">
           <button
             type="button"
+            data-testid="welcome-quick-start"
             onClick={() => setOnboardingOpen(true)}
             className={cn(
               "flex items-center justify-center gap-2 rounded border border-aether-accent bg-aether-accent text-white backdrop-blur-sm transition-opacity hover:opacity-90",
@@ -134,6 +139,7 @@ export function WelcomeView() {
           </button>
           <button
             type="button"
+            data-testid="welcome-new-project"
             onClick={() => setNewProjectOpen(true)}
             className="flex w-64 items-center justify-center gap-2 rounded border border-aether-border bg-aether-surface/90 px-3 py-2.5 text-xs text-aether-fg backdrop-blur-sm transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised"
           >
@@ -142,6 +148,7 @@ export function WelcomeView() {
           </button>
           <button
             type="button"
+            data-testid="welcome-open-folder"
             onClick={() => {
               void openFolder();
             }}

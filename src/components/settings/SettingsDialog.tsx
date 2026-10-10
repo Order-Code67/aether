@@ -133,6 +133,7 @@ export function SettingsDialog() {
     >
       <div
         ref={panelRef}
+        data-testid="settings-dialog"
         role="dialog"
         aria-modal="true"
         aria-label="Settings"

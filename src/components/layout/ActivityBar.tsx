@@ -155,6 +155,7 @@ export function ActivityBar() {
 
       <button
         type="button"
+        data-testid="activity-settings"
         title={t("settings.title")}
         aria-label={t("settings.title")}
         onClick={() => useSettingsStore.getState().openSettings()}

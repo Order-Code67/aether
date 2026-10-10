@@ -143,6 +143,7 @@ export function CommandPalette() {
       }}
     >
       <div
+        data-testid="command-palette"
         role="dialog"
         aria-modal="true"
         aria-label={mode === "commands" ? "Command Palette" : "Go to File"}

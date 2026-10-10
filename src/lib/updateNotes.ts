@@ -5,10 +5,15 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.19": {
+    en: "Playwright E2E smoke (Vite preview), expanded UI smoke checklist, Vitest contracts via test:contracts.",
+    ru: "Playwright E2E smoke (Vite preview), расширенный UI smoke-чеклист, Vitest-контракты через test:contracts.",
+  },
   "0.2.18": {
     en: "Firmware profile export/import, Plotter zoom & CSV, Camera save/record + reconnect, Debug watches & conditional breakpoints.",
     ru: "Экспорт/импорт профилей прошивки, зум и CSV в плоттере, сохранение/запись камеры с переподключением, watches и условные точки останова.",
   },
+
   "0.2.17": {
     en: "Quick Start on first launch, real Beta update channel, Settings Editor/Agent i18n, Arduino libraries via arduino-cli.",
     ru: "Быстрый старт при первом запуске, реальный канал Beta, i18n вкладок Editor/Agent, библиотеки Arduino через arduino-cli.",

@@ -11,7 +11,7 @@
 # /releases/latest/download/latest-beta.json remains reachable.
 
 param(
-  [string]$Version = "0.2.18",
+  [string]$Version = "0.2.19",
   [string]$Notes = "Aether update.",
   [string]$BetaVersion = "",
   [string]$BetaNotes = "",

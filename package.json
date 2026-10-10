@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "scripts": {
@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "vitest run src/lib/focusPolicy.test.ts src/lib/uploadGate.test.ts src/lib/supportReport.test.ts src/lib/pioErrors.test.ts src/lib/vscodeIntegration.test.ts src/lib/comDrivers.test.ts",
+    "test:contracts": "vitest run src/lib/focusPolicy.test.ts src/lib/uploadGate.test.ts src/lib/supportReport.test.ts src/lib/pioErrors.test.ts src/lib/vscodeIntegration.test.ts src/lib/comDrivers.test.ts",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "smoke:ui": "node scripts/smoke-ui.mjs",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
@@ -34,6 +36,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/cli": "^2",
     "@types/node": "^24.19.2",
