@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-watcher"
+description = "Allow watching workspace folder(s) for filesystem changes"
+commands.allow = ["watch_start", "watch_stop", "watch_sync"]

@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-search"
+description = "Allow searching text across workspace folders"
+commands.allow = ["search_workspace"]

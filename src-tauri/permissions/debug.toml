@@ -1,0 +1,19 @@
+[[permission]]
+identifier = "allow-debug"
+description = "Allow GDB/PlatformIO debug session control"
+commands.allow = [
+  "debug_status",
+  "debug_start",
+  "debug_stop",
+  "debug_continue",
+  "debug_pause",
+  "debug_step_over",
+  "debug_step_into",
+  "debug_step_out",
+  "debug_insert_breakpoint",
+  "debug_delete_breakpoint",
+  "debug_stack",
+  "debug_variables",
+  "debug_eval",
+  "debug_console_input"
+]

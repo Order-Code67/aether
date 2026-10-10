@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-ai"
+description = "Allow OpenAI-compatible chat completions from the Agent panel"
+commands.allow = ["ai_chat_completion", "ai_chat_stream", "ai_cancel"]

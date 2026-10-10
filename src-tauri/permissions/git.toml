@@ -1,0 +1,18 @@
+[[permission]]
+identifier = "allow-git"
+description = "Allow Git status, stage, commit, and diff for Source Control"
+commands.allow = [
+  "git_detect",
+  "git_status",
+  "git_stage",
+  "git_unstage",
+  "git_discard",
+  "git_commit",
+  "git_diff",
+  "git_branches",
+  "git_checkout",
+  "git_create_branch",
+  "git_fetch",
+  "git_pull",
+  "git_push"
+]

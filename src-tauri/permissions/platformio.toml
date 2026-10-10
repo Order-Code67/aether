@@ -1,0 +1,11 @@
+[[permission]]
+identifier = "allow-platformio"
+description = "Enables PlatformIO detect/inspect/run/cancel commands."
+commands.allow = [
+  "pio_detect",
+  "pio_inspect_project",
+  "pio_run",
+  "pio_cancel",
+  "pio_is_running",
+  "pio_project_init"
+]

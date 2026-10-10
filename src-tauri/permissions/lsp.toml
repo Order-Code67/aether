@@ -1,0 +1,12 @@
+[[permission]]
+identifier = "allow-lsp"
+description = "Allow clangd language server for IntelliSense"
+commands.allow = [
+  "lsp_detect",
+  "lsp_start",
+  "lsp_stop",
+  "lsp_status",
+  "lsp_notify",
+  "lsp_request",
+  "lsp_path_to_uri"
+]
