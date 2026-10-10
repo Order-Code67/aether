@@ -1,4 +1,4 @@
 [[permission]]
 identifier = "allow-vscode"
 description = "Open the current workspace folder in Visual Studio Code."
-commands.allow = ["open_external_vscode"]
+commands.allow = ["open_external_vscode", "vscode_detect"]

@@ -36,7 +36,7 @@ export const en = {
   "vscode.needFolder": "Open a project folder first.",
   "vscode.opened": "Opened folder in VS Code.",
   "vscode.cliMissing":
-    "VS Code CLI (`code`) not found. Install VS Code and enable “Shell Command: Install 'code' command in PATH”, then restart Aether.",
+    "VS Code is not installed (or not found). Install from https://code.visualstudio.com/ or run: winget install -e --id Microsoft.VisualStudioCode — then restart Aether.",
   "vscode.openFailed": "Could not launch VS Code.",
   "vscode.generateDone": "VS Code config written.",
   "vscode.generateFailed": "Could not generate VS Code config.",
@@ -50,6 +50,10 @@ export const en = {
     "Open the current folder in VS Code, or generate .vscode helpers (PlatformIO extension + IntelliSense hints). Existing files are merged or confirmed before overwrite.",
   "vscode.openAction": "Open in VS Code",
   "vscode.generateAction": "Generate VS Code config",
+  "vscode.statusInstalled": "Found: {path}",
+  "vscode.statusMissing":
+    "Not installed. Install: winget install -e --id Microsoft.VisualStudioCode — or https://code.visualstudio.com/",
+  "vscode.statusChecking": "Checking VS Code…",
   "wizard.title": "New Project",
   "wizard.parent": "Location",
   "wizard.name": "Project name",

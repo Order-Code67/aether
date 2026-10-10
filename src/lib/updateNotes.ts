@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.10": {
+    en: "VS Code install/launch fix on Windows, detect status in Settings, clearer missing-install hints.",
+    ru: "Исправление установки/запуска VS Code на Windows, статус в Настройках, понятные подсказки если не установлен.",
+  },
   "0.2.9": {
     en: "Animated PCB welcome background, install libraries from GitHub, Open in VS Code with .vscode helpers.",
     ru: "Анимированный PCB-фон Welcome, установка библиотек с GitHub, Open in VS Code и генерация .vscode.",

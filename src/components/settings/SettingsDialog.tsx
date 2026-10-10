@@ -62,6 +62,9 @@ export function SettingsDialog() {
 
   const [tab, setTab] = useState<SettingsTab>("general");
   const [appVersion, setAppVersion] = useState<string>("0.1.0");
+  const [vscodeStatus, setVscodeStatus] = useState<
+    "idle" | "checking" | { installed: true; path: string } | { installed: false }
+  >("idle");
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,6 +94,23 @@ export function SettingsDialog() {
     if (!open || tab !== "tools") return;
     void refreshOfflineCache();
   }, [open, tab, refreshOfflineCache]);
+
+  useEffect(() => {
+    if (!open || tab !== "tools" || !isTauriRuntime()) {
+      return;
+    }
+    setVscodeStatus("checking");
+    void import("@/lib/vscodeIntegration")
+      .then(({ detectVsCode }) => detectVsCode())
+      .then((info) => {
+        if (info.installed && info.path) {
+          setVscodeStatus({ installed: true, path: info.path });
+        } else {
+          setVscodeStatus({ installed: false });
+        }
+      })
+      .catch(() => setVscodeStatus({ installed: false }));
+  }, [open, tab]);
 
   if (!open) return null;
 
@@ -202,6 +222,13 @@ export function SettingsDialog() {
                     </p>
                     <p className="mt-1 text-[11px] leading-relaxed text-aether-fg-muted">
                       {t("vscode.settingsHint")}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-aether-fg-dim">
+                      {vscodeStatus === "checking" || vscodeStatus === "idle"
+                        ? t("vscode.statusChecking")
+                        : vscodeStatus.installed
+                          ? t("vscode.statusInstalled", { path: vscodeStatus.path })
+                          : t("vscode.statusMissing")}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">

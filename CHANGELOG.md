@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.10 — 2026-10-11
+
+- **VS Code launch fix (Windows)** — prefer `Code.exe` over `code.cmd`; avoid `CREATE_NO_WINDOW` on batch launchers; broader discovery (registry Uninstall keys, Insiders, LocalAppData)
+- **VS Code detect** — `vscode_detect` + Settings → Tools status (path or install hint with winget / download link); clearer RU/EN missing messages
+- **Audit** — tsc / vitest / cargo check; PlatformIO, Examples, Doctor, Upload, GitHub lib install paths still wired
+
 ## 0.2.9 — 2026-10-11
 
 - **Welcome PCB backdrop** — subtle animated circuit / microchip background on the Welcome screen (paused when the tab is hidden)

@@ -89,6 +89,18 @@ async function readJsonObject(
   }
 }
 
+export type VsCodeInfo = {
+  installed: boolean;
+  path: string | null;
+};
+
+export async function detectVsCode(): Promise<VsCodeInfo> {
+  if (!isTauriRuntime()) {
+    return { installed: false, path: null };
+  }
+  return invoke<VsCodeInfo>("vscode_detect");
+}
+
 export async function openInVsCode(folderPath: string): Promise<void> {
   if (!isTauriRuntime()) {
     throw new Error("VS Code integration requires the desktop app.");

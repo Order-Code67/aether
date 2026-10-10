@@ -106,6 +106,7 @@ pub fn run() {
             examples::list_bundled_examples,
             examples::materialize_bundled_example,
             vscode::open_external_vscode,
+            vscode::vscode_detect,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aether");

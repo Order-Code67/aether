@@ -39,7 +39,7 @@ export const ru: Record<MessageKey, string> = {
   "vscode.needFolder": "Сначала откройте папку проекта.",
   "vscode.opened": "Папка открыта в VS Code.",
   "vscode.cliMissing":
-    "Не найден CLI VS Code (`code`). Установите VS Code и команду «Shell Command: Install 'code' command in PATH», затем перезапустите Aether.",
+    "VS Code не установлен (или не найден). Установите с https://code.visualstudio.com/ или выполните: winget install -e --id Microsoft.VisualStudioCode — затем перезапустите Aether.",
   "vscode.openFailed": "Не удалось запустить VS Code.",
   "vscode.generateDone": "Конфиг VS Code записан.",
   "vscode.generateFailed": "Не удалось создать конфиг VS Code.",
@@ -53,6 +53,10 @@ export const ru: Record<MessageKey, string> = {
     "Откройте текущую папку в VS Code или создайте файлы .vscode (расширение PlatformIO и подсказки IntelliSense). Существующие файлы объединяются или запрашивается подтверждение.",
   "vscode.openAction": "Открыть в VS Code",
   "vscode.generateAction": "Создать конфиг VS Code",
+  "vscode.statusInstalled": "Найден: {path}",
+  "vscode.statusMissing":
+    "Не установлен. Установка: winget install -e --id Microsoft.VisualStudioCode — или https://code.visualstudio.com/",
+  "vscode.statusChecking": "Проверка VS Code…",
   "wizard.title": "Новый проект",
   "wizard.parent": "Папка",
   "wizard.name": "Имя проекта",
