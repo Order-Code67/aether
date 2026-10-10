@@ -5,7 +5,7 @@
 #   .\scripts\make-latest-json.ps1 -Version 0.2.15 -BetaNotes "Same as stable until a true prerelease."
 
 param(
-  [string]$Version = "0.2.15",
+  [string]$Version = "0.2.16",
   [string]$Notes = "Aether update.",
   [string]$BetaNotes = "",
   [string]$BaseUrl = "https://github.com/Order-Code67/aether/releases/download",
