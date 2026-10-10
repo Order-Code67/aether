@@ -38,6 +38,27 @@ const LOCALIZED: Record<
       "Минимальный Wi-Fi stub для ESP32. Укажите SSID/пароль; далее — документация PlatformIO.",
     tags: ["ESP32", "Wi-Fi"],
   },
+  "esp32-cam": {
+    descEn:
+      "AI-Thinker ESP32-CAM (board esp32cam). Status LED + plotter sample lines. Camera init left for you.",
+    descRu:
+      "AI-Thinker ESP32-CAM (плата esp32cam). Светодиод + строки для плоттера. Инициализацию камеры добавляйте сами.",
+    tags: ["ESP32", "CAM"],
+  },
+  "pixhawk-ardupilot-stub": {
+    descEn:
+      "Stub for Pixhawk / ArduPilot (SITL-oriented notes). Not a full ArduPilot IDE — read the README.",
+    descRu:
+      "Заглушка для Pixhawk / ArduPilot (заметки про SITL). Это не полноценная IDE ArduPilot — см. README.",
+    tags: ["Pixhawk", "ArduPilot", "Stub"],
+  },
+  "betaflight-espfc-stub": {
+    descEn:
+      "Later: Betaflight / ESP-FC. Placeholder card only — no heavy firmware tree yet.",
+    descRu:
+      "Позже: Betaflight / ESP-FC. Только карточка-заглушка — тяжёлое дерево прошивки пока не включено.",
+    tags: ["Betaflight", "ESP-FC", "Later"],
+  },
 };
 
 export function localizeExample(

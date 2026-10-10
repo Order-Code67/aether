@@ -249,8 +249,8 @@ export function MonacoEditor() {
     });
 
     editor.onMouseDown((e) => {
-      // Glyph margin = 2 in monaco MouseTargetType
-      if (e.target.type !== 2) return;
+      // Glyph margin = 2, line numbers = 3 (Monaco MouseTargetType)
+      if (e.target.type !== 2 && e.target.type !== 3) return;
       const line = e.target.position?.lineNumber;
       const path = useEditorStore.getState().tabs.find(
         (t) => t.id === useEditorStore.getState().activeTabId,

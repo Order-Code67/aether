@@ -10,6 +10,7 @@ import {
   StepForward,
   Trash2,
 } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
@@ -17,6 +18,7 @@ import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function DebugPanel() {
+  const { t } = useI18n();
   const sessionActive = useDebugStore((s) => s.sessionActive);
   const execState = useDebugStore((s) => s.execState);
   const error = useDebugStore((s) => s.error);
@@ -48,25 +50,21 @@ export function DebugPanel() {
     <div className="flex h-full flex-col">
       <header className="flex h-9 shrink-0 items-center justify-between gap-2 px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          Run and Debug
+          {t("debug.panelTitle")}
         </h2>
         <Bug size={14} className="text-aether-fg-muted" />
       </header>
 
       <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 pb-4">
         <p className="text-[11px] leading-relaxed text-aether-fg-dim">
-          Starts{" "}
-          <span className="font-mono text-aether-fg-muted">
-            pio debug --interpreter=mi2
-          </span>
-          . Configure{" "}
-          <span className="font-mono text-aether-fg-muted">debug_tool</span> in
-          platformio.ini. Click the editor gutter to toggle breakpoints.
+          {t("debug.hint")}
         </p>
 
         {kind === "folder" && isProject && envs.length > 0 && (
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] text-aether-fg-muted">Environment</span>
+            <span className="text-[11px] text-aether-fg-muted">
+              {t("debug.env")}
+            </span>
             <select
               value={selectedEnv}
               disabled={sessionActive}
@@ -85,49 +83,49 @@ export function DebugPanel() {
         <div className="flex flex-wrap gap-1">
           {!sessionActive ? (
             <ToolBtn
-              title="Start Debugging"
+              title={t("debug.start")}
               disabled={kind !== "folder" || !isProject}
               onClick={() => void start()}
             >
               <Play size={14} />
-              Start
+              {t("debug.startBtn")}
             </ToolBtn>
           ) : (
-            <ToolBtn title="Stop" danger onClick={() => void stop()}>
+            <ToolBtn title={t("debug.stop")} danger onClick={() => void stop()}>
               <Square size={14} />
-              Stop
+              {t("debug.stopBtn")}
             </ToolBtn>
           )}
           <ToolBtn
-            title="Continue"
+            title={t("debug.continue")}
             disabled={!sessionActive || !stopped}
             onClick={() => void continueExec()}
           >
             <Play size={14} />
           </ToolBtn>
           <ToolBtn
-            title="Pause"
+            title={t("debug.pause")}
             disabled={!sessionActive || !running || stopped}
             onClick={() => void pause()}
           >
             <Pause size={14} />
           </ToolBtn>
           <ToolBtn
-            title="Step Over"
+            title={t("debug.stepOver")}
             disabled={!sessionActive || !stopped}
             onClick={() => void stepOver()}
           >
             <StepForward size={14} />
           </ToolBtn>
           <ToolBtn
-            title="Step Into"
+            title={t("debug.stepInto")}
             disabled={!sessionActive || !stopped}
             onClick={() => void stepInto()}
           >
             <ArrowDownToLine size={14} />
           </ToolBtn>
           <ToolBtn
-            title="Step Out"
+            title={t("debug.stepOut")}
             disabled={!sessionActive || !stopped}
             onClick={() => void stepOut()}
           >
@@ -136,9 +134,9 @@ export function DebugPanel() {
         </div>
 
         <div className="text-[11px] text-aether-fg-muted">
-          Status:{" "}
+          {t("debug.status")}:{" "}
           <span className="text-aether-fg">
-            {sessionActive ? execState : "inactive"}
+            {sessionActive ? execState : t("debug.inactive")}
           </span>
           {stoppedFile && stoppedLine != null && (
             <span className="text-aether-fg-dim">
@@ -155,8 +153,8 @@ export function DebugPanel() {
         )}
 
         <Section
-          title="Call Stack"
-          empty={frames.length === 0 ? "No stack (paused at a breakpoint)." : null}
+          title={t("debug.stack")}
+          empty={frames.length === 0 ? t("debug.stackEmpty") : null}
         >
           {frames.map((frame) => (
             <button
@@ -190,9 +188,9 @@ export function DebugPanel() {
         </Section>
 
         <Section
-          title="Variables"
+          title={t("debug.variables")}
           empty={
-            variables.length === 0 ? "No locals (pause to inspect)." : null
+            variables.length === 0 ? t("debug.variablesEmpty") : null
           }
         >
           {variables.map((v) => (
@@ -209,12 +207,12 @@ export function DebugPanel() {
         </Section>
 
         <Section
-          title="Breakpoints"
+          title={t("debug.breakpoints")}
           action={
             breakpoints.length > 0 ? (
               <button
                 type="button"
-                title="Clear all"
+                title={t("debug.clearBreakpoints")}
                 onClick={clearBreakpoints}
                 className="text-aether-fg-dim hover:text-aether-fg"
               >
@@ -223,9 +221,7 @@ export function DebugPanel() {
             ) : null
           }
           empty={
-            breakpoints.length === 0
-              ? "Click the editor gutter to add breakpoints."
-              : null
+            breakpoints.length === 0 ? t("debug.breakpointsEmpty") : null
           }
         >
           {breakpoints.map((bp) => (

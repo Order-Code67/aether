@@ -218,6 +218,13 @@ export function getCommands(): Command[] {
       run: () => bottom("serial"),
     },
     {
+      id: "view.plotter",
+      title: "Show Serial Plotter",
+      category: "View",
+      keywords: "plot chart graph serial плоттер график",
+      run: () => bottom("plotter"),
+    },
+    {
       id: "view.debugConsole",
       title: "Show Debug Console",
       category: "View",

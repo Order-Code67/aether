@@ -43,6 +43,8 @@ export function StatusBar() {
   const lastSuccess = usePlatformIoStore((s) => s.lastSuccess);
   const progress = usePlatformIoStore((s) => s.progress);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
+  const envs = usePlatformIoStore((s) => s.envs);
+  const setSelectedEnv = usePlatformIoStore((s) => s.setSelectedEnv);
   const uploadPortByRoot = usePlatformIoStore((s) => s.uploadPortByRoot);
   const rootPath = useWorkspaceStore((s) => s.rootPath);
   const uploadPort =
@@ -98,16 +100,9 @@ export function StatusBar() {
     pioLabel =
       progress.percent != null ? `${stage} ${progress.percent}%` : stage;
   } else if (isProject) {
-    const boardPort = [
-      selectedEnv || t("pio.board"),
-      uploadPort || t("pio.portNone"),
-    ].join(" · ");
-    pioLabel =
-      lastSuccess === false
-        ? `${t("pio.failed")} · ${boardPort}`
-        : `${t("pio.ok")} · ${boardPort}`;
+    pioLabel = lastSuccess === false ? t("pio.failed") : t("pio.ok");
   } else if (kind === "folder") {
-    pioLabel = "No platformio.ini";
+    pioLabel = t("pio.error.noIni");
   }
 
   let clangdLabel = t("status.clangd");
@@ -188,16 +183,42 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title={
-            isProject
-              ? `${t("pio.board")}: ${selectedEnv || "—"} · ${t("pio.port")}: ${uploadPort || t("pio.portNone")}`
-              : "Open PlatformIO Output"
-          }
+          title="Open PlatformIO Output"
           onClick={() => setBottomPanelTab("output")}
           className="truncate opacity-90 hover:opacity-100"
         >
           {pioLabel}
         </button>
+        {isProject && envs.length > 0 && (
+          <label
+            className="flex max-w-[180px] items-center gap-1 opacity-95"
+            title={t("pio.envSwitch")}
+          >
+            <span className="shrink-0">{t("pio.env")}</span>
+            <select
+              value={selectedEnv}
+              disabled={running}
+              onChange={(event) => setSelectedEnv(event.target.value)}
+              onClick={(event) => event.stopPropagation()}
+              className="h-5 max-w-[130px] truncate rounded border border-white/25 bg-transparent px-0.5 text-[11px] text-white outline-none disabled:opacity-50"
+              aria-label={t("pio.envSwitch")}
+            >
+              {envs.map((env) => (
+                <option key={env} value={env} className="bg-aether-bg text-aether-fg">
+                  {env}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {isProject && (
+          <span
+            className="max-w-[100px] truncate opacity-90"
+            title={`${t("pio.port")}: ${uploadPort || t("pio.portNone")}`}
+          >
+            {uploadPort || t("pio.portNone")}
+          </span>
+        )}
         {kind === "folder" && (
           <span
             className="flex max-w-[160px] items-center gap-1 truncate opacity-90"

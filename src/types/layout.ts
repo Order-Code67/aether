@@ -15,6 +15,7 @@ export type BottomPanelTab =
   | "output"
   | "debug"
   | "serial"
+  | "plotter"
   | "terminal";
 
 export interface ActivityItem {
@@ -58,5 +59,6 @@ export const BOTTOM_PANEL_TABS: readonly {
   { id: "output", labelKey: "panel.output" },
   { id: "debug", labelKey: "panel.debug" },
   { id: "serial", labelKey: "panel.serial" },
+  { id: "plotter", labelKey: "panel.plotter" },
   { id: "terminal", labelKey: "panel.terminal" },
 ] as const;

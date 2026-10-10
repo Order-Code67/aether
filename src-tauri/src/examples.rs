@@ -52,6 +52,30 @@ const CATALOG: &[CatalogEntry] = &[
         board: "esp32dev",
         tags: &["ESP32", "Wi-Fi"],
     },
+    CatalogEntry {
+        id: "esp32-cam",
+        title: "ESP32-CAM",
+        description:
+            "AI-Thinker ESP32-CAM starter (board esp32cam). Status LED + Serial Plotter sample lines. Camera stack not included.",
+        board: "esp32cam",
+        tags: &["ESP32", "CAM"],
+    },
+    CatalogEntry {
+        id: "pixhawk-ardupilot-stub",
+        title: "Pixhawk / ArduPilot (stub)",
+        description:
+            "Placeholder for ArduPilot / SITL workflows. Not a full autopilot IDE — see README for orientation.",
+        board: "sitl",
+        tags: &["Pixhawk", "ArduPilot", "Stub"],
+    },
+    CatalogEntry {
+        id: "betaflight-espfc-stub",
+        title: "Betaflight / ESP-FC (later)",
+        description:
+            "Roadmap placeholder. Full Betaflight / ESP-FC scaffolding is not bundled yet — README only.",
+        board: "—",
+        tags: &["Betaflight", "ESP-FC", "Later"],
+    },
 ];
 
 fn examples_root(app: &AppHandle) -> Result<PathBuf, String> {

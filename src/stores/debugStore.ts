@@ -18,11 +18,17 @@ import {
   type DebugFrame,
   type DebugVariable,
 } from "@/lib/debug";
+import { friendlyDebugError } from "@/lib/debugErrors";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+
+function localizeDebugError(message: string): string {
+  return friendlyDebugError(message, useSettingsStore.getState().locale);
+}
 
 export interface Breakpoint {
   path: string;
@@ -113,12 +119,11 @@ export const useDebugStore = create<DebugState>()(
               });
             })
             .catch((error) => {
-              set({
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to set breakpoint.",
-              });
+              const raw =
+                error instanceof Error
+                  ? error.message
+                  : "Failed to set breakpoint.";
+              set({ error: localizeDebugError(raw) });
             });
         }
       },
@@ -126,24 +131,43 @@ export const useDebugStore = create<DebugState>()(
       clearBreakpoints: () => set({ breakpoints: [] }),
 
       start: async () => {
+        const locale = useSettingsStore.getState().locale;
         if (!isTauriRuntime()) {
           set({
-            error: "Debugger requires the desktop app (npm run tauri:dev).",
+            error:
+              locale === "ru"
+                ? "Отладчик доступен в десктоп-приложении (npm run tauri:dev)."
+                : "Debugger requires the desktop app (npm run tauri:dev).",
           });
           return;
         }
         const { kind, rootPath } = useWorkspaceStore.getState();
         if (kind !== "folder" || !rootPath) {
-          set({ error: "Open a PlatformIO project folder first." });
+          set({
+            error:
+              locale === "ru"
+                ? "Сначала откройте папку проекта PlatformIO."
+                : "Open a PlatformIO project folder first.",
+          });
           return;
         }
         const pio = usePlatformIoStore.getState();
         if (!pio.isProject) {
-          set({ error: "No platformio.ini in the active folder." });
+          set({
+            error:
+              locale === "ru"
+                ? "В активной папке нет platformio.ini."
+                : "No platformio.ini in the active folder.",
+          });
           return;
         }
         if (get().sessionActive) {
-          set({ error: "Debug session already running." });
+          set({
+            error:
+              locale === "ru"
+                ? "Сессия отладки уже запущена."
+                : "Debug session already running.",
+          });
           return;
         }
 
@@ -163,7 +187,7 @@ export const useDebugStore = create<DebugState>()(
           await debugStart(rootPath, pio.selectedEnv || null);
           set({ sessionActive: true, execState: "running" });
 
-          // Apply pending breakpoints
+          // Apply persisted breakpoints for this session
           const next: Breakpoint[] = [];
           for (const bp of get().breakpoints) {
             if (!bp.enabled) {
@@ -179,13 +203,14 @@ export const useDebugStore = create<DebugState>()(
           }
           set({ breakpoints: next });
         } catch (error) {
+          const raw =
+            error instanceof Error
+              ? error.message
+              : "Failed to start debugger.";
           set({
             sessionActive: false,
             execState: "inactive",
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to start debugger.",
+            error: localizeDebugError(raw),
           });
         }
       },

@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Eraser, Plug, PlugZap, RefreshCw, Send } from "lucide-react";
+import { ChartLine, Eraser, Plug, PlugZap, RefreshCw, Send } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
 import { cn } from "@/lib/cn";
+import { useLayoutStore } from "@/stores/layoutStore";
 import { useSerialStore } from "@/stores/serialStore";
 
 export function SerialMonitor() {
+  const { t } = useI18n();
   const tauri = isTauriRuntime();
   const [input, setInput] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
+  const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
 
   const ports = useSerialStore((s) => s.ports);
   const selectedPath = useSerialStore((s) => s.selectedPath);
@@ -136,6 +140,17 @@ export function SerialMonitor() {
           className="flex h-7 w-7 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
         >
           <Eraser size={13} />
+        </button>
+
+        <button
+          type="button"
+          title={t("panel.plotter")}
+          aria-label={t("panel.plotter")}
+          onClick={() => setBottomPanelTab("plotter")}
+          className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
+        >
+          <ChartLine size={13} />
+          {t("panel.plotter")}
         </button>
 
         <label className="ml-auto flex items-center gap-1 text-[11px] text-aether-fg-muted">

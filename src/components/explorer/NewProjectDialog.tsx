@@ -12,6 +12,7 @@ import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 const FEATURED_BOARDS = [
   { id: "esp32dev", labelKey: "wizard.board.esp32" as const },
+  { id: "esp32cam", labelKey: "wizard.board.esp32cam" as const },
   { id: "megaatmega2560", labelKey: "wizard.board.mega" as const },
   { id: "nanoatmega328", labelKey: "wizard.board.nano" as const },
 ];
@@ -292,6 +293,10 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
               {t("wizard.pathPreview")}: {joinPath(parent, name.trim())}
             </p>
           )}
+
+          <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+            {t("wizard.profile.hint")}
+          </p>
 
           {error && (
             <p className="text-[11px] leading-relaxed text-aether-danger">

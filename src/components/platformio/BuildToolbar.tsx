@@ -76,15 +76,15 @@ export function BuildToolbar() {
         PlatformIO
       </span>
 
-      <span className="mr-0.5 text-[10px] text-aether-fg-dim">{t("pio.board")}</span>
-      {envs.length > 0 && (
+      <span className="mr-0.5 text-[10px] text-aether-fg-dim">{t("pio.env")}</span>
+      {envs.length > 0 ? (
         <select
           value={selectedEnv}
           disabled={running}
           onChange={(event) => setSelectedEnv(event.target.value)}
-          className="h-6 max-w-[140px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          aria-label={t("pio.board")}
-          title={t("pio.boardEnv")}
+          className="h-6 max-w-[160px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+          aria-label={t("pio.envSwitch")}
+          title={t("pio.envSwitch")}
         >
           {envs.map((env) => (
             <option key={env} value={env}>
@@ -92,6 +92,8 @@ export function BuildToolbar() {
             </option>
           ))}
         </select>
+      ) : (
+        <span className="text-[11px] text-aether-fg-dim">{t("pio.envNone")}</span>
       )}
 
       <span className="ml-1 mr-0.5 text-[10px] text-aether-fg-dim">

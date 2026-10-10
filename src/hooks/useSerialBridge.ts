@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { isTauriRuntime } from "@/lib/tauri";
 import { listenSerialData, listenSerialStatus } from "@/lib/serial";
+import { usePlotterStore } from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
 
 /** Subscribes to native serial events for the lifetime of the IDE shell. */
@@ -22,7 +23,9 @@ export function useSerialBridge(): void {
 
     void (async () => {
       unlistenData = await listenSerialData((line) => {
-        if (!disposed) appendLine(line);
+        if (disposed) return;
+        appendLine(line);
+        usePlotterStore.getState().ingestLine(line);
       });
       unlistenStatus = await listenSerialStatus((status) => {
         if (!disposed) applyStatus(status);

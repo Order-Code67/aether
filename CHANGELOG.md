@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.8 — 2026-10-10
+
+- **Serial Plotter** — live numeric charts from serial (`temp:23.5`, `value=12`, or CSV); pause / clear / per-channel toggles in the bottom panel
+- **Hardware profiles** — Pixhawk / ArduPilot, Betaflight / ESPFC, and ESP32-CAM stubs in Examples; New Project wizard points to them
+- **Debug gutter & toolbar** — editor breakpoint gutter (persisted per file), Debug toolbar / panel for `pio debug` sessions
+- **Multi-env switcher** — pick the active PlatformIO env from the Build toolbar / Status Bar when `platformio.ini` has several envs
+
 ## 0.2.7 — 2026-10-10
 
 - **Focus reliability** — Monaco / Search / Terminal focus policy; bottom panel stays mounted when collapsed; Vitest guards + `docs/FOCUS_SMOKE.md`

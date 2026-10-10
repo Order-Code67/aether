@@ -394,7 +394,7 @@ pub fn debug_start(
     }
 
     let pio = resolve_pio().ok_or_else(|| {
-        "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH.".to_string()
+        "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH. Debug also needs debug_tool in platformio.ini for the selected env.".to_string()
     })?;
 
     let root = PathBuf::from(&cwd);
@@ -431,7 +431,11 @@ pub fn debug_start(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("Failed to start debugger: {e}"))?;
+        .map_err(|e| {
+            format!(
+                "Failed to start debugger: {e}. Ensure PlatformIO is installed and debug_tool is configured for this env."
+            )
+        })?;
 
     let stdout = child
         .stdout

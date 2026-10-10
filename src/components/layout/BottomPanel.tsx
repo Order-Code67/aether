@@ -4,6 +4,7 @@ import { DebugConsole } from "@/components/debug/DebugConsole";
 import { OutputPanel } from "@/components/platformio/OutputPanel";
 import { ProblemsPanel } from "@/components/problems/ProblemsPanel";
 import { SerialMonitor } from "@/components/serial/SerialMonitor";
+import { SerialPlotter } from "@/components/serial/SerialPlotter";
 import { TerminalView } from "@/components/terminal/TerminalView";
 import { useI18n } from "@/hooks/useI18n";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -155,6 +156,18 @@ export function BottomPanel() {
             </div>
           )}
 
+          {visited.plotter && (
+            <div
+              className={cn(
+                "absolute inset-0",
+                visible && activeTab === "plotter" ? "z-10" : "hidden",
+              )}
+              aria-hidden={!visible || activeTab !== "plotter"}
+            >
+              <SerialPlotter />
+            </div>
+          )}
+
           {visited.debug && (
             <div
               className={cn(
@@ -181,6 +194,7 @@ export function BottomPanel() {
 
           {visible &&
             activeTab !== "serial" &&
+            activeTab !== "plotter" &&
             activeTab !== "terminal" &&
             activeTab !== "output" &&
             activeTab !== "problems" &&
