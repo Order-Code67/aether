@@ -110,12 +110,12 @@ Copy-Item -Recurse (Join-Path $StagingDir "platforms") (Join-Path $packRoot "pla
 Copy-Item -Recurse (Join-Path $StagingDir "packages") (Join-Path $packRoot "packages")
 Copy-Item $manifestPath (Join-Path $packRoot "aether-offline-cache.json")
 
-Write-Host "`nCompressing $zipPath …"
+Write-Host "`nCompressing $zipPath ..."
 Compress-Archive -Path (Join-Path $packRoot "*") -DestinationPath $zipPath -CompressionLevel Optimal
 
 $sizeMb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
 Write-Host "Wrote $zipPath ($sizeMb MB)"
-Write-Host "Import in Aether: Settings → Tools → Import offline cache…"
+Write-Host "Import in Aether: Settings -> Tools -> Import offline cache..."
 if ($sizeMb -ge 1900) {
   Write-Host "WARNING: zip is near/over GitHub 2GB asset limit - attach only if under 2GB, otherwise document local build."
 }
