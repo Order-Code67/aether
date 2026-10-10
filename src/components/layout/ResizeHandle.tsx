@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
 type Orientation = "vertical" | "horizontal";
@@ -15,6 +15,12 @@ interface ResizeHandleProps {
   label: string;
 }
 
+function clearResizeChrome() {
+  document.body.classList.remove("aether-resizing");
+  document.body.style.cursor = "";
+  document.body.style.userSelect = "";
+}
+
 export function ResizeHandle({
   orientation,
   onDrag,
@@ -24,6 +30,24 @@ export function ResizeHandle({
   const lastPos = useRef<number | null>(null);
   const [active, setActive] = useState(false);
   const isVertical = orientation === "vertical";
+
+  useEffect(() => {
+    const end = () => {
+      if (lastPos.current === null) return;
+      lastPos.current = null;
+      setActive(false);
+      clearResizeChrome();
+    };
+    window.addEventListener("blur", end);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("blur", end);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      clearResizeChrome();
+    };
+  }, []);
 
   return (
     <div
@@ -51,19 +75,19 @@ export function ResizeHandle({
       }}
       onPointerUp={(event) => {
         if (lastPos.current === null) return;
-        event.currentTarget.releasePointerCapture(event.pointerId);
+        try {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        } catch {
+          // ignore
+        }
         lastPos.current = null;
         setActive(false);
-        document.body.classList.remove("aether-resizing");
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
+        clearResizeChrome();
       }}
       onPointerCancel={(event) => {
         lastPos.current = null;
         setActive(false);
-        document.body.classList.remove("aether-resizing");
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
+        clearResizeChrome();
         try {
           event.currentTarget.releasePointerCapture(event.pointerId);
         } catch {

@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { PublishPanel } from "@/components/extensions/PublishPanel";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useExtensionStore } from "@/stores/extensionStore";
@@ -25,6 +26,7 @@ const CATEGORY_LABEL: Record<ExtensionCategory, string> = {
 type PanelTab = "installed" | "marketplace" | "publish";
 
 export function ExtensionsPanel() {
+  const { t } = useI18n();
   const allManifests = useExtensionStore((s) => s.allManifests);
   const enabledIds = useExtensionStore((s) => s.enabledIds);
   const isEnabled = useExtensionStore((s) => s.isEnabled);
@@ -98,7 +100,7 @@ export function ExtensionsPanel() {
     <div className="flex h-full flex-col">
       <header className="flex h-9 shrink-0 items-center justify-between gap-2 px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          Extensions
+          {t("extensions.title")}
         </h2>
         <div className="flex items-center gap-0.5">
           {tab === "installed" && (
@@ -140,11 +142,11 @@ export function ExtensionsPanel() {
       <div className="flex gap-1 px-3 pb-2">
         {(
           [
-            ["installed", "Installed"],
-            ["marketplace", "Marketplace"],
-            ["publish", "Publish"],
+            ["installed", "extensions.installed"],
+            ["marketplace", "extensions.marketplace"],
+            ["publish", "extensions.publish"],
           ] as const
-        ).map(([id, label]) => (
+        ).map(([id, labelKey]) => (
           <button
             key={id}
             type="button"
@@ -156,7 +158,7 @@ export function ExtensionsPanel() {
                 : "text-aether-fg-muted hover:text-aether-fg",
             )}
           >
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>

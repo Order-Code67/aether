@@ -26,6 +26,9 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **Debugger** — PlatformIO/`pio debug` GDB MI: breakpoints, continue/step, call stack, locals, Debug Console
 - **Extensions** — built-in packs, local folders, Marketplace catalog + install-from-URL
 - **Extension publishing hub** — Publish tab: author packages, local hub catalog, export package/`catalog.json`
+- **Русский / English** — Settings → General → Language
+- **Sketch encryption** — AES-GCM password lock for source files (toolbar above editor)
+- **Libraries** — PlatformIO registry search/install (Arduino-like library manager)
 - **Command Palette / Quick Open** — `Ctrl+Shift+P` / `Ctrl+P`, native app menu wired to the same commands
 - **About** — live app version in Settings → About
 - **Auto-updater** — signed Tauri updates; Check for Updates in About / Help menu

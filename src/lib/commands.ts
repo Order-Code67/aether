@@ -321,6 +321,13 @@ export function getCommands(): Command[] {
       run: () => view("extensions"),
     },
     {
+      id: "libraries.show",
+      title: "Libraries: Show Manager",
+      category: "PlatformIO",
+      keywords: "arduino lib pkg install",
+      run: () => view("libraries"),
+    },
+    {
       id: "extensions.publish",
       title: "Extensions: Open Publisher",
       category: "Extensions",

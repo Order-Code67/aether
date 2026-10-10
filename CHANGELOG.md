@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — 2026-10-10
+
+- **i18n** — Russian / English (Settings → General)
+- **Sketch encryption** — AES-GCM password lock for source files
+- **Libraries** — PlatformIO registry search & install (Arduino-like manager)
+- Input/focus fixes for Monaco + hidden terminal stdin
+
 ## 0.1.0 — 2026-10-10
 
 First Windows desktop release.

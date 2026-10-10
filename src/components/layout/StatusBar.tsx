@@ -8,6 +8,7 @@ import {
   Radio,
   Wifi,
 } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { languageLabel, tabNameFromPath } from "@/types/editor";
 import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
@@ -20,6 +21,7 @@ import { useSerialStore } from "@/stores/serialStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function StatusBar() {
+  const { t } = useI18n();
   const cursor = useEditorStore((s) => s.cursor);
   const saveStatus = useEditorStore((s) => s.saveStatus);
   const activeTab = useEditorStore((s) => {
@@ -65,43 +67,45 @@ export function StatusBar() {
 
   let saveLabel: string | null = null;
   if (saveStatus.kind === "saving") {
-    saveLabel = "Saving…";
+    saveLabel = t("status.saving");
   } else if (saveStatus.kind === "saved") {
-    saveLabel = `Saved ${tabNameFromPath(saveStatus.path)}`;
+    saveLabel = t("status.saved", { name: tabNameFromPath(saveStatus.path) });
   } else if (saveStatus.kind === "error") {
     saveLabel = saveStatus.message;
   }
 
-  let pioLabel = "No PIO";
-  if (!pioInstalled) pioLabel = "PIO missing";
-  else if (running) pioLabel = "PIO running…";
+  let pioLabel = t("pio.none");
+  if (!pioInstalled) pioLabel = t("pio.missing");
+  else if (running) pioLabel = t("pio.running");
   else if (isProject) {
     pioLabel =
       lastSuccess === false
-        ? `PIO · ${selectedEnv || "env"} · fail`
-        : `PIO · ${selectedEnv || "project"}`;
+        ? `${t("pio.failed")} · ${selectedEnv || "env"}`
+        : `${t("pio.ok")} · ${selectedEnv || "project"}`;
   } else if (kind === "folder") {
     pioLabel = "No platformio.ini";
   }
 
-  let clangdLabel = "clangd";
+  let clangdLabel = t("status.clangd");
   let clangdTitle = "IntelliSense (clangd)";
   if (!lspInfo?.installed) {
-    clangdLabel = "No clangd";
+    clangdLabel = t("status.clangdMissing");
     clangdTitle = "Install LLVM/clangd and ensure it is on PATH";
   } else if (lspError) {
     clangdLabel = "clangd error";
     clangdTitle = lspError;
   } else if (lspInitializing) {
-    clangdLabel = "clangd…";
+    clangdLabel = t("status.clangdInit");
     clangdTitle = "Starting language server";
   } else if (lspRunning) {
-    clangdLabel = lspCompileDir ? "clangd" : "clangd · no DB";
+    clangdLabel = lspCompileDir
+      ? t("status.clangd")
+      : `${t("status.clangd")} · ${t("status.clangdNoDb")}`;
     clangdTitle = lspCompileDir
       ? `clangd · compile_commands: ${lspCompileDir}`
       : "clangd running without compile_commands.json — run PlatformIO → IntelliSense DB";
   } else if (kind === "folder") {
-    clangdLabel = "clangd off";
+    clangdLabel = t("status.clangdOff");
   }
 
   return (
@@ -110,7 +114,7 @@ export function StatusBar() {
       aria-label="Status Bar"
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="font-medium tracking-wide">Aether</span>
+        <span className="font-medium tracking-wide">{t("app.name")}</span>
         <button
           type="button"
           title="Open Problems"
@@ -219,7 +223,10 @@ export function StatusBar() {
         {activeTab && <span>{languageLabel(activeTab.language)}</span>}
         <span>UTF-8</span>
         <span>
-          Ln {cursor.lineNumber}, Col {cursor.column}
+          {t("status.lnCol", {
+            line: cursor.lineNumber,
+            col: cursor.column,
+          })}
         </span>
       </div>
     </footer>

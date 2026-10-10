@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { detectDefaultLocale, type Locale } from "@/i18n";
 
 export type WordWrapSetting = "on" | "off" | "wordWrapColumn";
 
-export type SettingsTabId = "editor" | "agent" | "about";
+export type SettingsTabId = "general" | "editor" | "agent" | "about";
 
 interface SettingsState {
   settingsOpen: boolean;
   initialTab: SettingsTabId | null;
+  locale: Locale;
   fontSize: number;
   tabSize: number;
   minimap: boolean;
@@ -19,6 +21,7 @@ interface SettingsState {
   closeSettings: () => void;
   toggleSettings: () => void;
   consumeInitialTab: () => SettingsTabId | null;
+  setLocale: (locale: Locale) => void;
   setFontSize: (n: number) => void;
   setTabSize: (n: number) => void;
   setMinimap: (v: boolean) => void;
@@ -44,6 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set, get) => ({
       settingsOpen: false,
       initialTab: null,
+      locale: detectDefaultLocale(),
       ...EDITOR_DEFAULTS,
 
       openSettings: (tab) =>
@@ -60,6 +64,8 @@ export const useSettingsStore = create<SettingsState>()(
         return tab;
       },
 
+      setLocale: (locale) => set({ locale }),
+
       setFontSize: (n) =>
         set({ fontSize: Math.min(28, Math.max(10, Math.round(n))) }),
       setTabSize: (n) =>
@@ -74,6 +80,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "aether-settings",
       partialize: (state) => ({
+        locale: state.locale,
         fontSize: state.fontSize,
         tabSize: state.tabSize,
         minimap: state.minimap,

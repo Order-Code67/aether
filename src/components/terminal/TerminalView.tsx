@@ -158,13 +158,27 @@ export function TerminalView({ active = true }: TerminalViewProps) {
   }, [sessionKey, rootPath]);
 
   useEffect(() => {
-    if (!active) return;
+    const term = termRef.current;
+    if (!term) return;
+
+    // Hidden terminals must not keep the xterm helper textarea focused —
+    // otherwise keystrokes never reach Monaco / other inputs.
+    if (!active) {
+      try {
+        term.blur();
+        term.options.disableStdin = true;
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
+    term.options.disableStdin = false;
     const timer = window.setTimeout(() => {
       try {
         fitRef.current?.fit();
         const id = idRef.current;
-        const term = termRef.current;
-        if (id != null && term) {
+        if (id != null) {
           void resizeTerminal(id, term.cols, term.rows);
         }
       } catch {

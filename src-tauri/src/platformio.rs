@@ -455,3 +455,576 @@ pub fn pio_project_init(
 
     Ok(project_dir.to_string_lossy().to_string())
 }
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PioLibEntry {
+    pub id: String,
+    pub name: String,
+    pub owner: String,
+    pub description: String,
+    pub version: String,
+    pub platforms: Vec<String>,
+}
+
+fn validate_lib_spec(library: &str) -> Result<&str, String> {
+    let lib = library.trim();
+    if lib.is_empty() || lib.len() > 200 {
+        return Err("Invalid library id.".into());
+    }
+    if lib.contains("..") || lib.contains('\\') || lib.contains('\0') {
+        return Err("Invalid library id.".into());
+    }
+    Ok(lib)
+}
+
+fn validate_env_name(env: &Option<String>) -> Result<Option<&str>, String> {
+    let Some(raw) = env.as_ref() else {
+        return Ok(None);
+    };
+    let name = raw.trim();
+    if name.is_empty() {
+        return Ok(None);
+    }
+    if name.len() > 64
+        || !name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')
+    {
+        return Err("Invalid environment name.".into());
+    }
+    Ok(Some(name))
+}
+
+fn command_failure_detail(output: &std::process::Output, fallback: &str) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !stderr.trim().is_empty() {
+        stderr.trim().to_string()
+    } else if !stdout.trim().is_empty() {
+        stdout.trim().to_string()
+    } else {
+        fallback.to_string()
+    }
+}
+
+/// Search PlatformIO registry for libraries.
+/// Uses `pio lib search --json-output` (supports `--platform` / `--framework`).
+/// Falls back to parsing `pio pkg search` text when JSON search is unavailable.
+#[tauri::command]
+pub fn pio_lib_search(
+    query: String,
+    platform: Option<String>,
+    framework: Option<String>,
+    pages: Option<u32>,
+) -> Result<Vec<PioLibEntry>, String> {
+    let command = resolve_pio_command().ok_or_else(|| {
+        "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH."
+            .to_string()
+    })?;
+
+    let q = query.trim();
+    if q.len() > 120 {
+        return Err("Search query too long.".into());
+    }
+
+    let platform = platform
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+    if let Some(ref p) = platform {
+        if p.len() > 64
+            || !p
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
+            return Err("Invalid platform filter.".into());
+        }
+    }
+
+    let framework = framework
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+    if let Some(ref f) = framework {
+        if f.len() > 64
+            || !f
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
+            return Err("Invalid framework filter.".into());
+        }
+    }
+
+    // Empty query is allowed when browsing by platform/framework.
+    if q.is_empty() && platform.is_none() && framework.is_none() {
+        return Ok(vec![]);
+    }
+
+    let page_count = pages.unwrap_or(2).clamp(1, 4);
+    let mut out: Vec<PioLibEntry> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut last_err = String::new();
+
+    for page in 1..=page_count {
+        let mut args: Vec<String> = vec![
+            "lib".into(),
+            "search".into(),
+            "--json-output".into(),
+            "--page".into(),
+            page.to_string(),
+        ];
+        if let Some(ref p) = platform {
+            args.push("--platform".into());
+            args.push(p.clone());
+        }
+        if let Some(ref f) = framework {
+            args.push("--framework".into());
+            args.push(f.clone());
+        }
+        if !q.is_empty() {
+            args.push(q.to_string());
+        }
+
+        let output = Command::new(&command)
+            .args(&args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| format!("Failed to run pio lib search: {e}"))?;
+
+        if !output.status.success() {
+            last_err = command_failure_detail(&output, "Library search failed.");
+            break;
+        }
+
+        let batch = parse_lib_search_json(&output.stdout);
+        if batch.is_empty() {
+            break;
+        }
+        let before = out.len();
+        for entry in batch {
+            let key = format!(
+                "{}/{}",
+                entry.owner.to_lowercase(),
+                entry.name.to_lowercase()
+            );
+            if seen.insert(key) {
+                out.push(entry);
+            }
+        }
+        if out.len() == before {
+            break;
+        }
+        if out.len() >= 40 {
+            break;
+        }
+    }
+
+    if !out.is_empty() {
+        out.truncate(40);
+        return Ok(out);
+    }
+
+    // Fallback: `pio pkg search` (human-readable; no --json-output on PIO 6.2).
+    if q.is_empty() {
+        return Err(if last_err.is_empty() {
+            "Library search failed.".into()
+        } else {
+            last_err
+        });
+    }
+
+    let output = Command::new(&command)
+        .args(["pkg", "search", q, "--sort", "popularity"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("Failed to run pio pkg search: {e}"))?;
+
+    if !output.status.success() {
+        return Err(if last_err.is_empty() {
+            command_failure_detail(&output, "Library search failed.")
+        } else {
+            last_err
+        });
+    }
+
+    Ok(parse_pkg_search_text(&output.stdout))
+}
+
+fn parse_lib_search_json(stdout: &[u8]) -> Vec<PioLibEntry> {
+    let text = String::from_utf8_lossy(stdout);
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return vec![];
+    }
+
+    // Registry JSON shapes vary; accept array or { items: [] } / { result: [] }
+    let value: serde_json::Value = match serde_json::from_str(trimmed) {
+        Ok(v) => v,
+        Err(_) => return vec![],
+    };
+
+    let items = if let Some(arr) = value.as_array() {
+        arr.clone()
+    } else if let Some(arr) = value.get("items").and_then(|v| v.as_array()) {
+        arr.clone()
+    } else if let Some(arr) = value.get("result").and_then(|v| v.as_array()) {
+        arr.clone()
+    } else {
+        vec![value]
+    };
+
+    let mut out = Vec::new();
+    for item in items.into_iter().take(40) {
+        let name = item
+            .get("name")
+            .or_else(|| item.get("title"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        if name.is_empty() {
+            continue;
+        }
+        let owner = item
+            .get("ownername")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .or_else(|| {
+                item.get("owner").and_then(|v| {
+                    v.as_str().map(|s| s.to_string()).or_else(|| {
+                        v.get("username")
+                            .and_then(|u| u.as_str())
+                            .map(|s| s.to_string())
+                    })
+                })
+            })
+            .unwrap_or_default();
+        let id = if !owner.is_empty() {
+            format!("{owner}/{name}")
+        } else {
+            item.get("id")
+                .map(|v| v.to_string().trim_matches('"').to_string())
+                .filter(|s| !s.is_empty())
+                .unwrap_or_else(|| name.clone())
+        };
+        let description = item
+            .get("description")
+            .or_else(|| item.get("short_description"))
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let version = item
+            .get("versionname")
+            .and_then(|v| v.as_str())
+            .or_else(|| item.get("version").and_then(|v| v.as_str()))
+            .or_else(|| {
+                item.get("versions")
+                    .and_then(|v| v.as_array())
+                    .and_then(|a| a.first())
+                    .and_then(|v| v.get("name").or_else(|| v.get("version")))
+                    .and_then(|v| v.as_str())
+            })
+            .unwrap_or("")
+            .to_string();
+        let platforms = item
+            .get("platforms")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|p| {
+                        p.get("name")
+                            .and_then(|n| n.as_str())
+                            .or_else(|| p.as_str())
+                            .map(|s| s.to_string())
+                    })
+                    .take(12)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        out.push(PioLibEntry {
+            id,
+            name,
+            owner,
+            description,
+            version,
+            platforms,
+        });
+    }
+    out
+}
+
+/// Parse human-readable `pio pkg search` blocks:
+/// `owner/Name` then a line like `Library · 1.2.3 · …`
+fn parse_pkg_search_text(stdout: &[u8]) -> Vec<PioLibEntry> {
+    let text = String::from_utf8_lossy(stdout);
+    let mut out = Vec::new();
+    let mut lines = text.lines().peekable();
+    while let Some(line) = lines.next() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with("Found ") {
+            continue;
+        }
+        // owner/name or bare name
+        let (owner, name) = if let Some((o, n)) = trimmed.split_once('/') {
+            if o.is_empty()
+                || n.is_empty()
+                || o.contains(' ')
+                || n.contains(' ')
+                || o.len() > 64
+                || n.len() > 80
+            {
+                continue;
+            }
+            (o.to_string(), n.to_string())
+        } else if trimmed
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')
+            && trimmed.len() <= 80
+        {
+            (String::new(), trimmed.to_string())
+        } else {
+            continue;
+        };
+
+        let mut version = String::new();
+        let mut description = String::new();
+        if let Some(next) = lines.peek().map(|s| s.trim().to_string()) {
+            let lower = next.to_lowercase();
+            if lower.starts_with("library") || lower.contains('·') || lower.contains("published") {
+                let _ = lines.next();
+                // "Library · 7.4.3 · Published …"
+                let parts: Vec<&str> = next.split('·').map(str::trim).collect();
+                if parts.len() >= 2 {
+                    let ver = parts[1].trim();
+                    if !ver.is_empty()
+                        && ver.len() < 32
+                        && ver
+                            .chars()
+                            .all(|c| c.is_ascii_alphanumeric() || "._-+".contains(c))
+                    {
+                        version = ver.to_string();
+                    }
+                }
+            }
+        }
+        if let Some(next) = lines.peek().map(|s| s.trim().to_string()) {
+            if !next.is_empty()
+                && !next.contains('/')
+                && !next.to_lowercase().starts_with("library")
+                && !next.starts_with("Found ")
+            {
+                let _ = lines.next();
+                description = next;
+            }
+        }
+
+        let id = if owner.is_empty() {
+            name.clone()
+        } else {
+            format!("{owner}/{name}")
+        };
+        out.push(PioLibEntry {
+            id,
+            name,
+            owner,
+            description,
+            version,
+            platforms: vec![],
+        });
+        if out.len() >= 40 {
+            break;
+        }
+    }
+    out
+}
+
+/// Install a library into the project (`pio pkg install -l …` → lib_deps).
+#[tauri::command]
+pub fn pio_lib_install(
+    cwd: String,
+    library: String,
+    env: Option<String>,
+) -> Result<String, String> {
+    let command = resolve_pio_command().ok_or_else(|| {
+        "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH."
+            .to_string()
+    })?;
+
+    let lib = validate_lib_spec(&library)?;
+    let env_name = validate_env_name(&env)?;
+
+    let root = PathBuf::from(&cwd);
+    if !root.join("platformio.ini").is_file() {
+        return Err("No platformio.ini in the workspace root.".into());
+    }
+
+    let mut args = vec!["pkg".into(), "install".into(), "--library".into(), lib.to_string()];
+    if let Some(e) = env_name {
+        args.push("--environment".into());
+        args.push(e.to_string());
+    }
+
+    let output = Command::new(&command)
+        .current_dir(&root)
+        .args(&args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("Failed to run pio pkg install: {e}"))?;
+
+    if !output.status.success() {
+        // Older CLI: pio lib install "Name"
+        let mut args2 = vec!["lib".into(), "install".into(), lib.to_string()];
+        if let Some(e) = env_name {
+            args2 = vec![
+                "lib".into(),
+                "-e".into(),
+                e.to_string(),
+                "install".into(),
+                lib.to_string(),
+            ];
+        }
+        let output2 = Command::new(&command)
+            .current_dir(&root)
+            .args(&args2)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| format!("Failed to run pio lib install: {e}"))?;
+        if !output2.status.success() {
+            return Err(command_failure_detail(
+                &output2,
+                "Library install failed.",
+            ));
+        }
+        return Ok(String::from_utf8_lossy(&output2.stdout).trim().to_string());
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Uninstall a library from the project (`pio pkg uninstall -l …`).
+#[tauri::command]
+pub fn pio_lib_uninstall(
+    cwd: String,
+    library: String,
+    env: Option<String>,
+) -> Result<String, String> {
+    let command = resolve_pio_command().ok_or_else(|| {
+        "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH."
+            .to_string()
+    })?;
+
+    let lib = validate_lib_spec(&library)?;
+    let env_name = validate_env_name(&env)?;
+
+    let root = PathBuf::from(&cwd);
+    if !root.join("platformio.ini").is_file() {
+        return Err("No platformio.ini in the workspace root.".into());
+    }
+
+    let mut args = vec![
+        "pkg".into(),
+        "uninstall".into(),
+        "--library".into(),
+        lib.to_string(),
+    ];
+    if let Some(e) = env_name {
+        args.push("--environment".into());
+        args.push(e.to_string());
+    }
+
+    let output = Command::new(&command)
+        .current_dir(&root)
+        .args(&args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("Failed to run pio pkg uninstall: {e}"))?;
+
+    if !output.status.success() {
+        let mut args2 = vec!["lib".into(), "uninstall".into(), lib.to_string()];
+        if let Some(e) = env_name {
+            args2 = vec![
+                "lib".into(),
+                "-e".into(),
+                e.to_string(),
+                "uninstall".into(),
+                lib.to_string(),
+            ];
+        }
+        let output2 = Command::new(&command)
+            .current_dir(&root)
+            .args(&args2)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| format!("Failed to run pio lib uninstall: {e}"))?;
+        if !output2.status.success() {
+            return Err(command_failure_detail(
+                &output2,
+                "Library uninstall failed.",
+            ));
+        }
+        return Ok(String::from_utf8_lossy(&output2.stdout).trim().to_string());
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+/// Read lib_deps lines from platformio.ini (best-effort).
+#[tauri::command]
+pub fn pio_lib_list(cwd: String) -> Result<Vec<String>, String> {
+    let ini = PathBuf::from(&cwd).join("platformio.ini");
+    if !ini.is_file() {
+        return Ok(vec![]);
+    }
+    let text = std::fs::read_to_string(&ini).map_err(|e| e.to_string())?;
+    let mut deps = Vec::new();
+    let mut in_lib_deps = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_lib_deps = false;
+        }
+        if trimmed.starts_with("lib_deps") && trimmed.contains('=') {
+            in_lib_deps = true;
+            if let Some(rest) = trimmed.split_once('=').map(|(_, r)| r.trim()) {
+                if !rest.is_empty() {
+                    for part in rest.split(',') {
+                        let p = part.trim();
+                        if !p.is_empty() {
+                            deps.push(p.to_string());
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+        if in_lib_deps {
+            if trimmed.is_empty() {
+                continue;
+            }
+            if trimmed.starts_with('#') {
+                continue;
+            }
+            if line.starts_with(' ') || line.starts_with('\t') {
+                let p = trimmed.trim_start_matches(&['-', '*'][..]).trim();
+                if !p.is_empty() {
+                    deps.push(p.to_string());
+                }
+            } else if trimmed.contains('=') {
+                in_lib_deps = false;
+            } else if !trimmed.starts_with('[') {
+                in_lib_deps = false;
+            }
+        }
+    }
+    deps.sort();
+    deps.dedup();
+    Ok(deps)
+}

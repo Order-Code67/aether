@@ -16,6 +16,8 @@ export interface EditorTab {
   language: EditorLanguage;
   content: string;
   dirty: boolean;
+  /** Plaintext is encrypted with AES-GCM when saved to disk. */
+  encrypted: boolean;
 }
 
 export interface CursorPosition {

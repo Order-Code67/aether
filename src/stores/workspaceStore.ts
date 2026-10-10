@@ -503,7 +503,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
     try {
       const content = await readWorkspaceTextFile(path);
-      useEditorStore.getState().openFile({ path, content });
+      const { isEncryptedPayload } = await import("@/lib/sketchCrypto");
+      if (isEncryptedPayload(content)) {
+        // Defer open until password unlock (handled by pending unlock UI).
+        const { useUnlockStore } = await import("@/stores/unlockStore");
+        useUnlockStore.getState().requestUnlock(path, content);
+        set({ error: null });
+        return;
+      }
+      useEditorStore.getState().openFile({ path, content, encrypted: false });
 
       // Focus the owning root as active when opening a file from it.
       const owner = get().folders.find((f) => isUnderRoot(path, f.path));
