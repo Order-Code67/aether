@@ -6,6 +6,7 @@ export const en = {
   "activity.sourceControl": "Source Control",
   "activity.boards": "Boards",
   "activity.libraries": "Libraries",
+  "activity.librariesTitle": "Libraries (book) — search & install Arduino libs",
   "activity.debug": "Run and Debug",
   "activity.agent": "AI Agent",
   "activity.extensions": "Extensions",
@@ -86,7 +87,9 @@ export const en = {
     "This sketch is encrypted on disk. Edit freely; save keeps encryption.",
   "encrypt.needFolder": "Open a folder workspace to encrypt sketches.",
   "libraries.title": "Libraries",
-  "libraries.search": "Search PlatformIO registry…",
+  "libraries.hint":
+    "1) Open a folder with platformio.ini. 2) Pick ESP32 / Nano / Mega / Arduino. 3) Search or tap Popular. 4) Install.",
+  "libraries.search": "Search registry (e.g. ArduinoJson)…",
   "libraries.searchBtn": "Search",
   "libraries.install": "Install",
   "libraries.installed": "Installed",
@@ -94,21 +97,30 @@ export const en = {
   "libraries.uninstall": "Remove",
   "libraries.uninstalling": "Removing…",
   "libraries.noProject":
-    "Open a PlatformIO project (platformio.ini) to manage libraries.",
+    "Open a folder that contains platformio.ini (File → Open Folder).",
+  "libraries.noProjectHelp":
+    "Then pick a board chip, search or use Popular, and press Install. Libs go into lib_deps.",
   "libraries.empty":
-    "Pick a platform chip or search the PlatformIO registry (Arduino libraries).",
-  "libraries.noResults": "No libraries found.",
-  "libraries.installedList": "Project libraries (lib_deps)",
-  "libraries.installedEmpty": "No lib_deps yet — install from search or popular chips.",
+    "Pick ESP32 / Nano / Mega / Arduino, or type a name and press Search.",
+  "libraries.noResults":
+    "No libraries found. Try another name, or tap a popular chip above.",
+  "libraries.installedList": "Installed in project (lib_deps)",
+  "libraries.installedEmpty":
+    "Nothing installed yet — use Search or a popular chip, then Install.",
   "libraries.refresh": "Refresh",
-  "libraries.popular": "Popular",
+  "libraries.popular": "Popular (one-click install)",
   "libraries.chipAll": "All",
+  "libraries.chipArduino": "Arduino",
   "libraries.chipEsp32": "ESP32",
   "libraries.chipNano": "Nano",
   "libraries.chipMega": "Mega",
   "libraries.activeEnv": "Active env: {env}",
   "libraries.needDesktop":
     "Library search requires the desktop app (npm run tauri:dev).",
+  "libraries.needProject":
+    "Open a PlatformIO project folder (with platformio.ini) first.",
+  "libraries.pioMissing":
+    "PlatformIO CLI not found. Install PlatformIO Core and restart Aether.",
   "extensions.title": "Extensions",
   "extensions.installed": "Installed",
   "extensions.marketplace": "Marketplace",

@@ -43,8 +43,14 @@
     font-family: var(--font-sans);
     background: var(--color-aether-bg);
     color: var(--color-aether-fg);
-    /* Keep chrome non-selectable, but never block typing in editors/inputs.
-       WebView2 + Monaco breaks when an ancestor has user-select: none. */
+    /* Do NOT set user-select:none on body/ancestors — WebView2 + Monaco
+       silently drops keyboard input when an ancestor forbids selection. */
+  }
+
+  /* Chrome-only: avoid accidental text selection on toolbars/labels. */
+  .aether-no-select,
+  [data-aether-chrome] {
+    -webkit-user-select: none;
     user-select: none;
   }
 
@@ -54,6 +60,7 @@
   option,
   [contenteditable="true"],
   .monaco-editor,
+  .monaco-editor .view-lines,
   .monaco-editor textarea,
   .monaco-editor .inputarea,
   .xterm,

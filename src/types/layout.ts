@@ -39,7 +39,7 @@ export const ACTIVITY_ITEMS: readonly ActivityItem[] = [
   {
     id: "libraries",
     labelKey: "activity.libraries",
-    titleKey: "activity.libraries",
+    titleKey: "activity.librariesTitle",
   },
   { id: "debug", labelKey: "activity.debug", titleKey: "activity.debug" },
   { id: "agent", labelKey: "activity.agent", titleKey: "activity.agent" },

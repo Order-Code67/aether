@@ -117,9 +117,7 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "problems"
-                ? "z-10"
-                : "pointer-events-none invisible z-0",
+              activeTab === "problems" ? "z-10" : "hidden",
             )}
             aria-hidden={activeTab !== "problems"}
           >
@@ -131,9 +129,7 @@ export function BottomPanel() {
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "output"
-                ? "z-10"
-                : "pointer-events-none invisible z-0",
+              activeTab === "output" ? "z-10" : "hidden",
             )}
             aria-hidden={activeTab !== "output"}
           >
@@ -141,27 +137,11 @@ export function BottomPanel() {
           </div>
         )}
 
-        {visited.debug && (
-          <div
-            className={cn(
-              "absolute inset-0",
-              activeTab === "debug"
-                ? "z-10"
-                : "pointer-events-none invisible z-0",
-            )}
-            aria-hidden={activeTab !== "debug"}
-          >
-            <DebugConsole />
-          </div>
-        )}
-
         {visited.serial && (
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "serial"
-                ? "z-10"
-                : "pointer-events-none invisible z-0",
+              activeTab === "serial" ? "z-10" : "hidden",
             )}
             aria-hidden={activeTab !== "serial"}
           >
@@ -169,13 +149,23 @@ export function BottomPanel() {
           </div>
         )}
 
+        {visited.debug && (
+          <div
+            className={cn(
+              "absolute inset-0",
+              activeTab === "debug" ? "z-10" : "hidden",
+            )}
+            aria-hidden={activeTab !== "debug"}
+          >
+            <DebugConsole />
+          </div>
+        )}
+
         {visited.terminal && (
           <div
             className={cn(
               "absolute inset-0",
-              activeTab === "terminal"
-                ? "z-10"
-                : "pointer-events-none invisible z-0",
+              activeTab === "terminal" ? "z-10" : "hidden",
             )}
             aria-hidden={activeTab !== "terminal"}
           >

@@ -330,11 +330,22 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
 
   return (
     <div className="space-y-2 text-aether-fg">
-      <p className="text-sm font-medium">Aether</p>
+      <div className="flex items-center gap-3">
+        <img
+          src="/aether-icon.png"
+          alt=""
+          width={40}
+          height={40}
+          className="h-10 w-10 shrink-0 rounded-sm"
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-medium">Aether</p>
+          <p className="text-aether-fg-muted">Version {appVersion}</p>
+        </div>
+      </div>
       <p className="text-aether-fg-dim leading-relaxed">
         IDE for robots, drones, and embedded systems.
       </p>
-      <p className="text-aether-fg-muted">Version {appVersion}</p>
       <p className="text-[11px] leading-relaxed text-aether-fg-dim">
         Stack: Tauri 2 · React 19 · TypeScript · Monaco · PlatformIO · clangd ·
         GDB MI · Git

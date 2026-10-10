@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-10
+
+- **App icon** — new robot-book / planet branding (Tauri `src-tauri/icons/*`)
+- **Typing / focus** — editor and input focus fixes carried forward
+- **Libraries** — Arduino-framework install/search fix; broader “Arduino” chip (framework=arduino, not AVR-only)
+- **Libraries UI** — clearer RU helper steps, Activity Bar tooltip (книга/библиотеки), real error messages via `errorMessage`
+
 ## 0.2.0 — 2026-10-10
 
 - **i18n** — Russian / English (Settings → General)

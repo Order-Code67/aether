@@ -65,18 +65,28 @@ fn resolve_pio_command() -> Option<String> {
         }
     }
 
-    if let Ok(home) = std::env::var("USERPROFILE") {
+    let mut homes: Vec<PathBuf> = Vec::new();
+    for key in ["USERPROFILE", "HOME"] {
+        if let Ok(home) = std::env::var(key) {
+            homes.push(PathBuf::from(home));
+        }
+    }
+
+    for home in homes {
         let candidates = [
-            PathBuf::from(&home)
-                .join(".platformio")
+            home.join(".platformio")
                 .join("penv")
                 .join("Scripts")
                 .join("pio.exe"),
-            PathBuf::from(&home)
-                .join(".platformio")
+            home.join(".platformio")
                 .join("penv")
                 .join("Scripts")
                 .join("platformio.exe"),
+            home.join(".platformio").join("penv").join("bin").join("pio"),
+            home.join(".platformio")
+                .join("penv")
+                .join("bin")
+                .join("platformio"),
         ];
         for path in candidates {
             if path.is_file() {
@@ -86,6 +96,35 @@ fn resolve_pio_command() -> Option<String> {
     }
 
     None
+}
+
+/// Configure a PlatformIO subprocess for GUI/WebView hosts (Windows).
+fn configure_pio_command(cmd: &mut Command) {
+    cmd.env("PYTHONUTF8", "1");
+    cmd.env("PYTHONIOENCODING", "utf-8");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+}
+
+fn run_pio(
+    command: &str,
+    args: &[String],
+    cwd: Option<&Path>,
+) -> Result<std::process::Output, String> {
+    let mut cmd = Command::new(command);
+    cmd.args(args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(dir) = cwd {
+        cmd.current_dir(dir);
+    }
+    configure_pio_command(&mut cmd);
+    cmd.output()
+        .map_err(|e| format!("Failed to run PlatformIO ({command}): {e}"))
 }
 
 fn parse_envs_from_ini(contents: &str) -> Vec<String> {
@@ -128,10 +167,13 @@ pub fn pio_detect() -> PioInfo {
         };
     };
 
-    let version = Command::new(&command)
+    let mut version_cmd = Command::new(&command);
+    version_cmd
         .arg("--version")
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::null());
+    configure_pio_command(&mut version_cmd);
+    let version = version_cmd
         .output()
         .ok()
         .and_then(|out| {
@@ -242,17 +284,18 @@ pub fn pio_run(
     emit_line(&app, "system", format!("> {command} {}", args.join(" ")));
     emit_line(&app, "system", format!("cwd: {cwd}"));
 
-    let mut child = Command::new(&command)
+    let mut child_cmd = Command::new(&command);
+    child_cmd
         .args(&args)
         .current_dir(&cwd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .stdin(Stdio::null())
-        .spawn()
-        .map_err(|e| {
-            state.running.store(false, Ordering::SeqCst);
-            format!("Failed to start PlatformIO: {e}")
-        })?;
+        .stdin(Stdio::null());
+    configure_pio_command(&mut child_cmd);
+    let mut child = child_cmd.spawn().map_err(|e| {
+        state.running.store(false, Ordering::SeqCst);
+        format!("Failed to start PlatformIO: {e}")
+    })?;
 
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
@@ -423,18 +466,15 @@ pub fn pio_project_init(
 
     std::fs::create_dir_all(&project_dir).map_err(|e| e.to_string())?;
 
-    let output = Command::new(&command)
-        .args([
-            "project",
-            "init",
-            "--board",
-            board,
-            "--project-dir",
-            &project_dir.to_string_lossy(),
-        ])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
+    let init_args = [
+        "project".into(),
+        "init".into(),
+        "--board".into(),
+        board.to_string(),
+        "--project-dir".into(),
+        project_dir.to_string_lossy().to_string(),
+    ];
+    let output = run_pio(&command, &init_args, None)
         .map_err(|e| format!("Failed to run pio project init: {e}"))?;
 
     if !output.status.success() {
@@ -588,12 +628,13 @@ pub fn pio_lib_search(
             args.push(q.to_string());
         }
 
-        let output = Command::new(&command)
-            .args(&args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| format!("Failed to run pio lib search: {e}"))?;
+        let output = match run_pio(&command, &args, None) {
+            Ok(o) => o,
+            Err(e) => {
+                last_err = e;
+                break;
+            }
+        };
 
         if !output.status.success() {
             last_err = command_failure_detail(&output, "Library search failed.");
@@ -637,12 +678,14 @@ pub fn pio_lib_search(
         });
     }
 
-    let output = Command::new(&command)
-        .args(["pkg", "search", q, "--sort", "popularity"])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .map_err(|e| format!("Failed to run pio pkg search: {e}"))?;
+    let pkg_args = vec![
+        "pkg".into(),
+        "search".into(),
+        q.to_string(),
+        "--sort".into(),
+        "popularity".into(),
+    ];
+    let output = run_pio(&command, &pkg_args, None)?;
 
     if !output.status.success() {
         return Err(if last_err.is_empty() {
@@ -769,20 +812,25 @@ fn parse_pkg_search_text(stdout: &[u8]) -> Vec<PioLibEntry> {
             continue;
         }
         // owner/name or bare name
+        // Registry specs may include spaces: owner/Adafruit NeoPixel
         let (owner, name) = if let Some((o, n)) = trimmed.split_once('/') {
+            let o = o.trim();
+            let n = n.trim();
             if o.is_empty()
                 || n.is_empty()
                 || o.contains(' ')
-                || n.contains(' ')
                 || o.len() > 64
                 || n.len() > 80
+                || !o
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')
             {
                 continue;
             }
             (o.to_string(), n.to_string())
         } else if trimmed
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.' || c == ' ')
             && trimmed.len() <= 80
         {
             (String::new(), trimmed.to_string())
@@ -859,52 +907,56 @@ pub fn pio_lib_install(
 
     let root = PathBuf::from(&cwd);
     if !root.join("platformio.ini").is_file() {
-        return Err("No platformio.ini in the workspace root.".into());
+        return Err(
+            "No platformio.ini in the workspace root. Open a PlatformIO project folder."
+                .into(),
+        );
     }
 
-    let mut args = vec!["pkg".into(), "install".into(), "--library".into(), lib.to_string()];
+    // Try: pkg install -l (with env) → pkg install -l (no env) → legacy lib install.
+    let mut attempts: Vec<Vec<String>> = Vec::new();
+    let mut with_env = vec![
+        "pkg".into(),
+        "install".into(),
+        "--library".into(),
+        lib.to_string(),
+    ];
     if let Some(e) = env_name {
-        args.push("--environment".into());
-        args.push(e.to_string());
+        with_env.push("--environment".into());
+        with_env.push(e.to_string());
+        attempts.push(with_env);
+        attempts.push(vec![
+            "pkg".into(),
+            "install".into(),
+            "--library".into(),
+            lib.to_string(),
+        ]);
+    } else {
+        attempts.push(with_env);
+    }
+    if let Some(e) = env_name {
+        attempts.push(vec![
+            "lib".into(),
+            "-e".into(),
+            e.to_string(),
+            "install".into(),
+            lib.to_string(),
+        ]);
+    }
+    attempts.push(vec!["lib".into(), "install".into(), lib.to_string()]);
+
+    let mut last_err = String::new();
+    for args in attempts {
+        let output = run_pio(&command, &args, Some(&root))?;
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            return Ok(if !stdout.is_empty() { stdout } else { stderr });
+        }
+        last_err = command_failure_detail(&output, "Library install failed.");
     }
 
-    let output = Command::new(&command)
-        .current_dir(&root)
-        .args(&args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .map_err(|e| format!("Failed to run pio pkg install: {e}"))?;
-
-    if !output.status.success() {
-        // Older CLI: pio lib install "Name"
-        let mut args2 = vec!["lib".into(), "install".into(), lib.to_string()];
-        if let Some(e) = env_name {
-            args2 = vec![
-                "lib".into(),
-                "-e".into(),
-                e.to_string(),
-                "install".into(),
-                lib.to_string(),
-            ];
-        }
-        let output2 = Command::new(&command)
-            .current_dir(&root)
-            .args(&args2)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| format!("Failed to run pio lib install: {e}"))?;
-        if !output2.status.success() {
-            return Err(command_failure_detail(
-                &output2,
-                "Library install failed.",
-            ));
-        }
-        return Ok(String::from_utf8_lossy(&output2.stdout).trim().to_string());
-    }
-
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    Err(last_err)
 }
 
 /// Uninstall a library from the project (`pio pkg uninstall -l …`).
@@ -924,56 +976,44 @@ pub fn pio_lib_uninstall(
 
     let root = PathBuf::from(&cwd);
     if !root.join("platformio.ini").is_file() {
-        return Err("No platformio.ini in the workspace root.".into());
+        return Err(
+            "No platformio.ini in the workspace root. Open a PlatformIO project folder."
+                .into(),
+        );
     }
 
-    let mut args = vec![
+    let mut attempts: Vec<Vec<String>> = Vec::new();
+    let mut with_env = vec![
         "pkg".into(),
         "uninstall".into(),
         "--library".into(),
         lib.to_string(),
     ];
     if let Some(e) = env_name {
-        args.push("--environment".into());
-        args.push(e.to_string());
+        with_env.push("--environment".into());
+        with_env.push(e.to_string());
+        attempts.push(with_env);
+        attempts.push(vec![
+            "pkg".into(),
+            "uninstall".into(),
+            "--library".into(),
+            lib.to_string(),
+        ]);
+    } else {
+        attempts.push(with_env);
+    }
+    attempts.push(vec!["lib".into(), "uninstall".into(), lib.to_string()]);
+
+    let mut last_err = String::new();
+    for args in attempts {
+        let output = run_pio(&command, &args, Some(&root))?;
+        if output.status.success() {
+            return Ok(String::from_utf8_lossy(&output.stdout).trim().to_string());
+        }
+        last_err = command_failure_detail(&output, "Library uninstall failed.");
     }
 
-    let output = Command::new(&command)
-        .current_dir(&root)
-        .args(&args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .map_err(|e| format!("Failed to run pio pkg uninstall: {e}"))?;
-
-    if !output.status.success() {
-        let mut args2 = vec!["lib".into(), "uninstall".into(), lib.to_string()];
-        if let Some(e) = env_name {
-            args2 = vec![
-                "lib".into(),
-                "-e".into(),
-                e.to_string(),
-                "uninstall".into(),
-                lib.to_string(),
-            ];
-        }
-        let output2 = Command::new(&command)
-            .current_dir(&root)
-            .args(&args2)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| format!("Failed to run pio lib uninstall: {e}"))?;
-        if !output2.status.success() {
-            return Err(command_failure_detail(
-                &output2,
-                "Library uninstall failed.",
-            ));
-        }
-        return Ok(String::from_utf8_lossy(&output2.stdout).trim().to_string());
-    }
-
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+    Err(last_err)
 }
 
 /// Read lib_deps lines from platformio.ini (best-effort).

@@ -38,7 +38,7 @@ export function ActivityBar() {
       className="flex h-full w-activity shrink-0 flex-col items-center border-r border-aether-border bg-aether-activity py-2"
       aria-label={t("activity.bar")}
     >
-      <nav className="flex flex-1 flex-col items-center gap-0.5">
+      <nav data-aether-chrome className="flex flex-1 flex-col items-center gap-0.5">
         {ACTIVITY_ITEMS.map((item) => {
           const Icon = ACTIVITY_ICONS[item.id];
           const isActive = sidebarVisible && activeActivity === item.id;
