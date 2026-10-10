@@ -5,6 +5,7 @@ import {
   Hammer,
   Loader2,
   RefreshCw,
+  Stethoscope,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -47,7 +48,11 @@ export function BuildToolbar() {
   const ports = useSerialStore((s) => s.ports);
   const serialPath = useSerialStore((s) => s.selectedPath);
   const serialConnected = useSerialStore((s) => s.connected);
+  const profiles = useFirmwareProfileStore((s) => s.profiles);
   const saveCurrentAs = useFirmwareProfileStore((s) => s.saveCurrentAs);
+  const applyProfile = useFirmwareProfileStore((s) => s.applyProfile);
+  const showDoctor = usePlatformIoStore((s) => s.showDoctor);
+  const runDoctor = usePlatformIoStore((s) => s.runDoctor);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
 
   const selectedPort =
@@ -234,6 +239,46 @@ export function BuildToolbar() {
       >
         <BookmarkPlus size={13} />
         {t("profiles.saveCurrentShort")}
+      </button>
+
+      {profiles.length > 0 && (
+        <select
+          value=""
+          disabled={running}
+          onChange={(event) => {
+            const id = event.target.value;
+            if (id) void applyProfile(id);
+            event.target.value = "";
+          }}
+          className="h-6 max-w-[140px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent disabled:opacity-40"
+          aria-label={t("profiles.apply")}
+          title={t("profiles.apply")}
+        >
+          <option value="">{t("profiles.applySelect")}</option>
+          {profiles.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <button
+        type="button"
+        title={t("doctor.title")}
+        aria-label={t("doctor.title")}
+        disabled={running}
+        onClick={() => {
+          showDoctor();
+          void runDoctor();
+        }}
+        className={cn(
+          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
+          "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+        )}
+      >
+        <Stethoscope size={13} />
+        {t("doctor.openShort")}
       </button>
 
       {showProgress && stageText && (

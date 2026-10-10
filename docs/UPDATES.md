@@ -57,12 +57,12 @@ Default endpoint in `tauri.conf.json` remains the stable `latest.json` (fallback
 After a signed build, copy NSIS artifacts into `release/` and regenerate feeds:
 
 ```powershell
-.\scripts\make-latest-json.ps1 -Version 0.2.15 -Notes "Release notes."
+.\scripts\make-latest-json.ps1 -Version 0.2.16 -Notes "Release notes."
 ```
 
-Ship on the GitHub Release (tag `v0.2.15`) at least:
+Ship on the GitHub Release (tag `v0.2.16`) at least:
 
-- `Aether_0.2.15_x64-setup.exe`
+- `Aether_0.2.16_x64-setup.exe`
 - `latest.json`
 - `latest-beta.json`
 
@@ -72,13 +72,13 @@ Template:
 
 ```json
 {
-  "version": "0.2.15",
+  "version": "0.2.16",
   "notes": "Bug fixes and improvements.",
   "pub_date": "2026-04-10T12:00:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "<contents of Aether_0.2.15_x64-setup.exe.sig>",
-      "url": "https://github.com/Order-Code67/aether/releases/download/v0.2.15/Aether_0.2.15_x64-setup.exe"
+      "signature": "<contents of Aether_0.2.16_x64-setup.exe.sig>",
+      "url": "https://github.com/Order-Code67/aether/releases/download/v0.2.16/Aether_0.2.16_x64-setup.exe"
     }
   }
 }

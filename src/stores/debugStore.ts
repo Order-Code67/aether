@@ -132,42 +132,44 @@ export const useDebugStore = create<DebugState>()(
 
       start: async () => {
         const locale = useSettingsStore.getState().locale;
+        const surfaceStartError = (message: string) => {
+          set({ error: message });
+          useLayoutStore.getState().setActiveActivity("debug");
+          useLayoutStore.getState().setBottomPanelTab("debug");
+          useSettingsStore.getState().flashNotice(message, 4000);
+        };
         if (!isTauriRuntime()) {
-          set({
-            error:
-              locale === "ru"
-                ? "Отладчик доступен в десктоп-приложении (npm run tauri:dev)."
-                : "Debugger requires the desktop app (npm run tauri:dev).",
-          });
+          surfaceStartError(
+            locale === "ru"
+              ? "Отладчик доступен в десктоп-приложении (npm run tauri:dev)."
+              : "Debugger requires the desktop app (npm run tauri:dev).",
+          );
           return;
         }
         const { kind, rootPath } = useWorkspaceStore.getState();
         if (kind !== "folder" || !rootPath) {
-          set({
-            error:
-              locale === "ru"
-                ? "Сначала откройте папку проекта PlatformIO."
-                : "Open a PlatformIO project folder first.",
-          });
+          surfaceStartError(
+            locale === "ru"
+              ? "Сначала откройте папку проекта PlatformIO."
+              : "Open a PlatformIO project folder first.",
+          );
           return;
         }
         const pio = usePlatformIoStore.getState();
         if (!pio.isProject) {
-          set({
-            error:
-              locale === "ru"
-                ? "В активной папке нет platformio.ini."
-                : "No platformio.ini in the active folder.",
-          });
+          surfaceStartError(
+            locale === "ru"
+              ? "В активной папке нет platformio.ini."
+              : "No platformio.ini in the active folder.",
+          );
           return;
         }
         if (get().sessionActive) {
-          set({
-            error:
-              locale === "ru"
-                ? "Сессия отладки уже запущена."
-                : "Debug session already running.",
-          });
+          surfaceStartError(
+            locale === "ru"
+              ? "Сессия отладки уже запущена."
+              : "Debug session already running.",
+          );
           return;
         }
 

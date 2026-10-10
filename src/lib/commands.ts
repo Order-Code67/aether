@@ -233,6 +233,13 @@ export function getCommands(): Command[] {
       run: () => view("boards"),
     },
     {
+      id: "view.libraries",
+      title: "Show Libraries",
+      category: "View",
+      keywords: "arduino lib pkg",
+      run: () => view("libraries"),
+    },
+    {
       id: "view.debug",
       title: "Show Run and Debug",
       category: "View",
@@ -584,8 +591,43 @@ export function getCommands(): Command[] {
 
 export function runCommandById(id: string): boolean {
   const cmd = getCommands().find((c) => c.id === id);
-  if (!cmd) return false;
-  void cmd.run();
+  if (!cmd) {
+    void import("@/hooks/useI18n").then(({ t }) => {
+      useSettingsStore
+        .getState()
+        .flashNotice(t("command.unknown", { id }), 3500);
+    });
+    return false;
+  }
+  try {
+    const result = cmd.run();
+    if (result != null && typeof (result as Promise<void>).then === "function") {
+      void (result as Promise<void>).catch((err) => {
+        void Promise.all([
+          import("@/hooks/useI18n"),
+          import("@/lib/errors"),
+        ]).then(([{ t }, { errorMessage }]) => {
+          useSettingsStore.getState().flashNotice(
+            t("command.failed", {
+              message: errorMessage(err, String(err)),
+            }),
+            4500,
+          );
+        });
+      });
+    }
+  } catch (err) {
+    void Promise.all([import("@/hooks/useI18n"), import("@/lib/errors")]).then(
+      ([{ t }, { errorMessage }]) => {
+        useSettingsStore.getState().flashNotice(
+          t("command.failed", {
+            message: errorMessage(err, String(err)),
+          }),
+          4500,
+        );
+      },
+    );
+  }
   usePaletteStore.getState().rememberCommand(id);
   return true;
 }

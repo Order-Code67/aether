@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.2.16 — 2026-10-11
+
+- **UI audit / menu wiring** — View menu covers Boards, Libraries, AI, Problems, Output, Serial, Plotter, Camera, Debug Console; every native menu id is covered by the command registry (parity test)
+- **Command failures surface** — unknown menu/palette ids and thrown command errors show RU/EN status notices instead of silent no-ops
+- **Debug Start** — missing project / desktop / already-running cases open the Debug panel and flash a notice (no silent F5)
+- **Build toolbar** — Doctor + Apply firmware profile controls alongside Build/Upload/Clean/port/env/save profile
+- **Activity switch** — short sidebar panel fade when changing Explorer / Search / SCM / Boards / Libraries / Debug / AI / Extensions
+
 ## 0.2.15 — 2026-10-11
 
 - **Offline cache package** — separate `Aether_OfflineCache_*_windows-x64.zip` builder (`npm run build:offline-cache` / `scripts/build-offline-cache.ps1`); Settings → Tools → **Import offline cache…** merges into `~/.platformio`; docs in `docs/OFFLINE_INSTALLER.md` (toolchains still not in the main NSIS)

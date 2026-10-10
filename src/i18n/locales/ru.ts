@@ -62,6 +62,7 @@ export const ru: Record<MessageKey, string> = {
   "profiles.saveCurrent": "Сохранить текущее как профиль",
   "profiles.saveCurrentShort": "Профиль",
   "profiles.apply": "Применить",
+  "profiles.applySelect": "Применить профиль…",
   "profiles.delete": "Удалить",
   "profiles.rename": "Переименовать",
   "profiles.empty":
@@ -177,7 +178,10 @@ export const ru: Record<MessageKey, string> = {
   "wizard.close": "Закрыть",
   "wizard.error": "Не удалось создать проект.",
   "doctor.title": "Проверка инструментов",
+  "doctor.openShort": "Диагностика",
   "doctor.ok": "Готово — найден PlatformIO.",
+  "command.unknown": "Неизвестная команда: {id}",
+  "command.failed": "Команда не выполнена: {message}",
   "doctor.checking": "Проверка инструментов…",
   "doctor.pioOk": "PlatformIO CLI: {version}",
   "doctor.pioMissing":

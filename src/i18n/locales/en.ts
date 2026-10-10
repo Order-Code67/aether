@@ -58,6 +58,7 @@ export const en = {
   "profiles.saveCurrent": "Save current as profile",
   "profiles.saveCurrentShort": "Save profile",
   "profiles.apply": "Apply",
+  "profiles.applySelect": "Apply profile…",
   "profiles.delete": "Delete",
   "profiles.rename": "Rename",
   "profiles.empty": "No profiles yet — open a PlatformIO project and save one.",
@@ -170,7 +171,10 @@ export const en = {
   "wizard.close": "Close",
   "wizard.error": "Failed to create project.",
   "doctor.title": "Toolchain check",
+  "doctor.openShort": "Doctor",
   "doctor.ok": "All set — PlatformIO was found.",
+  "command.unknown": "Unknown command: {id}",
+  "command.failed": "Command failed: {message}",
   "doctor.checking": "Checking tools…",
   "doctor.pioOk": "PlatformIO CLI: {version}",
   "doctor.pioMissing":

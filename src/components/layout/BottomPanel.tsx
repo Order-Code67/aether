@@ -229,18 +229,6 @@ export function BottomPanel() {
             </div>
           )}
 
-          {visible &&
-            activeTab !== "serial" &&
-            activeTab !== "plotter" &&
-            activeTab !== "camera" &&
-            activeTab !== "terminal" &&
-            activeTab !== "output" &&
-            activeTab !== "problems" &&
-            activeTab !== "debug" && (
-              <div className="aether-scroll h-full overflow-auto px-3 py-2 font-mono text-xs text-aether-fg-muted">
-                Panel placeholder.
-              </div>
-            )}
         </div>
       </section>
     </>

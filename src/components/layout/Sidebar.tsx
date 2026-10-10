@@ -477,31 +477,36 @@ export function Sidebar() {
       style={{ width: sidebarWidth }}
       aria-label={activityLabel}
     >
-      {activeActivity === "explorer" ? (
-        <ExplorerSidebar />
-      ) : activeActivity === "search" ? (
-        <SearchPanel />
-      ) : activeActivity === "source-control" ? (
-        <SourceControlPanel />
-      ) : activeActivity === "boards" ? (
-        <BoardsSidebar />
-      ) : activeActivity === "libraries" ? (
-        <LibrariesPanel />
-      ) : activeActivity === "debug" ? (
-        <DebugPanel />
-      ) : activeActivity === "agent" ? (
-        <AgentPanel />
-      ) : activeActivity === "extensions" ? (
-        <ExtensionsPanel />
-      ) : (
-        <SidebarPlaceholder
-          title={SIDEBAR_CONTENT[activeActivity]?.title ?? activityLabel}
-          hint={
-            SIDEBAR_CONTENT[activeActivity]?.hint ??
-            "This panel is reserved for a future feature."
-          }
-        />
-      )}
+      <div
+        key={activeActivity}
+        className="flex min-h-0 flex-1 flex-col animate-[aetherPanelIn_160ms_ease-out]"
+      >
+        {activeActivity === "explorer" ? (
+          <ExplorerSidebar />
+        ) : activeActivity === "search" ? (
+          <SearchPanel />
+        ) : activeActivity === "source-control" ? (
+          <SourceControlPanel />
+        ) : activeActivity === "boards" ? (
+          <BoardsSidebar />
+        ) : activeActivity === "libraries" ? (
+          <LibrariesPanel />
+        ) : activeActivity === "debug" ? (
+          <DebugPanel />
+        ) : activeActivity === "agent" ? (
+          <AgentPanel />
+        ) : activeActivity === "extensions" ? (
+          <ExtensionsPanel />
+        ) : (
+          <SidebarPlaceholder
+            title={SIDEBAR_CONTENT[activeActivity]?.title ?? activityLabel}
+            hint={
+              SIDEBAR_CONTENT[activeActivity]?.hint ??
+              "This panel is reserved for a future feature."
+            }
+          />
+        )}
+      </div>
     </aside>
   );
 }
