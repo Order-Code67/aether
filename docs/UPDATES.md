@@ -31,7 +31,7 @@ Quiet startup checks and manual **Check for Updates** both respect the selected 
 GitHub `/releases/latest/` only serves the latest **non-prerelease** release. Keep both feed files as assets on that stable release, but point their `url`s appropriately:
 
 1. Build and publish **stable** `vX.Y.Z` with signed `Aether_X.Y.Z_x64-setup.exe` + `latest.json` (version = `X.Y.Z`, URL under `…/download/vX.Y.Z/…`).
-2. Bump app version to a SemVer prerelease (e.g. `X.Y.Z-beta.1`), signed-build again, publish a **GitHub prerelease** tag `vX.Y.Z-beta.1` with that installer + `.sig`.
+2. Bump app version to a SemVer prerelease (e.g. `X.Y.Z-beta.1`), signed-build **NSIS only** (`npx tauri build --bundles nsis` — MSI rejects non-numeric prerelease identifiers), publish a **GitHub prerelease** tag `vX.Y.Z-beta.1` with that installer + `.sig`.
 3. Generate `latest-beta.json` with `-BetaVersion X.Y.Z-beta.1` so it points at the prerelease assets.
 4. Upload `latest-beta.json` onto the **stable** release assets (so Beta clients can fetch it via `/releases/latest/download/latest-beta.json`).
 5. Never point `latest.json` at a prerelease installer.
