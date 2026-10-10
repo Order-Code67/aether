@@ -40,7 +40,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEExNzJDMUY5NTBBOEMyMzEKUldReHdxaFErY0Z5b1VxVTFhL0w0YXVndzhKZE1BZ2dMY0xDdERsNS95bGpkSDJrYzFSbGJPeGMK",
       "endpoints": [
-        "https://github.com/aether-ide/aether/releases/latest/download/latest.json"
+        "https://github.com/Order-Code67/aether/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"

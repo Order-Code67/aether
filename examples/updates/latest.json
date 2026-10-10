@@ -5,7 +5,7 @@
   "platforms": {
     "windows-x86_64": {
       "signature": "REPLACE_WITH_CONTENTS_OF_SETUP_EXE_SIG",
-      "url": "https://github.com/aether-ide/aether/releases/download/v0.1.0/Aether_0.1.0_x64-setup.exe"
+      "url": "https://github.com/Order-Code67/aether/releases/download/v0.1.0/Aether_0.1.0_x64-setup.exe"
     }
   }
 }

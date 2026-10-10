@@ -31,7 +31,7 @@ With `bundle.createUpdaterArtifacts: true`, the build produces installer artifac
 
 Endpoint configured in `tauri.conf.json`:
 
-`https://github.com/aether-ide/aether/releases/latest/download/latest.json`
+`https://github.com/Order-Code67/aether/releases/latest/download/latest.json`
 
 After a signed build, copy NSIS artifacts into `release/` and regenerate the feed:
 

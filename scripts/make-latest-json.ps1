@@ -6,7 +6,7 @@
 param(
   [string]$Version = "0.1.0",
   [string]$Notes = "Aether update.",
-  [string]$BaseUrl = "https://github.com/aether-ide/aether/releases/download",
+  [string]$BaseUrl = "https://github.com/Order-Code67/aether/releases/download",
   [string]$ReleaseDir = ""
 )
 
