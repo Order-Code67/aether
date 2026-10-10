@@ -1,0 +1,19 @@
+{
+  "id": "community.blink-snippet",
+  "name": "Blink Snippet Pack",
+  "version": "0.1.0",
+  "description": "Sample local extension — LED blink helpers for Arduino-style sketches.",
+  "publisher": "Community",
+  "category": "snippets",
+  "contributes": {
+    "languages": ["cpp", "c"],
+    "snippets": [
+      {
+        "label": "blink",
+        "insertText": "pinMode(${1:LED_BUILTIN}, OUTPUT);\n\nvoid loop() {\n\tdigitalWrite(${1:LED_BUILTIN}, HIGH);\n\tdelay(${2:500});\n\tdigitalWrite(${1:LED_BUILTIN}, LOW);\n\tdelay(${2:500});\n}\n",
+        "detail": "Classic blink loop",
+        "documentation": "Sample contribution from a local extension folder."
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "notes": "Example shape — prefer release/latest.json after a signed build (see scripts/make-latest-json.ps1).",
+  "pub_date": "2026-10-10T11:16:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "REPLACE_WITH_CONTENTS_OF_SETUP_EXE_SIG",
+      "url": "https://github.com/aether-ide/aether/releases/download/v0.1.0/Aether_0.1.0_x64-setup.exe"
+    }
+  }
+}

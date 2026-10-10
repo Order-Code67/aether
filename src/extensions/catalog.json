@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "updated": "2026-04-10",
+  "entries": [
+    {
+      "id": "community.blink-snippet",
+      "name": "Blink Snippet Pack",
+      "description": "Sample Arduino blink helpers (same as examples/sample-extension).",
+      "publisher": "Community",
+      "category": "snippets",
+      "downloadUrl": "https://raw.githubusercontent.com/aether-ide/catalog/main/community.blink-snippet/extension.json",
+      "fallback": {
+        "id": "community.blink-snippet",
+        "name": "Blink Snippet Pack",
+        "version": "0.1.0",
+        "description": "Sample local extension — LED blink helpers for Arduino-style sketches.",
+        "publisher": "Community",
+        "category": "snippets",
+        "contributes": {
+          "languages": ["cpp", "c"],
+          "snippets": [
+            {
+              "label": "blink",
+              "insertText": "pinMode(${1:LED_BUILTIN}, OUTPUT);\n\nvoid loop() {\n\tdigitalWrite(${1:LED_BUILTIN}, HIGH);\n\tdelay(${2:500});\n\tdigitalWrite(${1:LED_BUILTIN}, LOW);\n\tdelay(${2:500});\n}\n",
+              "detail": "Classic blink loop",
+              "documentation": "Marketplace sample contribution."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "community.pid-snippets",
+      "name": "PID Control Snippets",
+      "description": "Basic PID loop and setpoint clamp snippets for flight/robot control.",
+      "publisher": "Community",
+      "category": "snippets",
+      "downloadUrl": "https://raw.githubusercontent.com/aether-ide/catalog/main/community.pid-snippets/extension.json",
+      "fallback": {
+        "id": "community.pid-snippets",
+        "name": "PID Control Snippets",
+        "version": "0.1.0",
+        "description": "Basic PID loop and setpoint clamp snippets for flight/robot control.",
+        "publisher": "Community",
+        "category": "snippets",
+        "contributes": {
+          "languages": ["cpp", "c"],
+          "snippets": [
+            {
+              "label": "pidstep",
+              "insertText": "float ${1:error} = ${2:setpoint} - ${3:measured};\n${4:integral} += ${1:error} * ${5:dt};\nfloat ${6:derivative} = (${1:error} - ${7:prevError}) / ${5:dt};\n${7:prevError} = ${1:error};\nfloat ${8:out} = ${9:kp} * ${1:error} + ${10:ki} * ${4:integral} + ${11:kd} * ${6:derivative};\n",
+              "detail": "PID step"
+            },
+            {
+              "label": "clampf",
+              "insertText": "${1:value} = fminf(${2:max}, fmaxf(${3:min}, ${1:value}));",
+              "detail": "Clamp float"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
