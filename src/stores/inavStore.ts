@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { InavConfiguratorTab } from "@/lib/inavTabs";
 import type { MspStatusSnapshot } from "@/lib/mspMinimal";
 import { pollMspStatus } from "@/lib/mspStatusPoll";
 import { releaseSerialBeforeUpload } from "@/lib/uploadGate";
@@ -21,6 +22,8 @@ interface InavState {
   profiles: InavProfile[];
   /** Exclusive CLI session owned by the iNav panel. */
   sessionActive: boolean;
+  /** Active configurator section (shared by sidebar nav + workspace). */
+  activeTab: InavConfiguratorTab;
   /** When true, serial lines are also appended to diffBuffer. */
   capturingDiff: boolean;
   cliLines: string[];
@@ -35,6 +38,7 @@ interface InavState {
   mspPolling: boolean;
   mspError: string | null;
 
+  setActiveTab: (tab: InavConfiguratorTab) => void;
   appendCliLine: (line: string) => void;
   clearCli: () => void;
   setDiffBuffer: (text: string) => void;
@@ -73,6 +77,7 @@ export const useInavStore = create<InavState>()(
     (set, get) => ({
       profiles: [],
       sessionActive: false,
+      activeTab: "setup",
       capturingDiff: false,
       cliLines: [],
       diffBuffer: "",
@@ -83,6 +88,8 @@ export const useInavStore = create<InavState>()(
       mspSnapshot: null,
       mspPolling: false,
       mspError: null,
+
+      setActiveTab: (tab) => set({ activeTab: tab }),
 
       appendCliLine: (line) =>
         set((state) => {
@@ -125,6 +132,8 @@ export const useInavStore = create<InavState>()(
         const after = useSerialStore.getState();
         if (after.connected) {
           set({ sessionActive: true, error: null });
+          // Auto identity/status poll so the configurator HUD fills in.
+          void get().refreshMspStatus();
         } else {
           set({
             sessionActive: false,
@@ -225,6 +234,7 @@ export const useInavStore = create<InavState>()(
         lastDiffPath: state.lastDiffPath,
         draftName: state.draftName,
         draftNotes: state.draftNotes,
+        activeTab: state.activeTab,
       }),
     },
   ),
