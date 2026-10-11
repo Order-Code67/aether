@@ -7,7 +7,7 @@
 - **Offline mode** — detect offline (`navigator.onLine` + short probe); status-bar «Офлайн» / Offline; suppress auto update check, registry search on panel open, and remote marketplace fetch when offline
 - **Timeouts** — updater / HTTP fetches race at ~4.5s; PlatformIO / arduino-cli registry search kill after 12s; AI connect timeout 5s; friendly RU/EN errors instead of long freezes
 - **Libraries** — Search button required for registry queries (chip/tab switches no longer auto-hit the network)
-- **FC Configurator (full)** — tabbed panel for iNav drones & planes: Setup, PID, Rates, Receiver (live MSP_RC), Battery, Failsafe, GPS/Nav, Mixer/Features, Ports, Modes, Parameters (ArduPilot-style search), vehicle Presets (BF + iNav + AP), CLI, Diff, Flash; CLI-first tuning with auto-backup; RU/EN; unit tests — no arm/motors; EEPROM explicit only
+- **FC Configurator (full, in Aether)** — main-window workspace (not just a sidebar): connect FC through Aether (left Connect + status HUD + Save EEPROM); tabs Setup/PID/Rates/RX/Battery/Failsafe/GPS/Mixer/Ports/Modes/Parameters/Presets/CLI/Diff/Flash; auto MSP poll on connect; status-bar FC chip; external Electron optional; RU/EN
 
 ## 0.2.25 — 2026-10-11
 

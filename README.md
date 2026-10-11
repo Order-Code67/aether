@@ -180,8 +180,9 @@ Offline toolchain pack (separate from the installer): `npm run build:offline-cac
 
 ## FC Configurator (iNav)
 
-1. Activity Bar → **FC Config** (or Welcome Hub → FC Configurator)
-2. Pick COM port → **Connect** (owns the serial port; Serial Monitor disconnects first)
-3. Use tabs: Setup · PID · Rates · Receiver · Battery · Failsafe · GPS/Nav · Mixer · Ports · Modes · Parameters · Presets · CLI · Diff · Flash
-4. Writes go to FC RAM with confirm + auto-backup under `Documents/Aether/drones/diffs/` — Save EEPROM / CLI `save` separately
-5. Never arms motors from Aether; see [`docs/INAV_MSP.md`](docs/INAV_MSP.md)
+1. Activity Bar → **FC Config** (or Welcome Hub → FC Configurator) — opens the **full configurator in the main window**
+2. Left panel: pick COM port → **Connect via Aether** (owns the serial port; Serial Monitor disconnects first)
+3. Session HUD shows craft name / voltage / GPS / armed; **Save EEPROM** is on the HUD
+4. Sections: Setup · PID · Rates · Receiver · Battery · Failsafe · GPS/Nav · Mixer · Ports · Modes · Parameters · Presets · CLI · Diff · Flash
+5. Writes go to FC RAM with confirm + auto-backup under `Documents/Aether/drones/diffs/`
+6. Never arms motors from Aether; see [`docs/INAV_MSP.md`](docs/INAV_MSP.md)

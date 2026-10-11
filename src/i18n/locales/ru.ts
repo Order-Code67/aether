@@ -567,9 +567,19 @@ export const ru: Record<MessageKey, string> = {
   "updater.badge.beta": "Beta",
   "updater.feedHint":
     "Подписанные обновления через Tauri updater. Stable → latest.json; Beta → latest-beta.json (prerelease).",
+  "status.fcSession": "FC · {port}",
+  "status.fcSessionTitle": "Сессия FC Configurator через Aether",
   "inav.title": "FC Configurator",
   "inav.hint":
-    "Полный конфигуратор FC для iNav (дроны и самолёты): PID/rates/RX как в Betaflight, дерево параметров и пресеты как в ArduPilot. Подключение занимает COM-порт. Без моторов/arm. EEPROM — только явно.",
+    "Подключите полётный контроллер через Aether (слева → Подключить). Полноценный конфигуратор iNav в этом окне: PID, rates, RX, nav, параметры, пресеты. Занимает COM-порт. Без моторов/arm. EEPROM — только явно.",
+  "inav.connectThroughAether":
+    "Подключайте FC через Aether — это приложение и есть конфигуратор (внешний Electron не обязателен).",
+  "inav.connectAether": "Подключить через Aether",
+  "inav.sessionOnHud": "Связь: {name}",
+  "inav.workspaceSubtitle": "{tab} · подключение через Aether",
+  "inav.hudDisconnected":
+    "Нет связи — выберите COM-порт слева и нажмите «Подключить через Aether».",
+  "inav.hudConnected": "Aether ↔ {port} @ {baud}",
   "inav.tabsAria": "Разделы конфигуратора",
   "inav.tab.setup": "Setup",
   "inav.tab.pid": "PID",
@@ -830,15 +840,15 @@ export const ru: Record<MessageKey, string> = {
   "inav.eeprom.confirm":
     "Записать текущие настройки RAM в EEPROM и перезагрузить FC? Это сохранит изменения Ports/Modes.",
   "inav.eeprom.saved": "Команда записи EEPROM отправлена.",
-  "inav.checklist.title": "Чеклист iNav",
+  "inav.checklist.title": "Чеклист FC Configurator",
   "inav.checklist.hint":
-    "Пошаговая настройка — прогресс сохраняется. Configurator необязателен.",
+    "Подключение через Aether — прогресс сохраняется. Внешнее приложение необязательно.",
   "inav.checklist.dismiss": "Скрыть чеклист",
-  "inav.checklist.port": "Выбрать COM-порт",
-  "inav.checklist.connect": "Подключить сессию iNav",
-  "inav.checklist.status": "Обновить MSP Status",
+  "inav.checklist.port": "Выбрать COM-порт (слева)",
+  "inav.checklist.connect": "Подключить через Aether",
+  "inav.checklist.status": "Обновить MSP Status (HUD)",
   "inav.checklist.diff": "Получить / сохранить diff",
-  "inav.checklist.configurator": "Открыть Configurator (необяз.)",
+  "inav.checklist.configurator": "Внешний iNav (необяз.)",
   "inav.flash.title": "Прошивка FC (.hex)",
   "inav.flash.hint":
     "Переведите FC в DFU (кнопка boot), отключите serial, затем прошейте через dfu-util в PATH. Лог — в Output. Неверный hex может «кирпичнуть» — подтверждайте осторожно.",
@@ -861,9 +871,4 @@ export const ru: Record<MessageKey, string> = {
   "inav.flash.failed": "dfu-util сообщил об ошибке — см. Output.",
   "inav.flash.needDfuUtil":
     "Нужен dfu-util в PATH (STM32CubeProgrammer CLI здесь не подключён).",
-  "inav.hudDisconnected": "FC отключён",
-  "inav.hudConnected": "Подключено · {port} @ {baud}",
-  "inav.connectThroughAether": "Подключение через Aether",
-  "inav.connectAether": "Подключить",
-  "inav.sessionOnHud": "Сессия · {port}",
 };

@@ -242,23 +242,23 @@ export function getCommands(): Command[] {
     },
     {
       id: "view.inav",
-      title: "Show iNav",
+      title: "Show FC Configurator",
       category: "View",
-      keywords: "drone flight fc inav кли дроны",
+      keywords: "drone flight fc inav кли дроны конфигуратор",
       run: () => view("inav"),
     },
     {
       id: "inav.focus",
-      title: "iNav: Focus",
+      title: "FC Configurator: Focus",
       category: "iNav",
       keywords: "drone flight fc inav дроны",
       run: () => view("inav"),
     },
     {
       id: "inav.connect",
-      title: "iNav: Connect",
+      title: "FC Configurator: Connect via Aether",
       category: "iNav",
-      keywords: "drone serial com connect подключить",
+      keywords: "drone serial com connect подключить aether",
       run: async () => {
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");
@@ -267,7 +267,7 @@ export function getCommands(): Command[] {
     },
     {
       id: "inav.disconnect",
-      title: "iNav: Disconnect",
+      title: "FC Configurator: Disconnect",
       category: "iNav",
       keywords: "drone serial disconnect отключить",
       run: async () => {
@@ -277,9 +277,9 @@ export function getCommands(): Command[] {
     },
     {
       id: "inav.openConfigurator",
-      title: "iNav: Open Configurator",
+      title: "FC Configurator: Open external iNav app",
       category: "iNav",
-      keywords: "configurator electron launch конфигуратор",
+      keywords: "configurator electron launch конфигуратор external",
       run: async () => {
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");

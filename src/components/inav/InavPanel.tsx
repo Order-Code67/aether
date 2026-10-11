@@ -1,15 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  ChartLine,
-  Eraser,
-  ExternalLink,
-  FolderOpen,
-  Plug,
-  PlugZap,
-  RefreshCw,
-  Save,
-  Send,
-} from "lucide-react";
+import { ChartLine, Eraser, ExternalLink, FolderOpen, Save, Send } from "lucide-react";
 import { InavBatteryCard } from "@/components/inav/InavBatteryCard";
 import { InavFailsafeCard } from "@/components/inav/InavFailsafeCard";
 import { InavFlashCard } from "@/components/inav/InavFlashCard";
@@ -24,10 +14,7 @@ import { InavPresetsCard } from "@/components/inav/InavPresetsCard";
 import { InavRatesCard } from "@/components/inav/InavRatesCard";
 import { InavReceiverCard } from "@/components/inav/InavReceiverCard";
 import { InavStatusCard } from "@/components/inav/InavStatusCard";
-import { InavTabBar } from "@/components/inav/InavTabBar";
-import type { InavConfiguratorTab } from "@/components/inav/inavTabs";
 import { useI18n } from "@/hooks/useI18n";
-import { cn } from "@/lib/cn";
 import { openExternalUrl } from "@/lib/comDrivers";
 import {
   detectInavConfigurator,
@@ -36,7 +23,6 @@ import {
 } from "@/lib/inavConfigurator";
 import { splitDiffForCliSend } from "@/lib/inavDiff";
 import { loadInavDiffFromFile, saveInavDiffToFile } from "@/lib/inavDiffFile";
-import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -46,25 +32,20 @@ import { useSettingsStore } from "@/stores/settingsStore";
 const QUICK_CMDS = ["help", "version", "status", "diff"] as const;
 const DIFF_CAPTURE_MS = 8000;
 
+/** Main configurator pages — connection lives in the sidebar; HUD in the workspace chrome. */
 export function InavPanel() {
   const { t, locale } = useI18n();
   const tauri = isTauriRuntime();
   const [input, setInput] = useState("");
   const [sendingDiff, setSendingDiff] = useState(false);
-  const [tab, setTab] = useState<InavConfiguratorTab>("setup");
   const logRef = useRef<HTMLDivElement>(null);
 
-  const ports = useSerialStore((s) => s.ports);
   const selectedPath = useSerialStore((s) => s.selectedPath);
-  const baudRate = useSerialStore((s) => s.baudRate);
   const connected = useSerialStore((s) => s.connected);
-  const connecting = useSerialStore((s) => s.connecting);
-  const refreshPorts = useSerialStore((s) => s.refreshPorts);
-  const setSelectedPath = useSerialStore((s) => s.setSelectedPath);
-  const setBaudRate = useSerialStore((s) => s.setBaudRate);
   const send = useSerialStore((s) => s.send);
 
   const sessionActive = useInavStore((s) => s.sessionActive);
+  const tab = useInavStore((s) => s.activeTab);
   const capturingDiff = useInavStore((s) => s.capturingDiff);
   const cliLines = useInavStore((s) => s.cliLines);
   const diffBuffer = useInavStore((s) => s.diffBuffer);
@@ -72,15 +53,12 @@ export function InavPanel() {
   const profiles = useInavStore((s) => s.profiles);
   const draftName = useInavStore((s) => s.draftName);
   const draftNotes = useInavStore((s) => s.draftNotes);
-  const error = useInavStore((s) => s.error);
   const clearCli = useInavStore((s) => s.clearCli);
   const setDiffBuffer = useInavStore((s) => s.setDiffBuffer);
   const setCapturingDiff = useInavStore((s) => s.setCapturingDiff);
   const setLastDiffPath = useInavStore((s) => s.setLastDiffPath);
   const setDraftName = useInavStore((s) => s.setDraftName);
   const setDraftNotes = useInavStore((s) => s.setDraftNotes);
-  const connectSession = useInavStore((s) => s.connectSession);
-  const disconnectSession = useInavStore((s) => s.disconnectSession);
   const releasePort = useInavStore((s) => s.releasePort);
   const saveCurrentAs = useInavStore((s) => s.saveCurrentAs);
   const applyProfile = useInavStore((s) => s.applyProfile);
@@ -89,11 +67,6 @@ export function InavPanel() {
   const flash = useSettingsStore((s) => s.flashNotice);
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
   const setBottomPanelVisible = useLayoutStore((s) => s.setBottomPanelVisible);
-
-  useEffect(() => {
-    if (!tauri) return;
-    void refreshPorts();
-  }, [tauri, refreshPorts]);
 
   useEffect(() => {
     if (!logRef.current) return;
@@ -243,16 +216,9 @@ export function InavPanel() {
     );
   }
 
-  const live = connected && sessionActive;
-
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="inav-panel">
-      <header className="flex h-9 shrink-0 items-center justify-between gap-2 px-3">
-        <div className="min-w-0">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-            {t("inav.title")}
-          </h2>
-        </div>
+      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-aether-border/60 px-4 py-1">
         <button
           type="button"
           title={t("inav.openPlotter")}
@@ -262,88 +228,9 @@ export function InavPanel() {
           <ChartLine size={12} />
           {t("inav.openPlotter")}
         </button>
-      </header>
-
-      <div className="shrink-0 space-y-1.5 border-b border-aether-border px-3 pb-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <select
-            value={selectedPath}
-            disabled={connected || connecting}
-            onChange={(e) => setSelectedPath(e.target.value)}
-            className="h-7 min-w-[120px] max-w-[180px] rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-            aria-label={t("inav.port")}
-            data-testid="inav-port"
-          >
-            {ports.length === 0 ? (
-              <option value="">{t("inav.noPorts")}</option>
-            ) : (
-              ports.map((port) => (
-                <option key={port.path} value={port.path}>
-                  {port.path}
-                  {port.portType ? ` — ${port.portType}` : ""}
-                </option>
-              ))
-            )}
-          </select>
-          <select
-            value={baudRate}
-            disabled={connected || connecting}
-            onChange={(e) => setBaudRate(Number(e.target.value))}
-            className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-            aria-label={t("inav.baud")}
-            data-testid="inav-baud"
-          >
-            {BAUD_RATES.map((rate) => (
-              <option key={rate} value={rate}>
-                {rate}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            title={t("common.refresh")}
-            onClick={() => void refreshPorts()}
-            className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
-          >
-            <RefreshCw size={12} />
-          </button>
-          {connected ? (
-            <button
-              type="button"
-              data-testid="inav-disconnect"
-              onClick={() => void disconnectSession()}
-              className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
-            >
-              <Plug size={12} />
-              {t("inav.disconnect")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              data-testid="inav-connect"
-              disabled={connecting || !selectedPath}
-              onClick={() => void connectSession()}
-              className="flex h-7 items-center gap-1 rounded border border-aether-accent bg-aether-accent-muted px-2 text-[11px] text-aether-fg hover:opacity-90 disabled:opacity-40"
-            >
-              <PlugZap size={12} />
-              {connecting ? t("inav.connecting") : t("inav.connect")}
-            </button>
-          )}
-          <span
-            className={cn(
-              "text-[10px]",
-              live ? "text-emerald-400" : "text-aether-fg-dim",
-            )}
-          >
-            {live ? t("inav.sessionOn") : t("inav.sessionOff")}
-          </span>
-        </div>
-        {error && <p className="text-[11px] text-aether-danger">{error}</p>}
       </div>
 
-      <InavTabBar active={tab} onChange={setTab} />
-
-      <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 py-2 text-xs">
+      <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-4 py-3 text-xs md:px-6">
         {tab === "setup" && (
           <>
             <p className="text-[11px] leading-relaxed text-aether-fg-dim">

@@ -1,6 +1,8 @@
 # iNav / FC Configurator notes (Aether)
 
-Aether’s **FC Configurator** talks to iNav (and compatible MSP) flight controllers over the same COM session used for FC CLI. It combines:
+Aether’s **FC Configurator** is a full main-window workspace: connect the flight controller **through Aether** (Activity → FC Config → Connect via Aether). No external Electron app is required for day-to-day setup.
+
+It talks to iNav (and compatible MSP) flight controllers over the same COM session used for FC CLI. It combines:
 
 | Source | What we take |
 |--------|----------------|

@@ -8,7 +8,9 @@
   "activity.libraries": "Libraries",
   "activity.librariesTitle": "Libraries (book) — search & install Arduino libs",
   "activity.inav": "FC Config",
-  "activity.inavTitle": "FC Configurator — iNav + Betaflight + ArduPilot presets",
+  "activity.inavTitle": "FC Configurator — connect FC through Aether",
+  "status.fcSession": "FC · {port}",
+  "status.fcSessionTitle": "FC Configurator session via Aether",
   "activity.debug": "Run and Debug",
   "activity.agent": "AI Agent",
   "activity.extensions": "Extensions",
@@ -132,7 +134,7 @@
   "hub.platformio": "PlatformIO",
   "hub.platformioDesc": "Open a folder and pick boards / environments.",
   "hub.inav": "FC Configurator",
-  "hub.inavDesc": "iNav drones & planes: PID, rates, RX, nav, presets, CLI, DFU.",
+  "hub.inavDesc": "Connect FC through Aether — full configurator in this window.",
   "hub.vscode": "VS Code",
   "hub.vscodeDesc": "Open the workspace in VS Code (desktop).",
   "hub.ai": "AI Assistant",
@@ -563,7 +565,15 @@
     "Signed updates via Tauri updater. Stable → latest.json (non-prerelease); Beta → latest-beta.json (prerelease when published).",
   "inav.title": "FC Configurator",
   "inav.hint":
-    "Full FC configurator for iNav (drones & planes), with Betaflight-style PID/rates/RX and ArduPilot-style parameter browser + presets. Connecting owns the COM port. No motors/arm. EEPROM save is explicit only.",
+    "Connect the flight controller through Aether (left panel → Connect). Full iNav configurator in this window: PID, rates, RX, nav, parameters, presets. Owns the COM port. No motors/arm. EEPROM save is explicit only.",
+  "inav.connectThroughAether":
+    "Connect the FC through Aether — this app is the configurator (no external Electron required).",
+  "inav.connectAether": "Connect via Aether",
+  "inav.sessionOnHud": "Linked: {name}",
+  "inav.workspaceSubtitle": "{tab} · connected through Aether",
+  "inav.hudDisconnected":
+    "Not connected — pick a COM port in the left panel and press Connect via Aether.",
+  "inav.hudConnected": "Aether ↔ {port} @ {baud}",
   "inav.tabsAria": "Configurator sections",
   "inav.tab.setup": "Setup",
   "inav.tab.pid": "PID",
@@ -739,9 +749,9 @@
   "inav.profilesEmpty": "No saved profiles yet.",
   "inav.delete": "Delete",
   "inav.deleteProfileConfirm": "Delete this iNav profile?",
-  "inav.openConfigurator": "Open iNav Configurator",
+  "inav.openConfigurator": "Open external iNav Configurator (optional)",
   "inav.configuratorHint":
-    "Launches the external Electron Configurator. Aether disconnects serial first so the COM port is free.",
+    "Optional: launches the official Electron app. Aether disconnects first. Prefer configuring here — Connect via Aether.",
   "inav.configuratorMissing":
     "iNav Configurator was not found in common install paths or PATH.\n\nOpen the GitHub releases page to download it?",
   "inav.configuratorLaunched": "iNav Configurator launched.",
@@ -822,14 +832,14 @@
   "inav.eeprom.confirm":
     "Write current RAM settings to EEPROM and reboot the FC? This persists Ports/Modes changes.",
   "inav.eeprom.saved": "EEPROM write sent.",
-  "inav.checklist.title": "iNav checklist",
-  "inav.checklist.hint": "Guided setup — progress is saved. Optional Configurator step.",
+  "inav.checklist.title": "FC Configurator checklist",
+  "inav.checklist.hint": "Connect through Aether — progress is saved. External app is optional.",
   "inav.checklist.dismiss": "Dismiss checklist",
-  "inav.checklist.port": "Select COM port",
-  "inav.checklist.connect": "Connect iNav session",
-  "inav.checklist.status": "Refresh MSP Status",
+  "inav.checklist.port": "Select COM port (left panel)",
+  "inav.checklist.connect": "Connect via Aether",
+  "inav.checklist.status": "Refresh MSP Status (HUD)",
   "inav.checklist.diff": "Get / Save diff",
-  "inav.checklist.configurator": "Open Configurator (optional)",
+  "inav.checklist.configurator": "External iNav app (optional)",
   "inav.flash.title": "FC firmware (.hex)",
   "inav.flash.hint":
     "Put the FC in DFU (boot button), disconnect serial, then flash with dfu-util on PATH. Log streams to Output. Wrong hex can brick — confirm carefully.",
@@ -851,11 +861,7 @@
   "inav.flash.hexInvalid": "Select a .hex or .bin firmware file.",
   "inav.flash.failed": "dfu-util reported failure — see Output.",
   "inav.flash.needDfuUtil": "Use dfu-util on PATH (STM32CubeProgrammer CLI is not wired here).",
-  "inav.hudDisconnected": "FC disconnected",
-  "inav.hudConnected": "Connected · {port} @ {baud}",
-  "inav.connectThroughAether": "Connect through Aether",
-  "inav.connectAether": "Connect",
-  "inav.sessionOnHud": "Session · {port}",
 } as const;
 
 export type MessageKey = keyof typeof en;
+
