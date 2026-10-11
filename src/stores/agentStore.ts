@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { t } from "@/hooks/useI18n";
 import {
   cancelChatStream,
+  chatCompletion,
   chatStream,
   listenAiChunk,
   listenAiStatus,
@@ -13,6 +15,7 @@ import {
   type PendingAttachment,
 } from "@/lib/agentAttachments";
 import { writeEditorContent } from "@/lib/applyEdit";
+import { shouldHardBlockNetwork } from "@/lib/offline";
 import {
   applyAgentEdit,
   extractAgentEdits,
@@ -45,6 +48,8 @@ interface AgentState {
   showSettings: boolean;
   busy: boolean;
   error: string | null;
+  /** Last failure reason for support reports (survives dismiss if needed). */
+  lastErrorReason: string | null;
   messages: ChatMessage[];
   draft: string;
   pendingAttachments: PendingAttachment[];
@@ -62,6 +67,7 @@ interface AgentState {
   removePendingAttachment: (id: string) => void;
   clearPendingAttachments: () => void;
   clearChat: () => void;
+  clearError: () => void;
   clearPreview: () => void;
   cancel: () => Promise<void>;
   send: () => Promise<void>;
@@ -137,6 +143,30 @@ function buildContextBlock(): string {
   return chunks.join("\n\n");
 }
 
+function finishAssistant(
+  assistantId: string,
+  patch: { content?: string; error?: string | null },
+) {
+  useAgentStore.setState((s) => {
+    const error = patch.error === undefined ? s.error : patch.error;
+    return {
+      busy: false,
+      error,
+      lastErrorReason: error ?? s.lastErrorReason,
+      messages: s.messages.map((m) =>
+        m.id === assistantId
+          ? {
+              ...m,
+              streaming: false,
+              content:
+                patch.content !== undefined ? patch.content : m.content,
+            }
+          : m,
+      ),
+    };
+  });
+}
+
 export const useAgentStore = create<AgentState>()(
   persist(
     (set, get) => ({
@@ -148,6 +178,7 @@ export const useAgentStore = create<AgentState>()(
       showSettings: false,
       busy: false,
       error: null,
+      lastErrorReason: null,
       messages: [],
       draft: "",
       pendingAttachments: [],
@@ -179,6 +210,8 @@ export const useAgentStore = create<AgentState>()(
           pendingAttachments: [],
         }),
 
+      clearError: () => set({ error: null }),
+
       clearPreview: () => set({ preview: null, previewEditId: null }),
 
       cancel: async () => {
@@ -200,13 +233,15 @@ export const useAgentStore = create<AgentState>()(
             error: null,
           });
         } catch (error) {
+          const msg =
+            error instanceof Error
+              ? error.message
+              : t("agent.errorRequestFailed");
           set({
             preview: null,
             previewEditId: null,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to preview edit.",
+            error: msg,
+            lastErrorReason: msg,
           });
         }
       },
@@ -226,11 +261,13 @@ export const useAgentStore = create<AgentState>()(
             }
           }, 2500);
         } catch (error) {
+          const msg =
+            error instanceof Error
+              ? error.message
+              : t("agent.errorRequestFailed");
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to apply edit.",
+            error: msg,
+            lastErrorReason: msg,
           });
         }
       },
@@ -252,11 +289,13 @@ export const useAgentStore = create<AgentState>()(
             }
           }, 2500);
         } catch (error) {
+          const msg =
+            error instanceof Error
+              ? error.message
+              : t("agent.errorRequestFailed");
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Failed to apply preview.",
+            error: msg,
+            lastErrorReason: msg,
           });
         }
       },
@@ -267,21 +306,22 @@ export const useAgentStore = create<AgentState>()(
         if ((!text && attachments.length === 0) || get().busy) return;
 
         if (!isTauriRuntime()) {
-          set({
-            error: "AI Agent requires the desktop app (npm run tauri:dev).",
-          });
+          const msg = t("agent.errorDesktopOnly");
+          set({ error: msg, lastErrorReason: msg });
           return;
         }
-        const { isAppOffline } = await import("@/stores/offlineStore");
-        if (isAppOffline()) {
-          set({
-            error: "Offline — AI requires an internet connection.",
-          });
+        // Hard-block only on navigator.onLine === false. Probe failures
+        // (gstatic etc.) must not silence the agent while the LLM API works.
+        if (shouldHardBlockNetwork()) {
+          const msg = t("agent.errorOffline");
+          set({ error: msg, lastErrorReason: msg });
           return;
         }
         if (!get().apiKey.trim()) {
+          const msg = t("agent.errorApiKey");
           set({
-            error: "Set an API key in Agent settings.",
+            error: msg,
+            lastErrorReason: msg,
             showSettings: true,
           });
           return;
@@ -335,12 +375,20 @@ export const useAgentStore = create<AgentState>()(
           { role: "user", content: userContent },
         ];
 
+        const requestOpts = {
+          baseUrl: get().baseUrl,
+          apiKey: get().apiKey,
+          model: get().model,
+          messages: history,
+        };
+
         let unlistenChunk: (() => void) | undefined;
         let unlistenStatus: (() => void) | undefined;
         let cancelled = false;
         let streamError: string | null = null;
 
         try {
+          // Register listeners BEFORE invoke so early chunks/status are not lost.
           unlistenChunk = await listenAiChunk((payload) => {
             set((s) => ({
               messages: s.messages.map((m) =>
@@ -364,41 +412,59 @@ export const useAgentStore = create<AgentState>()(
             }
           });
 
-          await chatStream({
-            baseUrl: get().baseUrl,
-            apiKey: get().apiKey,
-            model: get().model,
-            messages: history,
-          });
+          await chatStream(requestOpts);
 
-          set((s) => {
-            const msg = s.messages.find((m) => m.id === assistantId);
-            const empty = !msg?.content.trim();
-            let error = streamError;
-            if (!error && empty && !cancelled) {
-              error = "Agent returned an empty reply.";
+          const streamed = get().messages.find((m) => m.id === assistantId);
+          const empty = !streamed?.content.trim();
+
+          if (!cancelled && !streamError && empty) {
+            // Some providers stream empty / array-only deltas we missed — retry once.
+            try {
+              const fallback = await chatCompletion(requestOpts);
+              if (fallback.trim()) {
+                finishAssistant(assistantId, {
+                  content: fallback,
+                  error: null,
+                });
+                return;
+              }
+              finishAssistant(assistantId, {
+                error: t("agent.errorEmpty"),
+              });
+              return;
+            } catch (fallbackErr) {
+              const msg =
+                fallbackErr instanceof Error
+                  ? fallbackErr.message
+                  : t("agent.errorRequestFailed");
+              finishAssistant(assistantId, { error: msg });
+              return;
             }
-            return {
-              busy: false,
-              error,
-              messages: s.messages.map((m) =>
-                m.id === assistantId ? { ...m, streaming: false } : m,
-              ),
-            };
-          });
+          }
+
+          const error =
+            streamError ??
+            (empty && !cancelled ? t("agent.errorEmpty") : null);
+          finishAssistant(assistantId, { error });
         } catch (error) {
-          set((s) => ({
-            busy: false,
-            error:
-              streamError ??
-              (error instanceof Error ? error.message : "Agent request failed."),
-            messages: s.messages.map((m) =>
-              m.id === assistantId ? { ...m, streaming: false } : m,
-            ),
-          }));
+          const msg =
+            streamError ??
+            (error instanceof Error
+              ? error.message
+              : t("agent.errorRequestFailed"));
+          finishAssistant(assistantId, { error: msg });
         } finally {
           unlistenChunk?.();
           unlistenStatus?.();
+          // Guarantee busy clears even if listeners never fired (invoke failed early).
+          if (get().busy) {
+            set((s) => ({
+              busy: false,
+              messages: s.messages.map((m) =>
+                m.id === assistantId ? { ...m, streaming: false } : m,
+              ),
+            }));
+          }
         }
       },
     }),

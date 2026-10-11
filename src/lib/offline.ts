@@ -1,7 +1,15 @@
 /** Offline detection helpers (navigator.onLine + short connectivity probe). */
 
 export const HTTP_TIMEOUT_MS = 4500;
-export const OFFLINE_PROBE_MS = 3000;
+export const OFFLINE_PROBE_MS = 2500;
+
+/** Endpoints that return quickly when reachable (any response counts as online). */
+const PROBE_URLS = [
+  "https://www.gstatic.com/generate_204",
+  "https://connectivitycheck.gstatic.com/generate_204",
+  "https://www.msftconnecttest.com/connecttest.txt",
+  "https://cloudflare.com/cdn-cgi/trace",
+] as const;
 
 export class TimeoutError extends Error {
   constructor(message = "Request timed out.") {
@@ -52,18 +60,10 @@ export async function fetchWithTimeout(
   }
 }
 
-/**
- * Best-effort connectivity probe. Uses navigator.onLine first, then a tiny
- * HTTPS fetch that fails fast when DNS/TLS/routing is unavailable.
- */
-export async function probeOnline(): Promise<boolean> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) {
-    return false;
-  }
+async function probeOne(url: string): Promise<boolean> {
   try {
-    // generate_204 returns 204 when reachable; any network error ⇒ offline.
     await fetchWithTimeout(
-      "https://www.gstatic.com/generate_204",
+      url,
       { method: "GET", mode: "no-cors" },
       OFFLINE_PROBE_MS,
     );
@@ -73,7 +73,34 @@ export async function probeOnline(): Promise<boolean> {
   }
 }
 
+/**
+ * Best-effort connectivity probe. Uses navigator.onLine first, then tries
+ * several tiny HTTPS fetches (any success ⇒ online). Probe failures alone
+ * must not hard-block AI — many WebViews / regions block these hosts while
+ * the LLM API still works.
+ */
+export async function probeOnline(): Promise<boolean> {
+  if (!readNavigatorOnline()) {
+    return false;
+  }
+  const results = await Promise.all(PROBE_URLS.map((url) => probeOne(url)));
+  return results.some(Boolean);
+}
+
+/** True only when the browser reports offline (hard signal). */
+export function isNavigatorOffline(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.onLine === false;
+}
+
 export function readNavigatorOnline(): boolean {
-  if (typeof navigator === "undefined") return true;
-  return navigator.onLine !== false;
+  return !isNavigatorOffline();
+}
+
+/**
+ * Hard gate for features that must not start without a link.
+ * Soft/probe offline (`isAppOffline`) is intentionally separate.
+ */
+export function shouldHardBlockNetwork(): boolean {
+  return isNavigatorOffline();
 }

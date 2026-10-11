@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.31 — 2026-10-11
+
+- **AI Agent silence fix** — no longer hard-blocks send on a failed gstatic connectivity probe (WebView2 / blocked regions); hard-block only when `navigator.onLine === false`; multi-endpoint probe for soft offline UI
+- **Streaming robustness** — SSE delta parser accepts string or content-part arrays; empty stream retries once via non-streaming `ai_chat_completion`
+- **Errors visible** — sticky Agent error banner with dismiss; RU/EN for offline / API key / empty / request failed / desktop-only; `busy` always cleared; agent last error in support report
+
 ## 0.2.30 — 2026-10-11
 
 - **Finish incomplete WIP** — orphaned full iNav configurator UI removed from the IDE (Activity **БПЛА** remains the БПЛА-Студия bridge only); experimental Electron `apps/aether-configurator/` committed with honest docs (not an IDE launch target yet; primary FC path stays БПЛА-Студия); driver binary cache gitignored; incomplete Navigation upload / Blackbox charts labeled RU/EN «скоро» / Coming soon; no silent no-op driver install when cache is empty

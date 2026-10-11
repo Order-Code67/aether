@@ -12,6 +12,7 @@ const base: SupportReportSnapshot = {
   lastTask: "upload",
   lastSuccess: false,
   lastError: "port busy",
+  agentLastError: null,
   lastOutputTail: "error: port busy",
   clangdInstalled: true,
   clangdVersion: "18.1.0",
@@ -53,5 +54,14 @@ describe("formatSupportReport", () => {
     expect(text).toContain("Last task: build");
     expect(text).toContain("success");
     expect(text).toContain("SUCCESS");
+  });
+
+  it("includes AI agent last error when set", () => {
+    const text = formatSupportReport({
+      ...base,
+      agentLastError: "Offline — AI requires an internet connection",
+    });
+    expect(text).toContain("AI agent last error");
+    expect(text).toContain("Offline — AI requires an internet connection");
   });
 });

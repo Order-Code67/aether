@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tauri::{AppHandle, Emitter, State};
 
 const AI_CHUNK_EVENT: &str = "ai-chunk";
@@ -53,13 +54,21 @@ struct ChatCompletionsResponse {
 
 #[derive(Debug, Deserialize)]
 struct ChatChoice {
-    message: Option<AiMessage>,
+    message: Option<AssistantMessage>,
     delta: Option<StreamDelta>,
 }
 
 #[derive(Debug, Deserialize)]
 struct StreamDelta {
-    content: Option<String>,
+    /// OpenAI-compatible: string, or array of content parts.
+    content: Option<Value>,
+}
+
+#[derive(Debug, Deserialize)]
+struct AssistantMessage {
+    #[allow(dead_code)]
+    role: Option<String>,
+    content: Option<Value>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -79,6 +88,47 @@ impl Default for AiState {
             running: Arc::new(AtomicBool::new(false)),
         }
     }
+}
+
+/// Extract plain text from OpenAI-style `content` (string or content-part array).
+pub fn extract_text_content(value: &Value) -> String {
+    match value {
+        Value::String(s) => s.clone(),
+        Value::Array(parts) => {
+            let mut out = String::new();
+            for part in parts {
+                match part {
+                    Value::String(s) => out.push_str(s),
+                    Value::Object(obj) => {
+                        if let Some(t) = obj.get("text").and_then(|v| v.as_str()) {
+                            out.push_str(t);
+                        } else if let Some(t) = obj.get("content").and_then(|v| v.as_str()) {
+                            out.push_str(t);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            out
+        }
+        _ => String::new(),
+    }
+}
+
+fn delta_text(delta: &StreamDelta) -> String {
+    delta
+        .content
+        .as_ref()
+        .map(extract_text_content)
+        .unwrap_or_default()
+}
+
+fn message_text(message: &AssistantMessage) -> String {
+    message
+        .content
+        .as_ref()
+        .map(extract_text_content)
+        .unwrap_or_default()
 }
 
 fn normalize_base_url(base_url: &str) -> String {
@@ -164,7 +214,7 @@ pub async fn ai_chat_completion(request: AiChatRequest) -> Result<String, String
         .choices
         .and_then(|mut c| c.pop())
         .and_then(|c| c.message)
-        .map(|m| m.content)
+        .map(|m| message_text(&m))
         .filter(|c| !c.is_empty())
         .ok_or_else(|| "API returned an empty assistant message.".into())
 }
@@ -175,6 +225,7 @@ pub async fn ai_chat_stream(
     state: State<'_, AiState>,
     request: AiChatRequest,
 ) -> Result<(), String> {
+    // Validate before claiming the running slot so a bad request cannot stick busy.
     validate_request(&request)?;
 
     if state.running.swap(true, Ordering::SeqCst) {
@@ -297,8 +348,11 @@ async fn run_stream(
                 }
                 if let Some(choices) = parsed.choices {
                     for choice in choices {
-                        if let Some(delta) = choice.delta.and_then(|d| d.content) {
-                            emit_chunk(app, delta);
+                        if let Some(delta) = choice.delta {
+                            let text = delta_text(&delta);
+                            if !text.is_empty() {
+                                emit_chunk(app, text);
+                            }
                         }
                     }
                 }
@@ -326,4 +380,52 @@ pub fn ai_cancel(state: State<'_, AiState>) -> Result<(), String> {
         state.cancel.store(true, Ordering::SeqCst);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn extract_string_content() {
+        assert_eq!(extract_text_content(&json!("hello")), "hello");
+    }
+
+    #[test]
+    fn extract_array_text_parts() {
+        let v = json!([
+            {"type": "text", "text": "Hello "},
+            {"type": "text", "text": "world"}
+        ]);
+        assert_eq!(extract_text_content(&v), "Hello world");
+    }
+
+    #[test]
+    fn extract_array_plain_strings() {
+        let v = json!(["a", "b"]);
+        assert_eq!(extract_text_content(&v), "ab");
+    }
+
+    #[test]
+    fn extract_ignores_non_text() {
+        let v = json!([{"type": "image_url", "image_url": {"url": "x"}}]);
+        assert_eq!(extract_text_content(&v), "");
+    }
+
+    #[test]
+    fn delta_text_from_string() {
+        let d = StreamDelta {
+            content: Some(json!("chunk")),
+        };
+        assert_eq!(delta_text(&d), "chunk");
+    }
+
+    #[test]
+    fn delta_text_from_parts() {
+        let d = StreamDelta {
+            content: Some(json!([{"type": "text", "text": "part"}])),
+        };
+        assert_eq!(delta_text(&d), "part");
+    }
 }

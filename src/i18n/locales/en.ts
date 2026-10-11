@@ -507,6 +507,14 @@
   "agent.noLineChanges": "(no line changes)",
   "agent.previewChanges": "Preview changes",
   "agent.applyActive": "Apply to active file",
+  "agent.errorOffline":
+    "Offline — AI requires an internet connection (your device reports no network).",
+  "agent.errorApiKey": "Set an API key in Agent settings.",
+  "agent.errorEmpty": "Agent returned an empty reply.",
+  "agent.errorRequestFailed": "Agent request failed.",
+  "agent.errorDesktopOnly":
+    "AI Agent requires the desktop app (npm run tauri:dev).",
+  "agent.errorDismiss": "Dismiss error",
   "settings.close": "Close",
   "encrypt.lock": "Encrypt sketch…",
   "encrypt.unlock": "Unlock sketch…",

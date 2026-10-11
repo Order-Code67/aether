@@ -496,6 +496,14 @@ export const ru: Record<MessageKey, string> = {
   "agent.noLineChanges": "(нет изменений строк)",
   "agent.previewChanges": "Предпросмотр изменений",
   "agent.applyActive": "Применить к активному файлу",
+  "agent.errorOffline":
+    "Офлайн — для AI нужен интернет (система сообщает об отсутствии сети).",
+  "agent.errorApiKey": "Укажите API-ключ в настройках агента.",
+  "agent.errorEmpty": "Агент вернул пустой ответ.",
+  "agent.errorRequestFailed": "Запрос к агенту не выполнен.",
+  "agent.errorDesktopOnly":
+    "AI-агент работает только в десктоп-приложении (npm run tauri:dev).",
+  "agent.errorDismiss": "Скрыть ошибку",
   "settings.close": "Закрыть",
   "encrypt.lock": "Зашифровать скетч…",
   "encrypt.unlock": "Разблокировать скетч…",

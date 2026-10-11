@@ -39,7 +39,7 @@ import {
   transcribeAudio,
   WhisperTranscribeError,
 } from "@/lib/whisperTranscribe";
-import { isAppOffline } from "@/stores/offlineStore";
+import { shouldHardBlockNetwork } from "@/lib/offline";
 import { useAgentStore } from "@/stores/agentStore";
 
 type VoicePhase = "idle" | "listening" | "transcribing";
@@ -422,7 +422,7 @@ export function AgentPanel() {
       });
       return;
     }
-    if (isAppOffline()) {
+    if (shouldHardBlockNetwork()) {
       useAgentStore.setState({ error: t("agent.voiceOffline") });
       return;
     }
@@ -462,7 +462,7 @@ export function AgentPanel() {
         void (async () => {
           setVoicePhase("transcribing");
           try {
-            if (isAppOffline()) {
+            if (shouldHardBlockNetwork()) {
               throw new WhisperTranscribeError("offline");
             }
             const blob = new Blob(chunks, { type: blobType });
@@ -643,14 +643,26 @@ export function AgentPanel() {
 
       <EditPreviewPanel />
 
-      {(error || applyStatus) && (
+      {error && (
         <div
-          className={cn(
-            "border-t border-aether-border px-3 py-1.5 text-[11px]",
-            error ? "text-aether-danger" : "text-aether-fg-muted",
-          )}
+          role="alert"
+          className="sticky bottom-0 z-10 flex shrink-0 items-start gap-2 border-t border-aether-danger/40 bg-aether-danger/15 px-3 py-2 text-[12px] leading-snug text-aether-danger"
         >
-          {error ?? applyStatus}
+          <p className="min-w-0 flex-1 break-words font-medium">{error}</p>
+          <button
+            type="button"
+            title={t("agent.errorDismiss")}
+            aria-label={t("agent.errorDismiss")}
+            onClick={() => useAgentStore.getState().clearError()}
+            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-aether-danger hover:bg-aether-danger/20"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+      {!error && applyStatus && (
+        <div className="shrink-0 border-t border-aether-border px-3 py-1.5 text-[11px] text-aether-fg-muted">
+          {applyStatus}
         </div>
       )}
 

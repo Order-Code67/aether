@@ -1,11 +1,16 @@
 import { create } from "zustand";
 import {
+  isNavigatorOffline,
   probeOnline,
   readNavigatorOnline,
 } from "@/lib/offline";
 
 interface OfflineState {
-  /** True when the app should suppress auto network features. */
+  /**
+   * Soft offline: navigator offline OR connectivity probe failed.
+   * Use for suppressing auto network features (updates, registry prefetch).
+   * Do NOT hard-block AI solely on this — probe hosts often fail in WebView2.
+   */
   offline: boolean;
   /** Last probe timestamp (ms). */
   lastCheckedAt: number | null;
@@ -62,7 +67,12 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
   },
 }));
 
-/** Sync read for non-React call sites. */
+/** Soft offline (probe may be wrong). Prefer for auto-features only. */
 export function isAppOffline(): boolean {
   return useOfflineStore.getState().offline;
+}
+
+/** Hard offline — only `navigator.onLine === false`. Safe to hard-block AI. */
+export function isHardOffline(): boolean {
+  return isNavigatorOffline();
 }

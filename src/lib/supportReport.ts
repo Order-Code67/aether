@@ -3,6 +3,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { mkdir, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { Locale } from "@/i18n";
 import { isTauriRuntime } from "@/lib/tauri";
+import { useAgentStore } from "@/stores/agentStore";
 import { useLspStore } from "@/stores/lspStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSerialStore } from "@/stores/serialStore";
@@ -18,6 +19,7 @@ export type SupportReportSnapshot = {
   lastTask: string | null;
   lastSuccess: boolean | null;
   lastError: string | null;
+  agentLastError: string | null;
   lastOutputTail: string;
   clangdInstalled: boolean;
   clangdVersion: string | null;
@@ -43,6 +45,7 @@ function labels(locale: Locale) {
       failure: "ошибка",
       unknown: "н/д",
       lastError: "Последняя ошибка",
+      agentLastError: "Последняя ошибка AI-агента",
       output: "Хвост вывода",
       clangd: "clangd",
       clangdMissing: "не установлен",
@@ -67,6 +70,7 @@ function labels(locale: Locale) {
     failure: "failure",
     unknown: "n/a",
     lastError: "Last error",
+    agentLastError: "AI agent last error",
     output: "Output tail",
     clangd: "clangd",
     clangdMissing: "not installed",
@@ -104,6 +108,7 @@ export function formatSupportReport(snap: SupportReportSnapshot): string {
     `${L.lastTask}: ${snap.lastTask ?? L.none}`,
     `${L.lastResult}: ${result}`,
     `${L.lastError}: ${snap.lastError ?? L.none}`,
+    `${L.agentLastError}: ${snap.agentLastError ?? L.none}`,
     `${L.clangd}: ${clangdLine}`,
     "",
     `${L.output}:`,
@@ -140,6 +145,7 @@ export async function collectSupportReport(
   const pio = usePlatformIoStore.getState();
   const lsp = useLspStore.getState();
   const serial = useSerialStore.getState();
+  const agent = useAgentStore.getState();
 
   const uploadPort = pio.getUploadPort().trim() || serial.selectedPath || "";
 
@@ -160,6 +166,7 @@ export async function collectSupportReport(
     lastTask: pio.lastTask,
     lastSuccess: pio.lastSuccess,
     lastError: pio.error,
+    agentLastError: agent.lastErrorReason ?? agent.error,
     lastOutputTail: tail,
     clangdInstalled: Boolean(lsp.info?.installed ?? pio.doctor.clangd?.installed),
     clangdVersion:

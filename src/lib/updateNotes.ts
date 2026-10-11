@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.31": {
+    en: "AI Agent: fix silent failures (false offline probe, empty stream fallback, sticky errors RU/EN).",
+    ru: "AI-агент: исправлены «тихие» сбои (ложный offline-probe, fallback пустого стрима, заметные ошибки RU/EN).",
+  },
+  "0.2.30": {
+    en: "Finish incomplete WIP: remove orphaned IDE FC UI; document experimental Electron configurator.",
+    ru: "Дожали WIP: убран orphaned FC UI из IDE; задокументирован experimental Electron-конфигуратор.",
+  },
   "0.2.29": {
     en: "AI voice: Whisper transcription via Agent API when Web Speech is unavailable in WebView2; clearer mic errors.",
     ru: "AI-голос: расшифровка Whisper через API агента, если Web Speech недоступен в WebView2; понятные ошибки микрофона.",
