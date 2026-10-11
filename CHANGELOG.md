@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.25 — 2026-10-11
+
+- **Install to any drive/folder** — NSIS `installMode: both` (per-user or all-users) plus directory page; pick e.g. `D:\Apps\Aether` or `E:\Aether`, not only Program Files; all-users still creates Public Desktop shortcut; custom `windows/installer.nsi` keeps `/D=` across MultiUser init
+- **Silent custom path** — `Aether_0.2.25_x64-setup.exe /S /D=D:\Aether` (`/D=` must be last); see `docs/UPDATES.md`
+
 ## 0.2.24 — 2026-10-11
 
 - **Welcome Hub** — five large modules (Arduino Quick Start, PlatformIO/boards, iNav, VS Code, AI) with subtle hub watermark; secondary links kept; RU/EN

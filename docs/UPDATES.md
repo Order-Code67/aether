@@ -41,6 +41,21 @@ GitHub `/releases/latest/` only serves the latest **non-prerelease** release. Ke
 .\scripts\make-latest-json.ps1 -BetaVersion 0.2.17-beta.1 -BetaNotes "Beta notes." -BetaOnly
 ```
 
+## Windows NSIS install path
+
+Interactive setup (`installMode: both`):
+
+1. Choose **per-user** or **all users** (all users → Public Desktop shortcut).
+2. On the **directory** page, pick any folder on any drive (e.g. `D:\Apps\Aether`, `E:\Aether`). Defaults remain Program Files (all users) or `%LOCALAPPDATA%\Aether` (per-user).
+
+Silent install with a custom directory (`/D=` must be the **last** argument; no quotes):
+
+```text
+Aether_X.Y.Z_x64-setup.exe /S /D=D:\Aether
+```
+
+Optional: `/AllUsers` or `/CurrentUser` with `installMode: both`. MSI (WiX) may offer its own directory UI; NSIS is the primary custom-path installer for Aether.
+
 ## Sign a release build (Windows)
 
 PowerShell:
