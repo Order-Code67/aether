@@ -457,7 +457,7 @@ export const ru: Record<MessageKey, string> = {
   "agent.clearChat": "Очистить чат",
   "agent.settings": "Настройки агента",
   "agent.settingsHint":
-    "Поддерживаются полные файлы, патчи SEARCH/REPLACE и diff с предпросмотром. Можно прикреплять текст/код или говорить в микрофон, если доступно распознавание речи.",
+    "Поддерживаются полные файлы, патчи SEARCH/REPLACE и diff с предпросмотром. Можно прикреплять текст/код или говорить в микрофон (Web Speech при наличии, иначе Whisper через API агента).",
   "agent.emptyHint":
     "Спросите про прошивку, сборку или serial. Прикрепите файлы скрепкой или перетащите в поле ввода. Лучше SEARCH/REPLACE или diff — сначала Preview, потом Apply.",
   "agent.placeholder": "Спросите агента…",
@@ -472,10 +472,20 @@ export const ru: Record<MessageKey, string> = {
   "agent.attachUnsupported": "Неподдерживаемый тип пропущен: {names}.",
   "agent.voiceStart": "Голосовой ввод",
   "agent.voiceStop": "Остановить голосовой ввод",
+  "agent.voiceTranscribing": "Расшифровка…",
   "agent.voiceUnsupported":
-    "Распознавание речи недоступно в этом WebView. Введите текст вручную.",
+    "Для голоса нужны URL и ключ API агента (Настройки → Агент) или WebView с Speech Recognition. Укажите ключ и нажмите микрофон снова.",
   "agent.voiceDenied":
     "Доступ к микрофону запрещён. Разрешите микрофон в параметрах конфиденциальности Windows и повторите.",
+  "agent.voiceNoApiKey":
+    "Укажите URL и ключ API в Настройки → Агент для голосовой расшифровки.",
+  "agent.voiceOffline":
+    "Офлайн — для голосовой расшифровки нужен интернет.",
+  "agent.voiceRecorderUnsupported":
+    "Этот WebView не умеет записывать микрофон (MediaRecorder недоступен). Введите текст вручную.",
+  "agent.voiceFailed":
+    "Не удалось расшифровать речь. Проверьте URL/ключ API агента и повторите.",
+  "agent.voiceTimeout": "Расшифровка не успела завершиться. Попробуйте короче.",
   "agent.voiceError": "Ошибка голосового ввода ({code}).",
   "agent.roleYou": "Вы",
   "agent.roleAgent": "Агент",

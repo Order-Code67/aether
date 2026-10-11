@@ -28,9 +28,21 @@ import {
 import {
   createSpeechRecognition,
   isSpeechRecognitionSupported,
+  isWhisperVoiceSupported,
+  resolveVoiceInputMode,
   type SpeechRecognitionLike,
+  whisperLanguage,
 } from "@/lib/speechRecognition";
+import {
+  classifyMediaError,
+  pickAudioMimeType,
+  transcribeAudio,
+  WhisperTranscribeError,
+} from "@/lib/whisperTranscribe";
+import { isAppOffline } from "@/stores/offlineStore";
 import { useAgentStore } from "@/stores/agentStore";
+
+type VoicePhase = "idle" | "listening" | "transcribing";
 
 function EditPreviewPanel() {
   const { t } = useI18n();
@@ -216,22 +228,75 @@ export function AgentPanel() {
   const cancel = useAgentStore((s) => s.cancel);
   const listRef = useRef<HTMLDivElement>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [listening, setListening] = useState(false);
+  const [voicePhase, setVoicePhase] = useState<VoicePhase>("idle");
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
   const baseDraftRef = useRef("");
   const finalTranscriptRef = useRef("");
+  const voiceModeRef = useRef<"webspeech" | "whisper" | null>(null);
+
+  const listening = voicePhase === "listening";
+  const transcribing = voicePhase === "transcribing";
 
   useEffect(() => {
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, busy]);
 
+  const stopMediaTracks = () => {
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+  };
+
+  const resetVoiceUi = () => {
+    setVoicePhase("idle");
+    voiceModeRef.current = null;
+    recognitionRef.current = null;
+    mediaRecorderRef.current = null;
+    recordChunksRef.current = [];
+    stopMediaTracks();
+  };
+
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort();
-      recognitionRef.current = null;
+      try {
+        mediaRecorderRef.current?.stop();
+      } catch {
+        // ignore
+      }
+      mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  const appendTranscript = (text: string) => {
+    const piece = text.trim();
+    if (!piece) return;
+    const base = baseDraftRef.current.trimEnd();
+    setDraft(base ? `${base} ${piece}` : piece);
+  };
+
+  const voiceErrorMessage = (code: string): string => {
+    switch (code) {
+      case "no_api_key":
+        return t("agent.voiceNoApiKey");
+      case "offline":
+        return t("agent.voiceOffline");
+      case "mic_denied":
+        return t("agent.voiceDenied");
+      case "unsupported":
+        return t("agent.voiceRecorderUnsupported");
+      case "timeout":
+        return t("agent.voiceTimeout");
+      case "empty_audio":
+      case "failed":
+        return t("agent.voiceFailed");
+      default:
+        return t("agent.voiceError", { code });
+    }
+  };
 
   const canSend = Boolean(draft.trim() || pendingAttachments.length > 0);
 
@@ -273,16 +338,29 @@ export function AgentPanel() {
     }
   };
 
-  const toggleVoice = () => {
-    if (listening) {
+  const stopVoice = () => {
+    if (voiceModeRef.current === "webspeech") {
       recognitionRef.current?.stop();
-      setListening(false);
+      setVoicePhase("idle");
+      voiceModeRef.current = null;
+      recognitionRef.current = null;
       return;
     }
-    if (!isSpeechRecognitionSupported()) {
-      useAgentStore.setState({ error: t("agent.voiceUnsupported") });
-      return;
+    if (voiceModeRef.current === "whisper") {
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        try {
+          recorder.stop();
+        } catch {
+          resetVoiceUi();
+        }
+      } else {
+        resetVoiceUi();
+      }
     }
+  };
+
+  const startWebSpeech = () => {
     const rec = createSpeechRecognition(locale);
     if (!rec) {
       useAgentStore.setState({ error: t("agent.voiceUnsupported") });
@@ -291,6 +369,7 @@ export function AgentPanel() {
     baseDraftRef.current = draft.trimEnd();
     finalTranscriptRef.current = "";
     recognitionRef.current = rec;
+    voiceModeRef.current = "webspeech";
     rec.onresult = (ev) => {
       let interim = "";
       let finals = finalTranscriptRef.current;
@@ -308,8 +387,7 @@ export function AgentPanel() {
       setDraft(base ? `${base} ${joined}` : joined);
     };
     rec.onerror = (ev) => {
-      setListening(false);
-      recognitionRef.current = null;
+      resetVoiceUi();
       const code = ev.error ?? "";
       if (code === "not-allowed" || code === "service-not-allowed") {
         useAgentStore.setState({ error: t("agent.voiceDenied") });
@@ -322,18 +400,123 @@ export function AgentPanel() {
       }
     };
     rec.onend = () => {
-      setListening(false);
-      recognitionRef.current = null;
+      if (voiceModeRef.current === "webspeech") {
+        resetVoiceUi();
+      }
     };
     try {
       rec.start();
-      setListening(true);
+      setVoicePhase("listening");
       useAgentStore.setState({ error: null });
     } catch {
-      setListening(false);
-      recognitionRef.current = null;
+      resetVoiceUi();
       useAgentStore.setState({ error: t("agent.voiceUnsupported") });
     }
+  };
+
+  const startWhisperCapture = async () => {
+    if (!apiKey.trim() || !baseUrl.trim()) {
+      useAgentStore.setState({
+        error: t("agent.voiceNoApiKey"),
+        showSettings: true,
+      });
+      return;
+    }
+    if (isAppOffline()) {
+      useAgentStore.setState({ error: t("agent.voiceOffline") });
+      return;
+    }
+    if (!isWhisperVoiceSupported()) {
+      useAgentStore.setState({ error: t("agent.voiceRecorderUnsupported") });
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mimeType = pickAudioMimeType();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      recordChunksRef.current = [];
+      voiceModeRef.current = "whisper";
+      baseDraftRef.current = draft.trimEnd();
+
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size > 0) recordChunksRef.current.push(ev.data);
+      };
+
+      recorder.onerror = () => {
+        resetVoiceUi();
+        useAgentStore.setState({ error: t("agent.voiceFailed") });
+      };
+
+      recorder.onstop = () => {
+        const chunks = recordChunksRef.current;
+        const blobType = recorder.mimeType || mimeType || "audio/webm";
+        stopMediaTracks();
+        mediaRecorderRef.current = null;
+        voiceModeRef.current = null;
+
+        void (async () => {
+          setVoicePhase("transcribing");
+          try {
+            if (isAppOffline()) {
+              throw new WhisperTranscribeError("offline");
+            }
+            const blob = new Blob(chunks, { type: blobType });
+            const text = await transcribeAudio({
+              baseUrl,
+              apiKey,
+              blob,
+              language: whisperLanguage(locale),
+            });
+            appendTranscript(text);
+            useAgentStore.setState({ error: null });
+          } catch (e) {
+            const code =
+              e instanceof WhisperTranscribeError
+                ? e.code
+                : classifyMediaError(e);
+            useAgentStore.setState({ error: voiceErrorMessage(code) });
+            if (code === "no_api_key") {
+              useAgentStore.setState({ showSettings: true });
+            }
+          } finally {
+            setVoicePhase("idle");
+            recordChunksRef.current = [];
+          }
+        })();
+      };
+
+      recorder.start(250);
+      setVoicePhase("listening");
+      useAgentStore.setState({ error: null });
+    } catch (e) {
+      resetVoiceUi();
+      const code = classifyMediaError(e);
+      useAgentStore.setState({ error: voiceErrorMessage(code) });
+    }
+  };
+
+  const toggleVoice = () => {
+    if (transcribing) return;
+    if (listening) {
+      stopVoice();
+      return;
+    }
+
+    const mode = resolveVoiceInputMode(Boolean(apiKey.trim()));
+    if (!mode) {
+      useAgentStore.setState({ error: t("agent.voiceUnsupported") });
+      return;
+    }
+    if (mode === "webspeech" && isSpeechRecognitionSupported()) {
+      startWebSpeech();
+      return;
+    }
+    void startWhisperCapture();
   };
 
   return (
@@ -539,15 +722,30 @@ export function AgentPanel() {
           </button>
           <button
             type="button"
-            title={listening ? t("agent.voiceStop") : t("agent.voiceStart")}
-            aria-label={listening ? t("agent.voiceStop") : t("agent.voiceStart")}
+            title={
+              transcribing
+                ? t("agent.voiceTranscribing")
+                : listening
+                  ? t("agent.voiceStop")
+                  : t("agent.voiceStart")
+            }
+            aria-label={
+              transcribing
+                ? t("agent.voiceTranscribing")
+                : listening
+                  ? t("agent.voiceStop")
+                  : t("agent.voiceStart")
+            }
             aria-pressed={listening}
-            disabled={busy}
+            aria-busy={transcribing}
+            disabled={busy || transcribing}
             onClick={toggleVoice}
             className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
               listening &&
                 "border-aether-danger bg-aether-danger/15 text-aether-danger animate-pulse",
+              transcribing &&
+                "border-aether-accent bg-aether-accent/15 text-aether-accent animate-pulse",
             )}
           >
             <Mic size={14} />
@@ -563,10 +761,7 @@ export function AgentPanel() {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (listening) {
-                  recognitionRef.current?.stop();
-                  setListening(false);
-                }
+                if (listening) stopVoice();
                 void send();
               }
             }}
@@ -589,10 +784,7 @@ export function AgentPanel() {
               title={t("agent.send")}
               disabled={!canSend}
               onClick={() => {
-                if (listening) {
-                  recognitionRef.current?.stop();
-                  setListening(false);
-                }
+                if (listening) stopVoice();
                 void send();
               }}
               className="flex h-8 w-8 items-center justify-center rounded bg-aether-accent text-white hover:opacity-90 disabled:opacity-40"

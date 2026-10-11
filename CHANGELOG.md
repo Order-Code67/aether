@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.29 — 2026-10-11
+
+- **AI voice (Whisper fallback)** — Web Speech remains an optional fast path when `webkitSpeechRecognition` exists; otherwise MediaRecorder mic capture posts to OpenAI-compatible `/v1/audio/transcriptions` using Agent Settings base URL + API key; transcript appends to the composer; offline / no-key / mic-denied / unsupported / timeout errors in RU/EN; recording pulse and no stuck listening state
+
 ## 0.2.28 — 2026-10-11
 
 - **External iNav Configurator opt-in** — button / checklist step / command palette `inav.openConfigurator` hidden by default; enable via Settings → Tools → «Show external iNav Configurator button» (persisted `showExternalInavConfigurator`); RU/EN

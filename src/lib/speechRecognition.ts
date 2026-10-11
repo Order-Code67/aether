@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n";
+import { isMediaRecorderSupported } from "@/lib/whisperTranscribe";
 
 export type SpeechRecognitionLike = {
   lang: string;
@@ -26,6 +27,11 @@ export function speechLocale(locale: Locale): string {
   return locale === "ru" ? "ru-RU" : "en-US";
 }
 
+/** ISO-639-1 hint for Whisper `language` field. */
+export function whisperLanguage(locale: Locale): string {
+  return locale === "ru" ? "ru" : "en";
+}
+
 export function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
   if (typeof window === "undefined") return null;
   const w = window as Window & {
@@ -35,8 +41,26 @@ export function getSpeechRecognitionCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/** Optional fast path — often missing in WebView2. */
 export function isSpeechRecognitionSupported(): boolean {
   return getSpeechRecognitionCtor() !== null;
+}
+
+/** Reliable path: mic capture for Whisper-compatible API. */
+export function isWhisperVoiceSupported(): boolean {
+  return isMediaRecorderSupported();
+}
+
+export type VoiceInputMode = "webspeech" | "whisper";
+
+/**
+ * Prefer Web Speech when the constructor exists; otherwise MediaRecorder+API.
+ * Returns null when neither capture path is available.
+ */
+export function resolveVoiceInputMode(_hasApiKey?: boolean): VoiceInputMode | null {
+  if (isSpeechRecognitionSupported()) return "webspeech";
+  if (isWhisperVoiceSupported()) return "whisper";
+  return null;
 }
 
 export function createSpeechRecognition(

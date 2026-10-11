@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.29": {
+    en: "AI voice: Whisper transcription via Agent API when Web Speech is unavailable in WebView2; clearer mic errors.",
+    ru: "AI-голос: расшифровка Whisper через API агента, если Web Speech недоступен в WebView2; понятные ошибки микрофона.",
+  },
+  "0.2.28": {
+    en: "External iNav Configurator button is opt-in (Settings → Tools).",
+    ru: "Кнопка внешнего iNav Configurator — по желанию (Настройки → Инструменты).",
+  },
   "0.2.27": {
     en: "AI chat: attach text/code files (paperclip + drag-drop) and voice input via Web Speech API when available.",
     ru: "AI-чат: вложения текста/кода (скрепка + drag-and-drop) и голосовой ввод через Web Speech API, если доступно.",

@@ -468,7 +468,7 @@
   "agent.clearChat": "Clear chat",
   "agent.settings": "Agent settings",
   "agent.settingsHint":
-    "Supports full-file fences, SEARCH/REPLACE patches, and diff hunks with Preview. Attach text/code files or use the mic when Speech Recognition is available.",
+    "Supports full-file fences, SEARCH/REPLACE patches, and diff hunks with Preview. Attach text/code files or use the mic (Web Speech when available, otherwise Whisper via your Agent API).",
   "agent.emptyHint":
     "Ask about firmware, builds, or serial debugging. Attach files with the paperclip or drag onto the composer. Prefer SEARCH/REPLACE or a diff — Preview then Apply.",
   "agent.placeholder": "Ask the agent…",
@@ -483,10 +483,20 @@
   "agent.attachUnsupported": "Unsupported file type skipped: {names}.",
   "agent.voiceStart": "Voice input",
   "agent.voiceStop": "Stop voice input",
+  "agent.voiceTranscribing": "Transcribing…",
   "agent.voiceUnsupported":
-    "Speech recognition is not available in this WebView. Type your message instead.",
+    "Voice input needs an Agent API URL and key (Settings → Agent), or a WebView with Speech Recognition. Set the API key and try the mic again.",
   "agent.voiceDenied":
     "Microphone access was denied. Allow the mic in Windows privacy settings and try again.",
+  "agent.voiceNoApiKey":
+    "Set an API URL and key in Settings → Agent to use voice transcription.",
+  "agent.voiceOffline":
+    "Offline — voice transcription needs an internet connection.",
+  "agent.voiceRecorderUnsupported":
+    "This WebView cannot record microphone audio (MediaRecorder unsupported). Type your message instead.",
+  "agent.voiceFailed":
+    "Transcription failed. Check the Agent API URL/key and try again.",
+  "agent.voiceTimeout": "Transcription timed out. Try a shorter clip.",
   "agent.voiceError": "Voice input error ({code}).",
   "agent.roleYou": "You",
   "agent.roleAgent": "Agent",
