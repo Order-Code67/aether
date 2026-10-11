@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.23 — 2026-10-11
+
+- **Hub branding icon** — desktop/app icon replaced with the hub concept art; regenerated `src-tauri/icons/*` (incl. `icon.ico`) and About UI `public/aether-icon.png`
+- **Desktop shortcut for all users** — NSIS `installMode: perMachine` installs to Program Files and creates the Public Desktop shortcut (silent/passive installs); installer uses the new product `.ico`
+
 ## 0.2.22 — 2026-10-11
 
 - **iNav MSP Status / Setup (read-only)** — Status card in iNav activity: poll MSP_API_VERSION / FC_VARIANT / FC_VERSION / NAME / STATUS(_EX) / ANALOG / RAW_GPS over the same COM session; binary `serial_write_bytes`; sends `exit` before poll (CLI vs MSP); non-INAV warning; RU/EN; MSP v1/v2 encode/decode unit tests — no EEPROM write, motors, calibration, Ports/Modes/PID
