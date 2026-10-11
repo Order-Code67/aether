@@ -1,23 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FolderOpen, X } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { pickParentFolder } from "@/lib/fsWorkspace";
-import { initPioProject, type PioStarter } from "@/lib/platformio";
+import { LORA_REGIONS, type LoraRegionId } from "@/lib/loraRegions";
+import {
+  initPioProject,
+  type PioLoraRegion,
+  type PioStarter,
+} from "@/lib/platformio";
 import { isValidEntryName, joinPath } from "@/lib/paths";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useExtensionStore } from "@/stores/extensionStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
-const FEATURED_BOARDS = [
-  { id: "esp32dev", labelKey: "wizard.board.esp32" as const },
-  { id: "esp32cam", labelKey: "wizard.board.esp32cam" as const },
-  { id: "megaatmega2560", labelKey: "wizard.board.mega" as const },
-  { id: "nanoatmega328", labelKey: "wizard.board.nano" as const },
+const FEATURED_BOARDS: { id: string; labelKey: MessageKey }[] = [
+  { id: "esp32dev", labelKey: "wizard.board.esp32" },
+  { id: "esp32cam", labelKey: "wizard.board.esp32cam" },
+  { id: "heltec_wifi_lora_32_V3", labelKey: "wizard.board.heltecV3" },
+  { id: "ttgo-t-beam", labelKey: "wizard.board.tbeam" },
+  { id: "megaatmega2560", labelKey: "wizard.board.mega" },
+  { id: "nanoatmega328", labelKey: "wizard.board.nano" },
 ];
 
 const OTHER_BOARD_PRESETS: { id: string; label: string }[] = [
+  { id: "heltec_wifi_lora_32_V2", label: "Heltec WiFi LoRa 32 V2" },
+  { id: "ttgo-lora32-v1", label: "TTGO LoRa32 V1" },
+  { id: "ttgo-lora32-v2", label: "TTGO LoRa32 V2" },
   { id: "esp32-s3-devkitc-1", label: "ESP32-S3 DevKitC" },
   { id: "esp8266", label: "ESP8266 (generic)" },
   { id: "nodemcuv2", label: "NodeMCU 1.0 (ESP-12E)" },
@@ -26,13 +37,27 @@ const OTHER_BOARD_PRESETS: { id: string; label: string }[] = [
   { id: "pico", label: "Raspberry Pi Pico" },
 ];
 
+const STARTERS: { id: PioStarter; key: MessageKey }[] = [
+  { id: "none", key: "wizard.starter.none" },
+  { id: "blink", key: "wizard.starter.blink" },
+  { id: "servo", key: "wizard.starter.servo" },
+  { id: "lora_tx", key: "wizard.starter.loraTx" },
+  { id: "lora_rx", key: "wizard.starter.loraRx" },
+  { id: "lorawan", key: "wizard.starter.lorawan" },
+  { id: "espnow", key: "wizard.starter.espnow" },
+];
+
+function starterNeedsRegion(starter: PioStarter): boolean {
+  return starter === "lora_tx" || starter === "lora_rx" || starter === "lorawan";
+}
+
 interface NewProjectDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
 export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const openFolderAt = useWorkspaceStore((s) => s.openFolderAt);
   const refreshProject = usePlatformIoStore((s) => s.refreshProject);
   const enabledIds = useExtensionStore((s) => s.enabledIds);
@@ -41,6 +66,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
   const [boardMode, setBoardMode] = useState<"featured" | "other">("featured");
   const [board, setBoard] = useState("esp32dev");
   const [starter, setStarter] = useState<PioStarter>("blink");
+  const [region, setRegion] = useState<LoraRegionId>("EU868");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -77,6 +103,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
 
   if (!open) return null;
 
+  const showRegion = starterNeedsRegion(starter);
   const canSubmit =
     isTauriRuntime() &&
     parent.trim().length > 0 &&
@@ -95,6 +122,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
         board: board.trim(),
         framework: "arduino",
         starter,
+        region: showRegion ? (region as PioLoraRegion) : null,
       });
       onClose();
       await openFolderAt(path);
@@ -260,13 +288,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
               {t("wizard.starter")}
             </legend>
             <div className="flex flex-wrap gap-1.5">
-              {(
-                [
-                  ["none", "wizard.starter.none"],
-                  ["blink", "wizard.starter.blink"],
-                  ["servo", "wizard.starter.servo"],
-                ] as const
-              ).map(([id, key]) => (
+              {STARTERS.map(({ id, key }) => (
                 <button
                   key={id}
                   type="button"
@@ -284,6 +306,35 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
               ))}
             </div>
           </fieldset>
+
+          {showRegion && (
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="text-[11px] font-medium uppercase tracking-wide text-aether-fg-muted">
+                {t("wizard.region")}
+              </legend>
+              <p className="text-[10px] leading-relaxed text-aether-fg-dim">
+                {t("wizard.region.hint")}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {LORA_REGIONS.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setRegion(r.id)}
+                    className={cn(
+                      "rounded border px-2.5 py-1.5 text-[11px]",
+                      region === r.id
+                        ? "border-aether-accent bg-aether-accent/15 text-aether-fg"
+                        : "border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg",
+                    )}
+                  >
+                    {locale === "ru" ? r.labelRu : r.labelEn}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           {parent && name.trim() && (
             <p

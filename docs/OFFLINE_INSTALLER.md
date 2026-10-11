@@ -9,6 +9,7 @@ Large ESP32 / AVR toolchains are **not** embedded in the main Aether NSIS instal
 - `platforms/espressif32`
 - `platforms/atmelavr`
 - `packages/…` (toolchains and frameworks pulled in by those platforms)
+- `lib/…` (curated global libraries: RadioLib, ArduinoJson, OLED helpers, Servo, …)
 - `aether-offline-cache.json` (manifest)
 
 Target install location (merge, do not wipe unrelated packages):
@@ -32,9 +33,12 @@ The script:
 
 1. Uses a clean staging `PLATFORMIO_CORE_DIR` under `%TEMP%`
 2. Runs `pio pkg install -g -p espressif32` and `atmelavr` (with `pio platform install` fallback)
-3. Writes `release/Aether_OfflineCache_<ver>_windows-x64.zip`
+3. Installs curated libraries globally (`pio pkg install -g -l …`, RadioLib / ArduinoJson / …); use `-SkipLibs` to skip
+4. Writes `release/Aether_OfflineCache_<ver>_windows-x64.zip`
 
 This can take a long time and produce a multi‑GB archive. If GitHub’s **2 GB** release asset limit is exceeded, keep the zip local / on external storage and do **not** attach it to the release — users build or copy the pack themselves.
+
+**Libs-only pack** (smaller, ~50–80 MB): `release/Aether_OfflineLibs_<ver>_windows-x64.zip` contains `lib/` + manifest (no toolchains). Import the same way in Settings → Tools. Use full `Aether_OfflineCache_*` when you also need platforms offline.
 
 Optional: `-SkipInstall` packs an existing staging dir without re-downloading.
 

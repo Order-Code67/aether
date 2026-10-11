@@ -102,6 +102,12 @@ export const ru: Record<MessageKey, string> = {
   "profiles.rename": "Переименовать",
   "profiles.empty":
     "Профилей пока нет — откройте проект PlatformIO и сохраните один.",
+  "profiles.hardwareTitle": "Пресеты железа (LoRa)",
+  "profiles.hardwareHint":
+    "Открывает встроенный пример с картой пинов. После открытия при необходимости выберите env.",
+  "profiles.hardwareOpen": "Открыть",
+  "profiles.hardwareOpened": "Открыто «{name}»",
+  "profiles.hardwareFailed": "Не удалось открыть пресет железа.",
   "profiles.applied": "Применён профиль «{name}»",
   "profiles.needProject": "Сначала откройте проект PlatformIO.",
   "profiles.saved": "Сохранён профиль «{name}»",
@@ -233,17 +239,26 @@ export const ru: Record<MessageKey, string> = {
   "wizard.board": "Плата",
   "wizard.board.esp32": "ESP32 Dev Module",
   "wizard.board.esp32cam": "ESP32-CAM (AI-Thinker)",
+  "wizard.board.heltecV3": "Heltec LoRa V3",
+  "wizard.board.tbeam": "LilyGO T-Beam",
   "wizard.board.mega": "Arduino Mega 2560",
   "wizard.board.nano": "Arduino Nano",
   "wizard.board.other": "Другая…",
   "wizard.profile.hint":
-    "Профили железа (Pixhawk / Betaflight) — в каталоге Примеры (Файл → Примеры).",
+    "LoRa / Pixhawk / Betaflight: Файл → Примеры или Настройки → Профили прошивки → Пресеты железа.",
   "wizard.framework": "Фреймворк",
   "wizard.framework.arduino": "Arduino",
   "wizard.starter": "Стартовый скетч (необязательно)",
   "wizard.starter.none": "Пустой",
   "wizard.starter.blink": "Мигание (Blink)",
   "wizard.starter.servo": "Сервопривод",
+  "wizard.starter.loraTx": "LoRa TX",
+  "wizard.starter.loraRx": "LoRa RX",
+  "wizard.starter.lorawan": "LoRaWAN / TTN",
+  "wizard.starter.espnow": "ESP-NOW",
+  "wizard.region": "Регион LoRa",
+  "wizard.region.hint":
+    "TX и RX должны быть в одном регионе (и SF). Неверный регион — частая причина «молчащего» радио.",
   "wizard.pathPreview": "Будет создано",
   "wizard.browse": "Обзор",
   "wizard.cancel": "Отмена",
@@ -267,6 +282,7 @@ export const ru: Record<MessageKey, string> = {
     "Python не найден (нужен для установки PlatformIO через pip). Установите Python 3 с pip и Add to PATH.",
   "doctor.driversHint":
     "Драйверы COM: многим платам на Windows нужны CH340 или CP210x. Aether не ставит неподписанные драйверы сам — откройте «Дополнительные компоненты» Windows или страницы производителей ниже.",
+  "doctor.radioTitle": "Подсказки Radio / LoRa",
   "doctor.platformsNote":
     "Платформы плат и тулчейны скачиваются при первой сборке проекта (не при «Установить недостающее»).",
   "doctor.clangdOk": "clangd: {version}",
@@ -326,7 +342,7 @@ export const ru: Record<MessageKey, string> = {
   "pio.envNone": "Нет env",
   "offline.title": "Офлайн-кэш",
   "offline.hint":
-    "Проверка платформ в ~/.platformio и предзагрузка espressif32 + atmelavr (и тулчейнов), чтобы первая сборка проекта была быстрее. Многогигабайтные тулчейны в установщик не входят.",
+    "Проверка платформ в ~/.platformio и предзагрузка espressif32 + atmelavr (ESP32 / Mega / LoRa и тулчейны), чтобы первая сборка была быстрее. Крупные тулчейны в установщик не входят — npm run build:offline-cache или Import zip.",
   "offline.checking": "Проверка кэша…",
   "offline.home": "Папка кэша",
   "offline.present": "установлено",
@@ -336,7 +352,7 @@ export const ru: Record<MessageKey, string> = {
   "offline.import": "Импорт офлайн-кэша…",
   "offline.importing": "Импорт…",
   "offline.importHint":
-    "Импорт портативного Aether_OfflineCache_*.zip (espressif32 + atmelavr) в ~/.platformio без удаления других пакетов. См. docs/OFFLINE_INSTALLER.md.",
+    "Импорт портативного Aether_OfflineCache_*.zip (platforms + packages + lib/ для ESP32/Mega/LoRa) в ~/.platformio без удаления других пакетов. См. docs/OFFLINE_INSTALLER.md.",
   "offline.importNeedFile": "Выберите файл .zip офлайн-кэша.",
   "offline.needPio": "Сначала установите PlatformIO Core, затем готовьте офлайн-кэш.",
   "offline.reuseNote":
@@ -451,6 +467,7 @@ export const ru: Record<MessageKey, string> = {
   "settings.agent.model": "Модель",
   "settings.agent.attachFile": "Прикреплять активный файл по умолчанию",
   "settings.agent.attachProblems": "Прикреплять Проблемы по умолчанию",
+  "settings.agent.attachBoard": "Прикреплять плату / пины / lib_deps",
   "settings.agent.keyHint":
     "Ключ хранится локально в этом приложении (zustand persist).",
   "agent.title": "AI-агент",
@@ -548,6 +565,14 @@ export const ru: Record<MessageKey, string> = {
     "Пока пусто — найдите библиотеку или нажмите популярный чип, затем «Установить».",
   "libraries.refresh": "Обновить",
   "libraries.popular": "Популярные (установка в один клик)",
+  "libraries.stacks": "Стеки (несколько библиотек)",
+  "libraries.stacksHint":
+    "Один клик: RadioLib + OLED + ArduinoJson (и связанные). Стек Meshtastic — только помощники; официальную прошивку ставьте отдельно.",
+  "libraries.stack.lora": "Стек LoRa",
+  "libraries.stack.meshtastic": "Помощники Meshtastic",
+  "libraries.stack.espnow": "Помощники ESP-NOW",
+  "libraries.stackProgress": "Стек {name}: {current}/{total}…",
+  "libraries.stackDone": "Стек установлен: {name}",
   "libraries.favorites": "Избранное",
   "libraries.recent": "Недавние",
   "libraries.favorite": "В избранное",

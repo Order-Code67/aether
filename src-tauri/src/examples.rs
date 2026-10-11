@@ -61,6 +61,54 @@ const CATALOG: &[CatalogEntry] = &[
         tags: &["ESP32", "CAM"],
     },
     CatalogEntry {
+        id: "esp32-lora-tx",
+        title: "ESP32 LoRa TX",
+        description:
+            "RadioLib point-to-point transmitter with pin maps for Heltec / TTGO / T-Beam. Pair with ESP32 LoRa RX; default EU868.",
+        board: "heltec_wifi_lora_32_V3",
+        tags: &["ESP32", "LoRa", "TX"],
+    },
+    CatalogEntry {
+        id: "esp32-lora-rx",
+        title: "ESP32 LoRa RX",
+        description:
+            "RadioLib point-to-point receiver. Same board env and region/SF as ESP32 LoRa TX.",
+        board: "heltec_wifi_lora_32_V3",
+        tags: &["ESP32", "LoRa", "RX"],
+    },
+    CatalogEntry {
+        id: "arduino-mega-lora",
+        title: "Arduino Mega LoRa",
+        description:
+            "Mega + RFM95/SX1276 on SPI (NSS=10 DIO0=2 RST=9). RadioLib TX/RX loop; default EU868.",
+        board: "megaatmega2560",
+        tags: &["Mega", "LoRa"],
+    },
+    CatalogEntry {
+        id: "esp32-lorawan-stub",
+        title: "LoRaWAN OTAA (Join + uplink)",
+        description:
+            "RadioLib OTAA: set DevEUI/AppKey, Join the network, then periodic uplinks. Heltec/TTGO/ESP32 envs; EU868 default.",
+        board: "heltec_wifi_lora_32_V3",
+        tags: &["ESP32", "LoRaWAN", "TTN", "OTAA"],
+    },
+    CatalogEntry {
+        id: "esp32-espnow-stub",
+        title: "ESP-NOW stub",
+        description:
+            "ESP32 ESP-NOW peer stub with ArduinoJson payloads. Set PEER_MAC to the other board.",
+        board: "esp32dev",
+        tags: &["ESP32", "ESP-NOW"],
+    },
+    CatalogEntry {
+        id: "meshtastic-stub",
+        title: "Meshtastic (stub)",
+        description:
+            "Placeholder — Meshtastic firmware is not bundled. Use LoRa TX/RX or flash official Meshtastic.",
+        board: "heltec_wifi_lora_32_V3",
+        tags: &["Meshtastic", "LoRa", "Stub"],
+    },
+    CatalogEntry {
         id: "pixhawk-ardupilot-stub",
         title: "Pixhawk / ArduPilot (stub)",
         description:

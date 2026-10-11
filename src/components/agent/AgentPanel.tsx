@@ -212,6 +212,7 @@ export function AgentPanel() {
   const model = useAgentStore((s) => s.model);
   const includeActiveFile = useAgentStore((s) => s.includeActiveFile);
   const includeProblems = useAgentStore((s) => s.includeProblems);
+  const includeBoardHardware = useAgentStore((s) => s.includeBoardHardware);
   const setDraft = useAgentStore((s) => s.setDraft);
   const setPendingAttachments = useAgentStore((s) => s.setPendingAttachments);
   const removePendingAttachment = useAgentStore(
@@ -223,6 +224,9 @@ export function AgentPanel() {
   const setModel = useAgentStore((s) => s.setModel);
   const setIncludeActiveFile = useAgentStore((s) => s.setIncludeActiveFile);
   const setIncludeProblems = useAgentStore((s) => s.setIncludeProblems);
+  const setIncludeBoardHardware = useAgentStore(
+    (s) => s.setIncludeBoardHardware,
+  );
   const clearChat = useAgentStore((s) => s.clearChat);
   const send = useAgentStore((s) => s.send);
   const cancel = useAgentStore((s) => s.cancel);
@@ -603,6 +607,14 @@ export function AgentPanel() {
               onChange={(e) => setIncludeProblems(e.target.checked)}
             />
             {t("settings.agent.attachProblems")}
+          </label>
+          <label className="flex items-center gap-2 text-aether-fg">
+            <input
+              type="checkbox"
+              checked={includeBoardHardware}
+              onChange={(e) => setIncludeBoardHardware(e.target.checked)}
+            />
+            {t("settings.agent.attachBoard")}
           </label>
           <p className="text-[11px] leading-relaxed text-aether-fg-dim">
             {t("agent.settingsHint")}

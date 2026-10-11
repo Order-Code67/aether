@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.2.33 — 2026-10-12
+
+- **LoRaWAN OTAA** — Join + periodic uplink (RadioLib), not a stub; Serial step guide; wizard starter updated
+- **Offline cache libs** — `build-offline-cache` / Prepare cache also installs RadioLib, ArduinoJson, OLED, Servo, … into `lib/`; import merges `lib/`
+- **Updater key** — signing keypair rotated (backup `Documents/Aether/keys/aether.key`); pubkey in `tauri.conf.json`
+
+## 0.2.32 — 2026-10-12
+
+- **LoRa stacks** — Libraries panel one-click stacks: LoRa (RadioLib + OLED + ArduinoJson), Meshtastic helpers, ESP-NOW helpers
+- **Bundled LoRa examples** — TX/RX with pin maps (Heltec V2/V3, TTGO, T-Beam, ESP32), Mega+RFM95, LoRaWAN/TTN stub, ESP-NOW stub, Meshtastic stub
+- **Project wizard** — Heltec V3 / T-Beam boards; starters LoRa TX/RX, LoRaWAN, ESP-NOW; region presets EU868 / US915 / RU864
+- **Hardware presets** — Settings → Firmware profiles: open Heltec / T-Beam / Mega+SX1276 examples with env
+- **Radio Doctor** — SPI/OLED/region tips when the open project looks like LoRa
+- **AI board context** — optional attach of selected env, pin map, lib_deps / build_flags
+- **Offline cache** — docs/script note: espressif32 + atmelavr cover ESP32/Mega/LoRa boards (`npm run build:offline-cache`)
+
 ## 0.2.31 — 2026-10-11
 
 - **AI Agent silence fix** — no longer hard-blocks send on a failed gstatic connectivity probe (WebView2 / blocked regions); hard-block only when `navigator.onLine === false`; multi-endpoint probe for soft offline UI

@@ -789,19 +789,28 @@ fn platform_for_board(board: &str) -> &'static str {
         "esp32dev"
         | "esp32-s3-devkitc-1"
         | "esp32doit-devkit-v1"
-        | "esp32-c3-devkitm-1" => "espressif32",
+        | "esp32-c3-devkitm-1"
+        | "heltec_wifi_lora_32_V2"
+        | "heltec_wifi_lora_32_V3"
+        | "ttgo-lora32-v1"
+        | "ttgo-lora32-v2"
+        | "ttgo-t-beam" => "espressif32",
         "esp8266" | "nodemcuv2" | "d1_mini" => "espressif8266",
         "uno" | "nanoatmega328" | "megaatmega2560" | "leonardo" | "micro" => "atmelavr",
         "teensy41" | "teensy40" | "teensy36" => "teensy",
         "pico" | "pico2" => "raspberrypi",
         _ if board.starts_with("esp32") => "espressif32",
+        _ if board.starts_with("heltec") || board.starts_with("ttgo") => "espressif32",
         _ if board.starts_with("esp8266") => "espressif8266",
         _ => "atmelavr",
     }
 }
 
 fn is_esp32_family(board: &str) -> bool {
-    board.starts_with("esp32") || matches!(board, "esp32dev" | "esp32doit-devkit-v1")
+    board.starts_with("esp32")
+        || board.starts_with("heltec")
+        || board.starts_with("ttgo")
+        || matches!(board, "esp32dev" | "esp32doit-devkit-v1")
 }
 
 fn validate_framework(framework: &str) -> Result<&str, String> {
@@ -817,10 +826,98 @@ fn validate_framework(framework: &str) -> Result<&str, String> {
 
 fn validate_starter(starter: &str) -> Result<&str, String> {
     let s = starter.trim();
-    if s.is_empty() || s == "none" || s == "blink" || s == "servo" {
+    if s.is_empty()
+        || matches!(
+            s,
+            "none" | "blink" | "servo" | "lora_tx" | "lora_rx" | "lorawan" | "espnow"
+        )
+    {
         return Ok(if s.is_empty() { "none" } else { s });
     }
     Err("Invalid starter template.".into())
+}
+
+fn validate_region(region: &str) -> Result<&str, String> {
+    let r = region.trim();
+    if r.is_empty() || r == "EU868" || r == "US915" || r == "RU864" {
+        return Ok(if r.is_empty() { "EU868" } else { r });
+    }
+    Err("Invalid LoRa region (use EU868, US915, or RU864).".into())
+}
+
+fn region_freq_mhz(region: &str) -> &'static str {
+    match region {
+        "US915" => "915.0",
+        "RU864" => "864.1",
+        _ => "868.1",
+    }
+}
+
+fn lora_pin_build_flags(board: &str) -> String {
+    let flags = match board {
+        "heltec_wifi_lora_32_V3" => "\
+\t-DAETHER_LORA_NSS=8\n\
+\t-DAETHER_LORA_DIO=14\n\
+\t-DAETHER_LORA_RST=12\n\
+\t-DAETHER_LORA_BUSY=13\n\
+\t-DAETHER_LORA_SCK=9\n\
+\t-DAETHER_LORA_MISO=11\n\
+\t-DAETHER_LORA_MOSI=10\n\
+\t-DAETHER_OLED_SDA=17\n\
+\t-DAETHER_OLED_SCL=18\n\
+\t-DAETHER_OLED_RST=21\n\
+\t-DAETHER_RADIO_SX126X=1\n",
+        "heltec_wifi_lora_32_V2" => "\
+\t-DAETHER_LORA_NSS=18\n\
+\t-DAETHER_LORA_DIO=26\n\
+\t-DAETHER_LORA_RST=14\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_LORA_SCK=5\n\
+\t-DAETHER_LORA_MISO=19\n\
+\t-DAETHER_LORA_MOSI=27\n\
+\t-DAETHER_OLED_SDA=4\n\
+\t-DAETHER_OLED_SCL=15\n\
+\t-DAETHER_OLED_RST=16\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+        "ttgo-lora32-v1" | "ttgo-lora32-v2" => "\
+\t-DAETHER_LORA_NSS=18\n\
+\t-DAETHER_LORA_DIO=26\n\
+\t-DAETHER_LORA_RST=14\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_LORA_SCK=5\n\
+\t-DAETHER_LORA_MISO=19\n\
+\t-DAETHER_LORA_MOSI=27\n\
+\t-DAETHER_OLED_SDA=21\n\
+\t-DAETHER_OLED_SCL=22\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+        "ttgo-t-beam" => "\
+\t-DAETHER_LORA_NSS=18\n\
+\t-DAETHER_LORA_DIO=26\n\
+\t-DAETHER_LORA_RST=23\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_LORA_SCK=5\n\
+\t-DAETHER_LORA_MISO=19\n\
+\t-DAETHER_LORA_MOSI=27\n\
+\t-DAETHER_OLED_SDA=21\n\
+\t-DAETHER_OLED_SCL=22\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+        "megaatmega2560" => "\
+\t-DAETHER_LORA_NSS=10\n\
+\t-DAETHER_LORA_DIO=2\n\
+\t-DAETHER_LORA_RST=9\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+        _ => "\
+\t-DAETHER_LORA_NSS=5\n\
+\t-DAETHER_LORA_DIO=26\n\
+\t-DAETHER_LORA_RST=14\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_LORA_SCK=18\n\
+\t-DAETHER_LORA_MISO=19\n\
+\t-DAETHER_LORA_MOSI=23\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+    };
+    flags.to_string()
 }
 
 fn write_wizard_project_files(
@@ -828,16 +925,50 @@ fn write_wizard_project_files(
     board: &str,
     framework: &str,
     starter: &str,
+    region: &str,
 ) -> Result<(), String> {
     let platform = platform_for_board(board);
     let env_name = board;
+    let freq = region_freq_mhz(region);
+    let is_lora = matches!(starter, "lora_tx" | "lora_rx" | "lorawan");
     let mut lib_deps = String::new();
+    let mut build_flags = String::new();
+
     if starter == "servo" {
         if is_esp32_family(board) {
             lib_deps.push_str("lib_deps =\n\tmadhephaestus/ESP32Servo@^3.0.6\n");
         } else {
             lib_deps.push_str("lib_deps =\n\tarduino-libraries/Servo@^1.2.2\n");
         }
+    } else if is_lora {
+        lib_deps.push_str(
+            "lib_deps =\n\
+\tjgromes/RadioLib\n\
+\tbblanchon/ArduinoJson\n\
+\tadafruit/Adafruit GFX Library\n\
+\tadafruit/Adafruit SSD1306\n\
+\tadafruit/Adafruit BusIO\n\
+\tolikraus/U8g2\n",
+        );
+        if starter == "lorawan" {
+            lib_deps.push_str("\tmcci-catena/MCCI LoRaWAN LMIC library\n");
+        }
+        build_flags.push_str("build_flags =\n");
+        build_flags.push_str(&format!("\t-DAETHER_LORA_REGION_{region}\n"));
+        build_flags.push_str(&format!("\t-DAETHER_LORA_FREQ={freq}\n"));
+        build_flags.push_str("\t-DAETHER_LORA_SF=7\n");
+        build_flags.push_str("\t-DAETHER_LORA_BW=125.0\n");
+        build_flags.push_str(&lora_pin_build_flags(board));
+        if starter == "lorawan" {
+            let cfg = match region {
+                "US915" => "CFG_us915",
+                "RU864" => "CFG_ru864",
+                _ => "CFG_eu868",
+            };
+            build_flags.push_str(&format!("\t-D{cfg}=1\n"));
+        }
+    } else if starter == "espnow" {
+        lib_deps.push_str("lib_deps =\n\tbblanchon/ArduinoJson\n");
     }
 
     let ini = format!(
@@ -848,7 +979,7 @@ fn write_wizard_project_files(
          board = {board}\n\
          framework = {framework}\n\
          monitor_speed = 115200\n\
-         {lib_deps}"
+         {lib_deps}{build_flags}"
     );
 
     let main_cpp = match starter {
@@ -952,6 +1083,278 @@ void loop() {
 }
 "#
         }
+        "lora_tx" => {
+            r#"#include <Arduino.h>
+#include <RadioLib.h>
+#include <SPI.h>
+
+#ifndef AETHER_LORA_NSS
+#define AETHER_LORA_NSS 5
+#endif
+#ifndef AETHER_LORA_DIO
+#define AETHER_LORA_DIO 26
+#endif
+#ifndef AETHER_LORA_RST
+#define AETHER_LORA_RST 14
+#endif
+#ifndef AETHER_LORA_BUSY
+#define AETHER_LORA_BUSY -1
+#endif
+#ifndef AETHER_LORA_SCK
+#define AETHER_LORA_SCK 18
+#endif
+#ifndef AETHER_LORA_MISO
+#define AETHER_LORA_MISO 19
+#endif
+#ifndef AETHER_LORA_MOSI
+#define AETHER_LORA_MOSI 23
+#endif
+#ifndef AETHER_LORA_FREQ
+#define AETHER_LORA_FREQ 868.1
+#endif
+#ifndef AETHER_LORA_SF
+#define AETHER_LORA_SF 7
+#endif
+#ifndef AETHER_LORA_BW
+#define AETHER_LORA_BW 125.0
+#endif
+
+#if defined(AETHER_RADIO_SX126X)
+SX1262 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#else
+SX1276 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#endif
+
+uint32_t counter = 0;
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+#if defined(ESP32)
+  SPI.begin(AETHER_LORA_SCK, AETHER_LORA_MISO, AETHER_LORA_MOSI, AETHER_LORA_NSS);
+#endif
+  Serial.printf("Aether LoRa TX freq=%.1f SF=%d\n", (double)AETHER_LORA_FREQ, AETHER_LORA_SF);
+  int state = radio.begin(AETHER_LORA_FREQ);
+  if (state != RADIOLIB_ERR_NONE) {
+    Serial.printf("Radio init failed: %d — check SPI/NSS/RST/DIO + antenna\n", state);
+    while (true) delay(1000);
+  }
+  radio.setSpreadingFactor(AETHER_LORA_SF);
+  radio.setBandwidth(AETHER_LORA_BW);
+}
+
+void loop() {
+  String msg = "aether#" + String(counter++);
+  int state = radio.transmit(msg);
+  if (state == RADIOLIB_ERR_NONE) {
+    Serial.printf("TX OK: %s\n", msg.c_str());
+  } else {
+    Serial.printf("TX fail: %d\n", state);
+  }
+  delay(2000);
+}
+"#
+        }
+        "lora_rx" => {
+            r#"#include <Arduino.h>
+#include <RadioLib.h>
+#include <SPI.h>
+
+#ifndef AETHER_LORA_NSS
+#define AETHER_LORA_NSS 5
+#endif
+#ifndef AETHER_LORA_DIO
+#define AETHER_LORA_DIO 26
+#endif
+#ifndef AETHER_LORA_RST
+#define AETHER_LORA_RST 14
+#endif
+#ifndef AETHER_LORA_BUSY
+#define AETHER_LORA_BUSY -1
+#endif
+#ifndef AETHER_LORA_SCK
+#define AETHER_LORA_SCK 18
+#endif
+#ifndef AETHER_LORA_MISO
+#define AETHER_LORA_MISO 19
+#endif
+#ifndef AETHER_LORA_MOSI
+#define AETHER_LORA_MOSI 23
+#endif
+#ifndef AETHER_LORA_FREQ
+#define AETHER_LORA_FREQ 868.1
+#endif
+#ifndef AETHER_LORA_SF
+#define AETHER_LORA_SF 7
+#endif
+#ifndef AETHER_LORA_BW
+#define AETHER_LORA_BW 125.0
+#endif
+
+#if defined(AETHER_RADIO_SX126X)
+SX1262 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#else
+SX1276 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#endif
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+#if defined(ESP32)
+  SPI.begin(AETHER_LORA_SCK, AETHER_LORA_MISO, AETHER_LORA_MOSI, AETHER_LORA_NSS);
+#endif
+  Serial.printf("Aether LoRa RX freq=%.1f SF=%d\n", (double)AETHER_LORA_FREQ, AETHER_LORA_SF);
+  int state = radio.begin(AETHER_LORA_FREQ);
+  if (state != RADIOLIB_ERR_NONE) {
+    Serial.printf("Radio init failed: %d — check SPI/NSS/RST/DIO + antenna\n", state);
+    while (true) delay(1000);
+  }
+  radio.setSpreadingFactor(AETHER_LORA_SF);
+  radio.setBandwidth(AETHER_LORA_BW);
+  Serial.println("Waiting for packets…");
+}
+
+void loop() {
+  String str;
+  int state = radio.receive(str);
+  if (state == RADIOLIB_ERR_NONE) {
+    Serial.printf("RX: %s RSSI=%.1f SNR=%.1f\n", str.c_str(), radio.getRSSI(), radio.getSNR());
+  } else if (state != RADIOLIB_ERR_RX_TIMEOUT) {
+    Serial.printf("RX error: %d\n", state);
+  }
+}
+"#
+        }
+        "lorawan" => {
+            r#"#include <Arduino.h>
+#include <RadioLib.h>
+#include <SPI.h>
+
+// Wizard LoRaWAN OTAA — set DevEUI + AppKey, then Join + uplink.
+// Prefer File → Examples → LoRaWAN OTAA for full multi-board pin maps.
+
+#ifndef AETHER_LORA_NSS
+#define AETHER_LORA_NSS 8
+#endif
+#ifndef AETHER_LORA_DIO
+#define AETHER_LORA_DIO 14
+#endif
+#ifndef AETHER_LORA_RST
+#define AETHER_LORA_RST 12
+#endif
+#ifndef AETHER_LORA_BUSY
+#define AETHER_LORA_BUSY 13
+#endif
+#ifndef AETHER_LORA_SCK
+#define AETHER_LORA_SCK 9
+#endif
+#ifndef AETHER_LORA_MISO
+#define AETHER_LORA_MISO 11
+#endif
+#ifndef AETHER_LORA_MOSI
+#define AETHER_LORA_MOSI 10
+#endif
+
+#ifndef RADIOLIB_LORAWAN_JOIN_EUI
+#define RADIOLIB_LORAWAN_JOIN_EUI 0x0000000000000000ULL
+#endif
+#ifndef RADIOLIB_LORAWAN_DEV_EUI
+#define RADIOLIB_LORAWAN_DEV_EUI 0x0000000000000000ULL
+#endif
+
+uint8_t appKey[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint8_t nwkKey[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+uint64_t joinEUI = RADIOLIB_LORAWAN_JOIN_EUI;
+uint64_t devEUI = RADIOLIB_LORAWAN_DEV_EUI;
+const uint32_t uplinkIntervalSeconds = 300;
+
+#if defined(AETHER_RADIO_SX126X)
+SX1262 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#else
+SX1276 radio = new Module(AETHER_LORA_NSS, AETHER_LORA_DIO, AETHER_LORA_RST, AETHER_LORA_BUSY);
+#endif
+
+#if defined(AETHER_LORA_REGION_US915)
+LoRaWANNode node(&radio, &US915, 2);
+#else
+LoRaWANNode node(&radio, &EU868, 0);
+#endif
+
+void setup() {
+  Serial.begin(115200);
+  delay(400);
+  Serial.println("Aether LoRaWAN OTAA wizard");
+  Serial.printf("DevEUI=%016llX — set keys in main.cpp before Join\n", (unsigned long long)devEUI);
+  if (devEUI == 0) {
+    Serial.println("Fill DevEUI + AppKey/NwkKey, rebuild, upload.");
+    while (true) delay(1000);
+  }
+  SPI.begin(AETHER_LORA_SCK, AETHER_LORA_MISO, AETHER_LORA_MOSI, AETHER_LORA_NSS);
+  int st = radio.begin();
+  if (st != RADIOLIB_ERR_NONE) { Serial.printf("radio.begin %d\n", st); while (true) delay(1000); }
+  st = node.beginOTAA(joinEUI, devEUI, nwkKey, appKey);
+  if (st != RADIOLIB_ERR_NONE) { Serial.printf("beginOTAA %d\n", st); while (true) delay(1000); }
+  Serial.println("Joining…");
+  st = node.activateOTAA();
+  if (st != RADIOLIB_LORAWAN_NEW_SESSION && st != RADIOLIB_LORAWAN_SESSION_RESTORED) {
+    Serial.printf("Join failed %d\n", st);
+    while (true) delay(1000);
+  }
+  Serial.println("Joined — uplink loop");
+}
+
+void loop() {
+  uint8_t payload[3] = { (uint8_t)radio.random(100), 0x12, 0x34 };
+  int16_t st = node.sendReceive(payload, sizeof(payload));
+  Serial.printf("uplink state=%d\n", st);
+  delay(uplinkIntervalSeconds * 1000UL);
+}
+"#
+        }
+        "espnow" => {
+            r#"#include <Arduino.h>
+#include <WiFi.h>
+#include <esp_now.h>
+#include <ArduinoJson.h>
+
+uint8_t PEER_MAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+void onRecv(const uint8_t *mac, const uint8_t *data, int len) {
+  Serial.printf("ESP-NOW RX %d bytes\n", len);
+  Serial.write(data, len);
+  Serial.println();
+  (void)mac;
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+  WiFi.mode(WIFI_STA);
+  Serial.print("This MAC: ");
+  Serial.println(WiFi.macAddress());
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("esp_now_init failed");
+    return;
+  }
+  esp_now_register_recv_cb(onRecv);
+  esp_now_peer_info_t peer{};
+  memcpy(peer.peer_addr, PEER_MAC, 6);
+  peer.channel = 0;
+  peer.encrypt = false;
+  esp_now_add_peer(&peer);
+}
+
+void loop() {
+  JsonDocument doc;
+  doc["from"] = "aether";
+  doc["ms"] = millis();
+  char buf[128];
+  size_t n = serializeJson(doc, buf, sizeof(buf));
+  esp_now_send(PEER_MAC, reinterpret_cast<uint8_t *>(buf), n);
+  delay(2000);
+}
+"#
+        }
         _ => {
             r#"#include <Arduino.h>
 
@@ -980,6 +1383,7 @@ pub fn pio_project_init(
     board: String,
     framework: Option<String>,
     starter: Option<String>,
+    region: Option<String>,
 ) -> Result<String, String> {
     let command = resolve_pio_command().ok_or_else(|| {
         "PlatformIO CLI not found. Install PlatformIO Core and ensure `pio` is on PATH."
@@ -1004,6 +1408,7 @@ pub fn pio_project_init(
 
     let framework = validate_framework(framework.as_deref().unwrap_or("arduino"))?;
     let starter = validate_starter(starter.as_deref().unwrap_or("none"))?;
+    let region = validate_region(region.as_deref().unwrap_or("EU868"))?;
 
     let parent_path = PathBuf::from(&parent);
     if !parent_path.is_dir() {
@@ -1050,7 +1455,7 @@ pub fn pio_project_init(
         });
     }
 
-    if let Err(err) = write_wizard_project_files(&project_dir, board, framework, starter) {
+    if let Err(err) = write_wizard_project_files(&project_dir, board, framework, starter, region) {
         let _ = std::fs::remove_dir_all(&project_dir);
         return Err(err);
     }
@@ -1781,12 +2186,12 @@ pub fn pio_prepare_offline_cache(
     emit_line(
         &app,
         "system",
-        "Preparing offline cache: espressif32 + atmelavr (ESP32 / Mega / Nano)…".into(),
+        "Preparing offline cache: espressif32 + atmelavr + LoRa/Arduino libs…".into(),
     );
     emit_line(
         &app,
         "system",
-        "Downloads platforms and toolchains into ~/.platformio so first builds are faster.".into(),
+        "Downloads platforms, toolchains, and curated libraries (RadioLib, ArduinoJson, …) into ~/.platformio.".into(),
     );
 
     let app_bg = app.clone();
@@ -1912,12 +2317,120 @@ pub fn pio_prepare_offline_cache(
             }
         }
 
+        // Curated global libraries (ESP32 / Mega / LoRa stacks).
+        let libs = [
+            "jgromes/RadioLib",
+            "bblanchon/ArduinoJson",
+            "adafruit/Adafruit GFX Library",
+            "adafruit/Adafruit SSD1306",
+            "adafruit/Adafruit BusIO",
+            "olikraus/U8g2",
+            "sandeepmistry/LoRa",
+            "mcci-catena/MCCI LoRaWAN LMIC library",
+            "knolleary/PubSubClient",
+            "fastled/FastLED",
+            "adafruit/Adafruit NeoPixel",
+            "madhephaestus/ESP32Servo",
+            "arduino-libraries/Servo",
+        ];
+        for lib in libs {
+            if !running.load(Ordering::SeqCst) {
+                all_ok = false;
+                break;
+            }
+            let args: Vec<String> = vec![
+                "pkg".into(),
+                "install".into(),
+                "-g".into(),
+                "-l".into(),
+                lib.into(),
+            ];
+            emit_line(
+                &app_bg,
+                "system",
+                format!("> {command} {}", args.join(" ")),
+            );
+            let mut child_cmd = Command::new(&command);
+            child_cmd
+                .args(&args)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .stdin(Stdio::null());
+            configure_pio_command(&mut child_cmd);
+            let mut child = match child_cmd.spawn() {
+                Ok(c) => c,
+                Err(e) => {
+                    emit_line(&app_bg, "stderr", format!("Failed to start: {e}"));
+                    all_ok = false;
+                    continue;
+                }
+            };
+            let stdout = child.stdout.take();
+            let stderr = child.stderr.take();
+            {
+                let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+                *slot = Some(child);
+            }
+            let app_out = app_bg.clone();
+            let out_handle = thread::spawn(move || {
+                if let Some(out) = stdout {
+                    for line in BufReader::new(out).lines().map_while(Result::ok) {
+                        emit_line(&app_out, "stdout", line);
+                    }
+                }
+            });
+            let app_err = app_bg.clone();
+            let err_handle = thread::spawn(move || {
+                if let Some(err) = stderr {
+                    for line in BufReader::new(err).lines().map_while(Result::ok) {
+                        emit_line(&app_err, "stderr", line);
+                    }
+                }
+            });
+            let status = loop {
+                let outcome = {
+                    let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+                    match slot.as_mut() {
+                        None => Some(None),
+                        Some(c) => match c.try_wait() {
+                            Ok(Some(s)) => {
+                                *slot = None;
+                                Some(Some(s))
+                            }
+                            Ok(None) => None,
+                            Err(_) => {
+                                *slot = None;
+                                Some(None)
+                            }
+                        },
+                    }
+                };
+                if let Some(done) = outcome {
+                    break done;
+                }
+                thread::sleep(std::time::Duration::from_millis(50));
+            };
+            let _ = out_handle.join();
+            let _ = err_handle.join();
+            if let Some(s) = status {
+                if s.success() {
+                    emit_line(&app_bg, "system", format!("✔ Library ready: {lib}"));
+                } else {
+                    emit_line(
+                        &app_bg,
+                        "system",
+                        format!("✖ Failed library (non-fatal): {lib}"),
+                    );
+                }
+            }
+        }
+
         running.store(false, Ordering::SeqCst);
         emit_line(
             &app_bg,
             "system",
             if all_ok {
-                "✔ Offline cache prepared. You can copy ~/.platformio to another machine to reuse toolchains.".into()
+                "✔ Offline cache prepared (platforms + libs). You can copy ~/.platformio or export a zip via npm run build:offline-cache.".into()
             } else {
                 "✖ Offline cache finished with errors — see output above.".into()
             },
@@ -2048,12 +2561,13 @@ fn import_offline_cache_zip(
     }
 
     let strip = detect_offline_cache_strip_prefix(&names).ok_or_else(|| {
-        "Invalid offline cache zip: expected platforms/espressif32 and/or platforms/atmelavr (see docs/OFFLINE_INSTALLER.md)."
+        "Invalid offline cache zip: expected platforms/… and/or lib/ (see docs/OFFLINE_INSTALLER.md)."
             .to_string()
     })?;
 
     let mut has_espressif = false;
     let mut has_atmel = false;
+    let mut has_lib = false;
     let mut extract_count = 0usize;
     let total_candidates = names
         .iter()
@@ -2093,6 +2607,9 @@ fn import_offline_cache_zip(
         if rel.starts_with("platforms/atmelavr") {
             has_atmel = true;
         }
+        if rel.starts_with("lib/") {
+            has_lib = true;
+        }
 
         let out_path = safe_join_under(home, rel)
             .ok_or_else(|| format!("Refusing unsafe zip path: {rel}"))?;
@@ -2125,10 +2642,9 @@ fn import_offline_cache_zip(
         }
     }
 
-    if !has_espressif && !has_atmel {
+    if !has_espressif && !has_atmel && !has_lib {
         return Err(
-            "Invalid offline cache zip: no espressif32 or atmelavr platform found after extract."
-                .into(),
+            "Invalid offline cache zip: no platforms or lib/ content found after extract.".into(),
         );
     }
 
@@ -2136,16 +2652,22 @@ fn import_offline_cache_zip(
         app,
         "system",
         format!(
-            "Merged {extract_count} entries. espressif32={} atmelavr={}",
+            "Merged {extract_count} entries. espressif32={} atmelavr={} lib={}",
             if has_espressif { "yes" } else { "no" },
-            if has_atmel { "yes" } else { "no" }
+            if has_atmel { "yes" } else { "no" },
+            if has_lib { "yes" } else { "no" }
         ),
     );
     Ok(())
 }
 
 fn detect_offline_cache_strip_prefix(names: &[String]) -> Option<String> {
-    let markers = ["platforms/espressif32", "platforms/atmelavr"];
+    let markers = [
+        "platforms/espressif32",
+        "platforms/atmelavr",
+        "lib/",
+        "packages/",
+    ];
     for name in names {
         let n = name.trim_start_matches("./");
         for marker in markers {
@@ -2154,10 +2676,10 @@ fn detect_offline_cache_strip_prefix(names: &[String]) -> Option<String> {
             }
         }
     }
-    // Manifest-only packs still need a platforms/ folder nearby
     for name in names {
         let n = name.trim_start_matches("./");
-        if let Some(idx) = n.find("platforms/") {
+        if n == "aether-offline-cache.json" || n.ends_with("/aether-offline-cache.json") {
+            let idx = n.rfind("aether-offline-cache.json").unwrap_or(0);
             return Some(n[..idx].to_string());
         }
     }
@@ -2177,7 +2699,9 @@ fn is_offline_cache_member(rel: &str) -> bool {
     if rel.is_empty() || rel == "aether-offline-cache.json" {
         return rel == "aether-offline-cache.json";
     }
-    rel.starts_with("platforms/") || rel.starts_with("packages/")
+    rel.starts_with("platforms/")
+        || rel.starts_with("packages/")
+        || rel.starts_with("lib/")
 }
 
 fn safe_join_under(base: &Path, relative: &str) -> Option<PathBuf> {

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
+import { materializeBundledExample } from "@/lib/examples";
 import {
   exportFirmwareProfilesToFile,
   importFirmwareProfilesFromFile,
 } from "@/lib/firmwareProfilesFile";
+import { HARDWARE_PROFILE_PRESETS } from "@/lib/hardwareProfiles";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
   useFirmwareProfileStore,
@@ -24,6 +26,9 @@ export function FirmwareProfilesSection() {
   const replaceProfiles = useFirmwareProfileStore((s) => s.replaceProfiles);
   const mergeProfiles = useFirmwareProfileStore((s) => s.mergeProfiles);
   const isProject = usePlatformIoStore((s) => s.isProject);
+  const setSelectedEnv = usePlatformIoStore((s) => s.setSelectedEnv);
+  const refreshProject = usePlatformIoStore((s) => s.refreshProject);
+  const openFolderAt = useWorkspaceStore((s) => s.openFolderAt);
   const kind = useWorkspaceStore((s) => s.kind);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
   const [name, setName] = useState("");
@@ -31,6 +36,7 @@ export function FirmwareProfilesSection() {
   const [editName, setEditName] = useState("");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
+  const [hwBusy, setHwBusy] = useState<string | null>(null);
 
   const canSave = kind === "folder" && isProject;
   const selectedIds = profiles.filter((p) => selected[p.id]).map((p) => p.id);
@@ -100,9 +106,66 @@ export function FirmwareProfilesSection() {
     }
   };
 
+  const openHardwarePreset = async (presetId: string) => {
+    if (!isTauriRuntime()) {
+      flashNotice(t("profiles.desktopOnly"));
+      return;
+    }
+    const preset = HARDWARE_PROFILE_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setHwBusy(presetId);
+    try {
+      const path = await materializeBundledExample(preset.exampleId);
+      await openFolderAt(path);
+      await refreshProject();
+      setSelectedEnv(preset.env);
+      const label = locale === "ru" ? preset.labelRu : preset.labelEn;
+      flashNotice(t("profiles.hardwareOpened", { name: label }), 3500);
+    } catch (e) {
+      flashNotice(
+        e instanceof Error ? e.message : t("profiles.hardwareFailed"),
+      );
+    } finally {
+      setHwBusy(null);
+    }
+  };
+
   return (
     <div className="space-y-2 border-t border-aether-border pt-3">
-      <p className="font-medium text-aether-fg">{t("profiles.title")}</p>
+      <p className="font-medium text-aether-fg">{t("profiles.hardwareTitle")}</p>
+      <p className="text-[11px] text-aether-fg-muted">
+        {t("profiles.hardwareHint")}
+      </p>
+      <ul className="space-y-1">
+        {HARDWARE_PROFILE_PRESETS.map((p) => {
+          const label = locale === "ru" ? p.labelRu : p.labelEn;
+          return (
+            <li
+              key={p.id}
+              className="flex flex-wrap items-center justify-between gap-1 rounded border border-aether-border/60 px-2 py-1.5"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[11px] text-aether-fg">{label}</p>
+                <p className="truncate text-[10px] text-aether-fg-dim">
+                  {p.env} · {p.tags.join(", ")}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={hwBusy === p.id}
+                onClick={() => void openHardwarePreset(p.id)}
+                className="h-7 shrink-0 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                {hwBusy === p.id
+                  ? t("wizard.creating")
+                  : t("profiles.hardwareOpen")}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="pt-2 font-medium text-aether-fg">{t("profiles.title")}</p>
       <p className="text-[11px] text-aether-fg-muted">{t("profiles.hint")}</p>
 
       <div className="flex flex-wrap items-center gap-1.5">

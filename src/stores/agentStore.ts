@@ -23,8 +23,10 @@ import {
   type AgentEdit,
   type EditPreview,
 } from "@/lib/patchEdit";
+import { buildBoardHardwareContext } from "@/lib/projectBoardContext";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useEditorStore } from "@/stores/editorStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useProblemsStore } from "@/stores/problemsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
@@ -45,6 +47,7 @@ interface AgentState {
   model: string;
   includeActiveFile: boolean;
   includeProblems: boolean;
+  includeBoardHardware: boolean;
   showSettings: boolean;
   busy: boolean;
   error: string | null;
@@ -61,6 +64,7 @@ interface AgentState {
   setModel: (v: string) => void;
   setIncludeActiveFile: (v: boolean) => void;
   setIncludeProblems: (v: boolean) => void;
+  setIncludeBoardHardware: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
   setDraft: (v: string) => void;
   setPendingAttachments: (items: PendingAttachment[]) => void;
@@ -140,6 +144,19 @@ function buildContextBlock(): string {
     }
   }
 
+  if (state.includeBoardHardware) {
+    const pio = usePlatformIoStore.getState();
+    const tabs = useEditorStore.getState().tabs;
+    const iniTab = tabs.find((t) =>
+      /platformio\.ini$/i.test(t.path.replace(/\\/g, "/")),
+    );
+    const boardCtx = buildBoardHardwareContext({
+      selectedEnv: pio.selectedEnv,
+      iniText: iniTab?.content ?? null,
+    });
+    if (boardCtx) chunks.push(boardCtx);
+  }
+
   return chunks.join("\n\n");
 }
 
@@ -175,6 +192,7 @@ export const useAgentStore = create<AgentState>()(
       model: "gpt-4o-mini",
       includeActiveFile: true,
       includeProblems: true,
+      includeBoardHardware: true,
       showSettings: false,
       busy: false,
       error: null,
@@ -191,6 +209,7 @@ export const useAgentStore = create<AgentState>()(
       setModel: (v) => set({ model: v }),
       setIncludeActiveFile: (v) => set({ includeActiveFile: v }),
       setIncludeProblems: (v) => set({ includeProblems: v }),
+      setIncludeBoardHardware: (v) => set({ includeBoardHardware: v }),
       setShowSettings: (v) => set({ showSettings: v }),
       setDraft: (v) => set({ draft: v }),
       setPendingAttachments: (items) => set({ pendingAttachments: items }),
@@ -476,6 +495,7 @@ export const useAgentStore = create<AgentState>()(
         model: state.model,
         includeActiveFile: state.includeActiveFile,
         includeProblems: state.includeProblems,
+        includeBoardHardware: state.includeBoardHardware,
       }),
     },
   ),

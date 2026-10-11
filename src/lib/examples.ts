@@ -45,6 +45,48 @@ const LOCALIZED: Record<
       "AI-Thinker ESP32-CAM: Wi‑Fi + /capture JPEG + /stream MJPEG для панели Камера. Нужен стабильный 5 В; сначала SSID/пароль.",
     tags: ["ESP32", "CAM", "Wi-Fi"],
   },
+  "esp32-lora-tx": {
+    descEn:
+      "RadioLib LoRa TX with pin maps for Heltec V2/V3, TTGO, T-Beam. Pair with LoRa RX; default EU868 (edit for US915/RU864).",
+    descRu:
+      "RadioLib LoRa TX с картой пинов Heltec V2/V3, TTGO, T-Beam. Пара с LoRa RX; по умолчанию EU868 (US915/RU864 в build_flags).",
+    tags: ["ESP32", "LoRa", "TX"],
+  },
+  "esp32-lora-rx": {
+    descEn:
+      "RadioLib LoRa RX peer. Same board env, region, SF and bandwidth as LoRa TX.",
+    descRu:
+      "RadioLib LoRa RX. Тот же env платы, регион, SF и полоса, что у LoRa TX.",
+    tags: ["ESP32", "LoRa", "RX"],
+  },
+  "arduino-mega-lora": {
+    descEn:
+      "Mega + RFM95/SX1276 on SPI (NSS=10 DIO0=2 RST=9). RadioLib TX/RX; default EU868.",
+    descRu:
+      "Mega + RFM95/SX1276 по SPI (NSS=10 DIO0=2 RST=9). RadioLib TX/RX; по умолчанию EU868.",
+    tags: ["Mega", "LoRa"],
+  },
+  "esp32-lorawan-stub": {
+    descEn:
+      "LoRaWAN OTAA: set DevEUI/AppKey, Join, then periodic uplinks (RadioLib). Heltec/TTGO envs; default EU868.",
+    descRu:
+      "LoRaWAN OTAA: DevEUI/AppKey → Join → периодические uplink (RadioLib). Env Heltec/TTGO; по умолчанию EU868.",
+    tags: ["ESP32", "LoRaWAN", "TTN", "OTAA"],
+  },
+  "esp32-espnow-stub": {
+    descEn:
+      "ESP-NOW peer stub with ArduinoJson. Set PEER_MAC to the other ESP32.",
+    descRu:
+      "Заглушка ESP-NOW с ArduinoJson. Укажите PEER_MAC второго ESP32.",
+    tags: ["ESP32", "ESP-NOW"],
+  },
+  "meshtastic-stub": {
+    descEn:
+      "Meshtastic firmware is not bundled. Use LoRa TX/RX examples or flash official Meshtastic.",
+    descRu:
+      "Прошивка Meshtastic не входит в комплект. Используйте LoRa TX/RX или официальный Meshtastic.",
+    tags: ["Meshtastic", "LoRa", "Stub"],
+  },
   "pixhawk-ardupilot-stub": {
     descEn:
       "Stub for Pixhawk / ArduPilot (SITL-oriented notes). Not a full ArduPilot IDE — read the README.",

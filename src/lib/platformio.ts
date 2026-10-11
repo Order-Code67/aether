@@ -12,7 +12,16 @@ export type PioTask =
   | "offline-cache"
   | "offline-cache-import";
 
-export type PioStarter = "none" | "blink" | "servo";
+export type PioStarter =
+  | "none"
+  | "blink"
+  | "servo"
+  | "lora_tx"
+  | "lora_rx"
+  | "lorawan"
+  | "espnow";
+
+export type PioLoraRegion = "EU868" | "US915" | "RU864";
 
 export interface PioInfo {
   installed: boolean;
@@ -102,6 +111,8 @@ export async function initPioProject(options: {
   board: string;
   framework?: string;
   starter?: PioStarter;
+  /** LoRa / LoRaWAN frequency region (ignored for non-radio starters). */
+  region?: PioLoraRegion | null;
 }): Promise<string> {
   return invoke<string>("pio_project_init", {
     parent: options.parent,
@@ -109,6 +120,7 @@ export async function initPioProject(options: {
     board: options.board,
     framework: options.framework ?? "arduino",
     starter: options.starter ?? "none",
+    region: options.region ?? null,
   });
 }
 

@@ -20,7 +20,7 @@ Override with the `PLATFORMIO_CORE_DIR` environment variable if needed.
 3. Click **Prepare offline cache** / **Подготовить офлайн-кэш**.
 4. Watch progress in the **Output** panel.
 
-This runs `pio pkg install -g -p espressif32` and `pio pkg install -g -p atmelavr` (with a `pio platform install …` fallback). Those cover the bundled ESP32 / Mega / Nano examples.
+This runs `pio pkg install -g -p espressif32` and `pio pkg install -g -p atmelavr` (with a `pio platform install …` fallback), then installs curated global libraries (RadioLib, ArduinoJson, OLED, Servo, …). That covers the bundled ESP32 / Mega / Nano / LoRa examples offline.
 
 Large toolchains are **not** bundled into the Windows NSIS installer.
 

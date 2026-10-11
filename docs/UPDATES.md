@@ -8,12 +8,15 @@ Aether uses [`tauri-plugin-updater`](https://v2.tauri.app/plugin/updater/) with 
 - Private key lives at `src-tauri/keys/aether.key` (gitignored). Never commit it.
 - Public companion: `src-tauri/keys/aether.key.pub` (safe to commit).
 
-Generate a new pair only if you are rotating keys (existing installs will not accept updates signed with a new private key unless you also ship a pubkey migration):
+Generate a new pair only if you are rotating keys (existing installs will not accept updates signed with a new private key unless you also ship a pubkey migration — they must install a build that already embeds the new `pubkey`):
 
 ```bash
 npx tauri signer generate -w src-tauri/keys/aether.key --ci -f
 # paste the new public key string into tauri.conf.json → plugins.updater.pubkey
+# keep aether.key offline / backed up; it is gitignored
 ```
+
+**2026-10-12:** private key was missing on this machine; pair rotated and `plugins.updater.pubkey` updated. Back up `src-tauri/keys/aether.key` somewhere safe outside the repo.
 
 ## Channels (Stable / Beta)
 

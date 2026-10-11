@@ -25,9 +25,15 @@ import {
   type PythonInfo,
 } from "@/lib/platformio";
 import { matchEnvForBoard, pickPreferredPort } from "@/lib/pioPorts";
+import {
+  analyzeRadioProject,
+  type RadioDoctorHints,
+} from "@/lib/radioDoctor";
 import { findMainSketchPath } from "@/lib/sketchMode";
 import { lspDetect, type LspInfo } from "@/lib/lsp";
 import { isTauriRuntime } from "@/lib/tauri";
+import { readTextFile } from "@tauri-apps/plugin-fs";
+import { joinPath } from "@/lib/paths";
 import {
   releaseSerialBeforeUpload,
   shouldRetryUploadOnPortError,
@@ -60,6 +66,8 @@ export interface DoctorReport {
   clangd: LspInfo | null;
   /** True when PlatformIO CLI is present (clangd/python tips are optional). */
   ok: boolean;
+  /** LoRa / radio wiring tips when the open project looks like a radio sketch. */
+  radio: RadioDoctorHints | null;
 }
 
 interface PlatformIoState {
@@ -135,6 +143,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         python: null,
         clangd: null,
         ok: true,
+        radio: null,
       },
       doctorDismissed: false,
       offlineCache: null,
@@ -638,6 +647,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               python: { installed: false, command: null, version: null },
               clangd: { installed: false, command: null, version: null },
               ok: false,
+              radio: null,
             },
           });
           return;
@@ -658,6 +668,21 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             detectPython(),
             lspDetect(),
           ]);
+
+          let radio: RadioDoctorHints | null = null;
+          const root = useWorkspaceStore.getState().rootPath;
+          const selectedEnv = get().selectedEnv;
+          if (root && get().isProject) {
+            try {
+              const iniText = await readTextFile(
+                joinPath(root, "platformio.ini"),
+              );
+              radio = analyzeRadioProject(iniText, selectedEnv);
+            } catch {
+              radio = analyzeRadioProject(null, selectedEnv);
+            }
+          }
+
           set({
             info: pio,
             doctor: {
@@ -669,6 +694,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               python,
               clangd,
               ok: pio.installed,
+              radio,
             },
           });
           void import("@/stores/lspStore").then(({ useLspStore }) => {
@@ -685,6 +711,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               python: get().doctor.python,
               clangd: null,
               ok: false,
+              radio: get().doctor.radio,
             },
             error: localizeError(
               error instanceof Error

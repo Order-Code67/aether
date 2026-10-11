@@ -1,17 +1,22 @@
-# Build a portable PlatformIO offline cache for Aether (espressif32 + atmelavr).
+# Build a portable PlatformIO offline cache for Aether (espressif32 + atmelavr + libs).
+# Covers ESP32 Dev / Heltec / TTGO LoRa boards, Arduino Mega, and curated libraries
+# (RadioLib, ArduinoJson, OLED helpers, …).
 # Does NOT embed toolchains into the main NSIS installer - produces a separate zip.
 #
 # Usage (from repo root):
 #   .\scripts\build-offline-cache.ps1
-#   .\scripts\build-offline-cache.ps1 -Version 0.2.15 -SkipInstall
+#   .\scripts\build-offline-cache.ps1 -Version 0.2.33 -SkipInstall
+#   .\scripts\build-offline-cache.ps1 -SkipLibs
 #   npm run build:offline-cache
 #
 # Requires: PlatformIO Core (`pio` on PATH or ~/.platformio/penv).
+# Import in Aether: Settings → Tools → Import offline cache…
 
 param(
   [string]$Version = "",
   [string]$OutDir = "",
   [switch]$SkipInstall,
+  [switch]$SkipLibs,
   [string]$StagingDir = ""
 )
 
@@ -26,6 +31,25 @@ if (-not $OutDir) { $OutDir = Join-Path $root "release" }
 if (-not $StagingDir) {
   $StagingDir = Join-Path $env:TEMP "aether-pio-offline-cache-$Version"
 }
+
+# Curated libs for ESP32 / Mega / LoRa stacks (global `pio pkg install -g -l`).
+$libraries = @(
+  "jgromes/RadioLib",
+  "bblanchon/ArduinoJson",
+  "adafruit/Adafruit GFX Library",
+  "adafruit/Adafruit SSD1306",
+  "adafruit/Adafruit BusIO",
+  "olikraus/U8g2",
+  "sandeepmistry/LoRa",
+  "mcci-catena/MCCI LoRaWAN LMIC library",
+  "knolleary/PubSubClient",
+  "fastled/FastLED",
+  "adafruit/Adafruit NeoPixel",
+  "madhephaestus/ESP32Servo",
+  "arduino-libraries/Servo",
+  "paulstoffregen/OneWire",
+  "milesburton/DallasTemperature"
+)
 
 function Find-Pio {
   $cmd = Get-Command pio -ErrorAction SilentlyContinue
@@ -71,12 +95,23 @@ if (-not $SkipInstall) {
       throw "Failed to install platform: $platform"
     }
   }
+
+  if (-not $SkipLibs) {
+    foreach ($lib in $libraries) {
+      Write-Host "`n=== Installing library: $lib ==="
+      & $pio pkg install -g -l $lib
+      if ($LASTEXITCODE -ne 0) {
+        Write-Host "WARN: failed to install $lib (continuing)"
+      }
+    }
+  }
 } else {
   Write-Host "SkipInstall: packing existing staging contents only."
 }
 
 $platformsDir = Join-Path $StagingDir "platforms"
 $packagesDir = Join-Path $StagingDir "packages"
+$libDir = Join-Path $StagingDir "lib"
 foreach ($p in $platforms) {
   $dir = Join-Path $platformsDir $p
   if (-not (Test-Path $dir)) {
@@ -87,13 +122,20 @@ if (-not (Test-Path $packagesDir)) {
   throw "Missing packages directory: $packagesDir"
 }
 
+$libsInstalled = @()
+if (Test-Path $libDir) {
+  $libsInstalled = @(Get-ChildItem $libDir -Directory | ForEach-Object { $_.Name })
+}
+
 $manifest = [ordered]@{
   format      = "aether-offline-cache"
-  version     = 1
+  version     = 2
   aether      = $Version
   platforms   = $platforms
+  libraries   = $libraries
+  lib_folders = $libsInstalled
   created_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-  note        = "Extract/merge into %USERPROFILE%\.platformio (platforms + packages)."
+  note        = "Extract/merge into %USERPROFILE%\.platformio (platforms + packages + lib)."
 }
 $manifestPath = Join-Path $StagingDir "aether-offline-cache.json"
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding utf8
@@ -102,12 +144,14 @@ $zipName = "Aether_OfflineCache_${Version}_windows-x64.zip"
 $zipPath = Join-Path $OutDir $zipName
 if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
 
-# Pack only platforms/, packages/, and the manifest (flat .platformio layout).
 $packRoot = Join-Path $env:TEMP "aether-pio-pack-$Version"
 if (Test-Path $packRoot) { Remove-Item -Recurse -Force $packRoot }
 New-Item -ItemType Directory -Force -Path $packRoot | Out-Null
 Copy-Item -Recurse (Join-Path $StagingDir "platforms") (Join-Path $packRoot "platforms")
 Copy-Item -Recurse (Join-Path $StagingDir "packages") (Join-Path $packRoot "packages")
+if (Test-Path $libDir) {
+  Copy-Item -Recurse $libDir (Join-Path $packRoot "lib")
+}
 Copy-Item $manifestPath (Join-Path $packRoot "aether-offline-cache.json")
 
 Write-Host "`nCompressing $zipPath ..."
@@ -115,6 +159,7 @@ Compress-Archive -Path (Join-Path $packRoot "*") -DestinationPath $zipPath -Comp
 
 $sizeMb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
 Write-Host "Wrote $zipPath ($sizeMb MB)"
+Write-Host "Libs in pack: $($libsInstalled.Count) folder(s)"
 Write-Host "Import in Aether: Settings -> Tools -> Import offline cache..."
 if ($sizeMb -ge 1900) {
   Write-Host "WARNING: zip is near/over GitHub 2GB asset limit - attach only if under 2GB, otherwise document local build."

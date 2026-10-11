@@ -45,6 +45,10 @@ export function matchEnvForBoard(
     esp32dev: ["esp32dev", "esp32"],
     megaatmega2560: ["megaatmega2560", "mega"],
     nanoatmega328: ["nanoatmega328", "nano"],
+    heltec_wifi_lora_32_V3: ["heltec_wifi_lora_32_V3", "heltec"],
+    heltec_wifi_lora_32_V2: ["heltec_wifi_lora_32_V2", "heltec"],
+    "ttgo-t-beam": ["ttgo-t-beam", "t-beam", "tbeam"],
+    "ttgo-lora32-v2": ["ttgo-lora32-v2", "lora32"],
   };
   for (const [board, names] of Object.entries(aliases)) {
     if (h === board || names.some((n) => h.includes(n))) {

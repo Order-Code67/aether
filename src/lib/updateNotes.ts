@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.33": {
+    en: "LoRaWAN OTAA Join+uplink; offline cache includes RadioLib/ArduinoJson libs; updater signing key rotated.",
+    ru: "LoRaWAN OTAA Join+uplink; офлайн-кэш с библиотеками RadioLib/ArduinoJson; ротация ключа подписи обновлений.",
+  },
+  "0.2.32": {
+    en: "LoRa: one-click lib stacks, TX/RX examples with pin maps, EU868/US915/RU864 wizard, hardware presets, radio Doctor tips, AI board context.",
+    ru: "LoRa: стеки библиотек в один клик, примеры TX/RX с картой пинов, регионы EU868/US915/RU864 в мастере, пресеты железа, подсказки Doctor, контекст платы для AI.",
+  },
   "0.2.31": {
     en: "AI Agent: fix silent failures (false offline probe, empty stream fallback, sticky errors RU/EN).",
     ru: "AI-агент: исправлены «тихие» сбои (ложный offline-probe, fallback пустого стрима, заметные ошибки RU/EN).",

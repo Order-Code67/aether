@@ -43,6 +43,7 @@ export function ToolsDoctorBanner() {
   const installMissing = usePlatformIoStore((s) => s.installMissing);
   const dismissDoctor = usePlatformIoStore((s) => s.dismissDoctor);
   const openSettings = useSettingsStore((s) => s.openSettings);
+  const locale = useSettingsStore((s) => s.locale);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -53,8 +54,12 @@ export function ToolsDoctorBanner() {
     return null;
   }
 
-  // Hide when PlatformIO is healthy after first check.
-  if (doctor.ok && !doctor.installing) {
+  const radio = doctor.radio;
+  const showRadio =
+    Boolean(radio?.isRadioProject) && (radio?.tipsEn.length ?? 0) > 0;
+
+  // Hide when PlatformIO is healthy and there are no radio tips.
+  if (doctor.ok && !doctor.installing && !showRadio) {
     return null;
   }
 
@@ -65,6 +70,8 @@ export function ToolsDoctorBanner() {
   const pythonMissing = !python?.installed;
   const severity = pioMissing ? "warning" : "info";
   const busy = doctor.checking || doctor.installing;
+  const radioTips =
+    locale === "ru" ? (radio?.tipsRu ?? []) : (radio?.tipsEn ?? []);
 
   return (
     <div
@@ -89,34 +96,49 @@ export function ToolsDoctorBanner() {
       )}
 
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="font-medium">{t("doctor.title")}</p>
-        {doctor.checking ? (
-          <p className="text-aether-fg-muted">{t("doctor.checking")}</p>
-        ) : (
-          <ul className="space-y-0.5 text-aether-fg-muted">
-            <li>
-              {pioMissing
-                ? t("doctor.pioMissing")
-                : t("doctor.pioOk", {
-                    version: pio?.version ?? "OK",
-                  })}
-            </li>
-            <li>
-              {pythonMissing
-                ? t("doctor.pythonMissing")
-                : t("doctor.pythonOk", {
-                    version: python?.version ?? "OK",
-                  })}
-            </li>
-            <li>{t("doctor.driversHint")}</li>
-            <li>
-              {!clangd?.installed
-                ? t("doctor.clangdMissing")
-                : t("doctor.clangdOk", {
-                    version: clangd.version ?? "OK",
-                  })}
-            </li>
-          </ul>
+        {(!doctor.ok || doctor.installing || doctor.checking) && (
+          <>
+            <p className="font-medium">{t("doctor.title")}</p>
+            {doctor.checking ? (
+              <p className="text-aether-fg-muted">{t("doctor.checking")}</p>
+            ) : (
+              <ul className="space-y-0.5 text-aether-fg-muted">
+                <li>
+                  {pioMissing
+                    ? t("doctor.pioMissing")
+                    : t("doctor.pioOk", {
+                        version: pio?.version ?? "OK",
+                      })}
+                </li>
+                <li>
+                  {pythonMissing
+                    ? t("doctor.pythonMissing")
+                    : t("doctor.pythonOk", {
+                        version: python?.version ?? "OK",
+                      })}
+                </li>
+                <li>{t("doctor.driversHint")}</li>
+                <li>
+                  {!clangd?.installed
+                    ? t("doctor.clangdMissing")
+                    : t("doctor.clangdOk", {
+                        version: clangd.version ?? "OK",
+                      })}
+                </li>
+              </ul>
+            )}
+          </>
+        )}
+
+        {showRadio && (
+          <div className="space-y-0.5">
+            <p className="font-medium">{t("doctor.radioTitle")}</p>
+            <ul className="list-disc space-y-0.5 pl-4 text-aether-fg-muted">
+              {radioTips.slice(0, 4).map((tip) => (
+                <li key={tip}>{tip}</li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {doctor.installing && (
@@ -130,8 +152,12 @@ export function ToolsDoctorBanner() {
           <p className="text-aether-danger">{doctor.installError}</p>
         )}
 
-        <p className="text-aether-fg-dim">{t("doctor.platformsNote")}</p>
-        <p className="text-aether-fg-dim">{t("doctor.offlineHint")}</p>
+        {(!doctor.ok || doctor.installing) && (
+          <>
+            <p className="text-aether-fg-dim">{t("doctor.platformsNote")}</p>
+            <p className="text-aether-fg-dim">{t("doctor.offlineHint")}</p>
+          </>
+        )}
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {pioMissing && (

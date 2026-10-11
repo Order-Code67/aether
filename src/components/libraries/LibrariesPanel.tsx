@@ -22,6 +22,7 @@ import {
   searchArduinoCliLibraries,
   type ArduinoCliInfo,
 } from "@/lib/arduinoCli";
+import { stacksForPlatform } from "@/lib/libraryStacks";
 import {
   installPioLibrary,
   listPioLibraries,
@@ -203,6 +204,7 @@ export function LibrariesPanel() {
   }, [effectivePreset]);
 
   const popular = POPULAR[effectivePreset];
+  const stacks = stacksForPlatform(effectivePreset);
 
   const isEsp32Context =
     preset === "esp32" || /esp32/i.test(selectedEnv || "");
@@ -412,6 +414,61 @@ export function LibrariesPanel() {
       git: true,
       displayName: parsed.label,
     });
+  };
+
+  const installStack = async (stackId: string, specs: string[], label: string) => {
+    if (!isTauriRuntime()) {
+      setError(t("libraries.needDesktop"));
+      return;
+    }
+    if (!rootPath || !isProject) {
+      setError(t("libraries.needProject"));
+      return;
+    }
+    if (isAppOffline()) {
+      setError(t("libraries.offline"));
+      return;
+    }
+    const pending = specs.filter((spec) => !isInstalledSpec(spec));
+    if (pending.length === 0) {
+      setInstallStatus(t("libraries.stackDone", { name: label }));
+      window.setTimeout(() => setInstallStatus(null), 3000);
+      return;
+    }
+    setBusyId(`stack:${stackId}`);
+    setError(null);
+    try {
+      for (let i = 0; i < pending.length; i++) {
+        const spec = pending[i]!;
+        setInstallStatus(
+          t("libraries.stackProgress", {
+            name: label,
+            current: String(i + 1),
+            total: String(pending.length),
+          }),
+        );
+        try {
+          await installPioLibrary(rootPath, spec, selectedEnv || null);
+          pushRecent(spec);
+        } catch {
+          const bare = spec.includes("/") ? spec.split("/").pop()! : spec;
+          if (bare !== spec) {
+            await installPioLibrary(rootPath, bare, selectedEnv || null);
+            pushRecent(spec);
+          } else {
+            throw new Error(spec);
+          }
+        }
+      }
+      setInstallStatus(t("libraries.stackDone", { name: label }));
+      await refreshInstalled();
+    } catch (err) {
+      setInstallStatus(null);
+      setError(mapLibError(err));
+    } finally {
+      setBusyId(null);
+      window.setTimeout(() => setInstallStatus(null), 4000);
+    }
   };
 
   const uninstall = async (dep: string) => {
@@ -767,6 +824,52 @@ export function LibrariesPanel() {
               </p>
               <div className="flex flex-wrap gap-1">
                 {recent.map((spec) => renderSpecChip(spec))}
+              </div>
+            </div>
+          )}
+
+          {managerTab !== "github" && stacks.length > 0 && (
+            <div className="px-3 pb-2">
+              <p className="mb-1 text-[11px] uppercase tracking-wide text-aether-fg-dim">
+                {t("libraries.stacks")}
+              </p>
+              <p className="mb-1.5 text-[10px] leading-relaxed text-aether-fg-dim">
+                {t("libraries.stacksHint")}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {stacks.map((stack) => {
+                  const label = t(stack.labelKey);
+                  const allHit = stack.specs.every((s) => isInstalledSpec(s));
+                  const busy = busyId === `stack:${stack.id}`;
+                  return (
+                    <button
+                      key={stack.id}
+                      type="button"
+                      title={stack.specs.join(", ")}
+                      disabled={busy || allHit}
+                      onClick={() =>
+                        void installStack(stack.id, stack.specs, label)
+                      }
+                      className={cn(
+                        "rounded border px-2 py-0.5 text-[11px]",
+                        allHit
+                          ? "border-aether-border text-aether-fg-dim"
+                          : "border-aether-accent/50 text-aether-fg-muted hover:border-aether-accent hover:text-aether-fg",
+                      )}
+                    >
+                      {busy ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Loader2 size={10} className="animate-spin" />
+                          {t("libraries.installing")}
+                        </span>
+                      ) : allHit ? (
+                        `${label} ✓`
+                      ) : (
+                        label
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
