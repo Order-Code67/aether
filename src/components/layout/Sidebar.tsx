@@ -14,7 +14,7 @@ import { DebugPanel } from "@/components/debug/DebugPanel";
 import { ExtensionsPanel } from "@/components/extensions/ExtensionsPanel";
 import { FileTree } from "@/components/explorer/FileTree";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
-import { InavSidebarNav } from "@/components/inav/InavSidebarNav";
+import { BplaStudioPanel } from "@/components/inav/BplaStudioPanel";
 import { LibrariesPanel } from "@/components/libraries/LibrariesPanel";
 import { SearchPanel } from "@/components/search/SearchPanel";
 import { SourceControlPanel } from "@/components/scm/SourceControlPanel";
@@ -493,7 +493,7 @@ export function Sidebar() {
         ) : activeActivity === "libraries" ? (
           <LibrariesPanel />
         ) : activeActivity === "inav" ? (
-          <InavSidebarNav />
+          <BplaStudioPanel />
         ) : activeActivity === "debug" ? (
           <DebugPanel />
         ) : activeActivity === "agent" ? (

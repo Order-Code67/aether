@@ -1,0 +1,106 @@
+[
+  {
+    "id": "matekf405te",
+    "name": "Matek F405-TE",
+    "mcu": "F4",
+    "families": ["inav", "betaflight"],
+    "category": "wing",
+    "targets": { "inav": "MATEKF405TE", "betaflight": "MATEKF405TE" }
+  },
+  {
+    "id": "matekf722se",
+    "name": "Matek F722-SE",
+    "mcu": "F7",
+    "families": ["inav", "betaflight"],
+    "category": "multirotor",
+    "targets": { "inav": "MATEKF722SE", "betaflight": "MATEKF722SE" }
+  },
+  {
+    "id": "speedybeef4",
+    "name": "SpeedyBee F4 V3",
+    "mcu": "F4",
+    "families": ["inav", "betaflight"],
+    "category": "aio",
+    "targets": { "inav": "SPEEDYBEEF4V3", "betaflight": "SPEEDYBEEF4V3" }
+  },
+  {
+    "id": "speedybeef405v4",
+    "name": "SpeedyBee F405 V4",
+    "mcu": "F4",
+    "families": ["inav", "betaflight"],
+    "category": "aio",
+    "targets": { "inav": "SPEEDYBEEF405V4", "betaflight": "SPEEDYBEEF405V4" }
+  },
+  {
+    "id": "holybrokakutef7",
+    "name": "Holybro Kakute F7",
+    "mcu": "F7",
+    "families": ["inav", "betaflight"],
+    "category": "multirotor",
+    "targets": { "inav": "KAKUTEF7", "betaflight": "KAKUTEF7" }
+  },
+  {
+    "id": "foxeerh743",
+    "name": "Foxeer H743",
+    "mcu": "H7",
+    "families": ["inav", "betaflight"],
+    "category": "multirotor",
+    "targets": { "inav": "FOXEERH743", "betaflight": "FOXEERH743" }
+  },
+  {
+    "id": "diablof4",
+    "name": "Diatone Mamba F405",
+    "mcu": "F4",
+    "families": ["betaflight", "inav"],
+    "category": "multirotor",
+    "targets": { "betaflight": "MAMBAF405", "inav": "MAMBAF405" }
+  },
+  {
+    "id": "betafpvf4",
+    "name": "BETAFPV F4 2-3S AIO",
+    "mcu": "F4",
+    "families": ["betaflight"],
+    "category": "whoop",
+    "targets": { "betaflight": "BETAFPVF405" }
+  },
+  {
+    "id": "pixhawk4",
+    "name": "Pixhawk 4",
+    "mcu": "F7",
+    "families": ["ardupilot"],
+    "category": "autopilot",
+    "targets": { "ardupilot": "Pixhawk4" }
+  },
+  {
+    "id": "pixhawk6c",
+    "name": "Pixhawk 6C",
+    "mcu": "H7",
+    "families": ["ardupilot"],
+    "category": "autopilot",
+    "targets": { "ardupilot": "Pixhawk6C" }
+  },
+  {
+    "id": "cubeorange",
+    "name": "Hex Cube Orange",
+    "mcu": "H7",
+    "families": ["ardupilot"],
+    "category": "autopilot",
+    "targets": { "ardupilot": "CubeOrange" }
+  },
+  {
+    "id": "matekh743",
+    "name": "Matek H743-WING",
+    "mcu": "H7",
+    "families": ["inav", "ardupilot"],
+    "category": "wing",
+    "targets": { "inav": "MATEKH743", "ardupilot": "MatekH743" }
+  },
+  {
+    "id": "espfc",
+    "name": "ESP32 FC (Espressif / EspFC stub)",
+    "mcu": "ESP32",
+    "families": ["betaflight"],
+    "category": "experimental",
+    "targets": { "betaflight": "ESPFC" }
+  }
+]

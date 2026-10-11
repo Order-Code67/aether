@@ -1,14 +1,23 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Eraser,
   Eye,
   FileDown,
+  Mic,
+  Paperclip,
   Send,
   Settings2,
   Square,
   X,
 } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
+import type { MessageKey } from "@/i18n";
+import {
+  loadAttachmentsFromFiles,
+  loadAttachmentsFromPaths,
+  pickAgentAttachmentPaths,
+} from "@/lib/agentAttachIo";
 import { cn } from "@/lib/cn";
 import { basename } from "@/lib/paths";
 import {
@@ -16,9 +25,15 @@ import {
   extractAgentEdits,
   type AgentEdit,
 } from "@/lib/patchEdit";
+import {
+  createSpeechRecognition,
+  isSpeechRecognitionSupported,
+  type SpeechRecognitionLike,
+} from "@/lib/speechRecognition";
 import { useAgentStore } from "@/stores/agentStore";
 
 function EditPreviewPanel() {
+  const { t } = useI18n();
   const preview = useAgentStore((s) => s.preview);
   const confirmPreview = useAgentStore((s) => s.confirmPreview);
   const clearPreview = useAgentStore((s) => s.clearPreview);
@@ -30,7 +45,7 @@ function EditPreviewPanel() {
       <div className="flex items-center justify-between gap-2 px-3 py-1.5">
         <div className="min-w-0">
           <p className="truncate text-[11px] font-medium text-aether-fg">
-            Preview · {basename(preview.path)}
+            {t("agent.preview")} · {basename(preview.path)}
           </p>
           <p className="truncate text-[10px] text-aether-fg-dim">
             {preview.summary}
@@ -45,11 +60,11 @@ function EditPreviewPanel() {
             className="flex h-6 items-center gap-1 rounded bg-aether-accent px-2 text-[11px] text-white hover:opacity-90"
           >
             <Check size={12} />
-            Apply
+            {t("agent.apply")}
           </button>
           <button
             type="button"
-            title="Close preview"
+            title={t("agent.closePreview")}
             onClick={clearPreview}
             className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >
@@ -69,7 +84,7 @@ function EditPreviewPanel() {
           </div>
         ))}
         {preview.removed.length === 0 && preview.added.length === 0 && (
-          <p className="text-aether-fg-dim">(no line changes)</p>
+          <p className="text-aether-fg-dim">{t("agent.noLineChanges")}</p>
         )}
       </div>
     </div>
@@ -83,6 +98,7 @@ function AssistantMessage({
   content: string;
   streaming?: boolean;
 }) {
+  const { t } = useI18n();
   const previewEdit = useAgentStore((s) => s.previewEdit);
   const applyEdit = useAgentStore((s) => s.applyEdit);
   const previewEditId = useAgentStore((s) => s.previewEditId);
@@ -91,7 +107,8 @@ function AssistantMessage({
   return (
     <div className="rounded bg-aether-bg px-2 py-1.5 text-xs leading-relaxed text-aether-fg">
       <div className="mb-1 text-[10px] uppercase tracking-wide text-aether-fg-dim">
-        Agent{streaming ? " · streaming" : ""}
+        {t("agent.roleAgent")}
+        {streaming ? ` · ${t("agent.streaming")}` : ""}
       </div>
       <div className="whitespace-pre-wrap break-words">{content}</div>
       {!streaming && edits.length > 0 && (
@@ -100,7 +117,7 @@ function AssistantMessage({
             <div key={edit.id} className="flex gap-1">
               <button
                 type="button"
-                title="Preview changes"
+                title={t("agent.previewChanges")}
                 onClick={() => {
                   void previewEdit(edit);
                 }}
@@ -114,7 +131,7 @@ function AssistantMessage({
               </button>
               <button
                 type="button"
-                title={edit.pathLabel ?? "Apply to active file"}
+                title={edit.pathLabel ?? t("agent.applyActive")}
                 onClick={() => {
                   void applyEdit(edit);
                 }}
@@ -140,9 +157,40 @@ function AssistantMessage({
   );
 }
 
+function formatAttachSkipMessage(
+  t: (key: MessageKey, vars?: Record<string, string | number>) => string,
+  result: {
+    skippedImages: string[];
+    skippedUnsupported: string[];
+    errors: string[];
+  },
+): string | null {
+  const parts: string[] = [];
+  if (result.skippedImages.length > 0) {
+    parts.push(
+      t("agent.attachImagesSkipped", {
+        names: result.skippedImages.join(", "),
+      }),
+    );
+  }
+  if (result.skippedUnsupported.length > 0) {
+    parts.push(
+      t("agent.attachUnsupported", {
+        names: result.skippedUnsupported.join(", "),
+      }),
+    );
+  }
+  if (result.errors.length > 0) {
+    parts.push(result.errors.join("; "));
+  }
+  return parts.length > 0 ? parts.join(" ") : null;
+}
+
 export function AgentPanel() {
+  const { t, locale } = useI18n();
   const messages = useAgentStore((s) => s.messages);
   const draft = useAgentStore((s) => s.draft);
+  const pendingAttachments = useAgentStore((s) => s.pendingAttachments);
   const busy = useAgentStore((s) => s.busy);
   const error = useAgentStore((s) => s.error);
   const applyStatus = useAgentStore((s) => s.applyStatus);
@@ -153,6 +201,10 @@ export function AgentPanel() {
   const includeActiveFile = useAgentStore((s) => s.includeActiveFile);
   const includeProblems = useAgentStore((s) => s.includeProblems);
   const setDraft = useAgentStore((s) => s.setDraft);
+  const setPendingAttachments = useAgentStore((s) => s.setPendingAttachments);
+  const removePendingAttachment = useAgentStore(
+    (s) => s.removePendingAttachment,
+  );
   const setShowSettings = useAgentStore((s) => s.setShowSettings);
   const setBaseUrl = useAgentStore((s) => s.setBaseUrl);
   const setApiKey = useAgentStore((s) => s.setApiKey);
@@ -163,23 +215,138 @@ export function AgentPanel() {
   const send = useAgentStore((s) => s.send);
   const cancel = useAgentStore((s) => s.cancel);
   const listRef = useRef<HTMLDivElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const baseDraftRef = useRef("");
+  const finalTranscriptRef = useRef("");
 
   useEffect(() => {
     if (!listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, busy]);
 
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.abort();
+      recognitionRef.current = null;
+    };
+  }, []);
+
+  const canSend = Boolean(draft.trim() || pendingAttachments.length > 0);
+
+  const applyAttachResult = (result: Awaited<
+    ReturnType<typeof loadAttachmentsFromPaths>
+  >) => {
+    setPendingAttachments(result.attachments);
+    const skipMsg = formatAttachSkipMessage(t, result);
+    if (skipMsg) {
+      useAgentStore.setState({ error: skipMsg });
+    }
+  };
+
+  const onAttachClick = async () => {
+    try {
+      const paths = await pickAgentAttachmentPaths();
+      if (!paths || paths.length === 0) return;
+      const result = await loadAttachmentsFromPaths(paths, pendingAttachments);
+      applyAttachResult(result);
+    } catch (e) {
+      useAgentStore.setState({
+        error:
+          e instanceof Error ? e.message : t("agent.attachFailed"),
+      });
+    }
+  };
+
+  const onDropFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    try {
+      const result = await loadAttachmentsFromFiles(list, pendingAttachments);
+      applyAttachResult(result);
+    } catch (e) {
+      useAgentStore.setState({
+        error:
+          e instanceof Error ? e.message : t("agent.attachFailed"),
+      });
+    }
+  };
+
+  const toggleVoice = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    if (!isSpeechRecognitionSupported()) {
+      useAgentStore.setState({ error: t("agent.voiceUnsupported") });
+      return;
+    }
+    const rec = createSpeechRecognition(locale);
+    if (!rec) {
+      useAgentStore.setState({ error: t("agent.voiceUnsupported") });
+      return;
+    }
+    baseDraftRef.current = draft.trimEnd();
+    finalTranscriptRef.current = "";
+    recognitionRef.current = rec;
+    rec.onresult = (ev) => {
+      let interim = "";
+      let finals = finalTranscriptRef.current;
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const piece = ev.results[i]![0]!.transcript;
+        if (ev.results[i]!.isFinal) {
+          finals = `${finals}${piece}`;
+        } else {
+          interim += piece;
+        }
+      }
+      finalTranscriptRef.current = finals;
+      const joined = `${finals}${interim}`.trim();
+      const base = baseDraftRef.current;
+      setDraft(base ? `${base} ${joined}` : joined);
+    };
+    rec.onerror = (ev) => {
+      setListening(false);
+      recognitionRef.current = null;
+      const code = ev.error ?? "";
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        useAgentStore.setState({ error: t("agent.voiceDenied") });
+      } else if (code === "audio-capture") {
+        useAgentStore.setState({ error: t("agent.voiceDenied") });
+      } else if (code && code !== "aborted" && code !== "no-speech") {
+        useAgentStore.setState({
+          error: t("agent.voiceError", { code }),
+        });
+      }
+    };
+    rec.onend = () => {
+      setListening(false);
+      recognitionRef.current = null;
+    };
+    try {
+      rec.start();
+      setListening(true);
+      useAgentStore.setState({ error: null });
+    } catch {
+      setListening(false);
+      recognitionRef.current = null;
+      useAgentStore.setState({ error: t("agent.voiceUnsupported") });
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex h-9 shrink-0 items-center justify-between px-3">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          AI Agent
+          {t("agent.title")}
         </h2>
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            title="Clear chat"
-            aria-label="Clear chat"
+            title={t("agent.clearChat")}
+            aria-label={t("agent.clearChat")}
             onClick={clearChat}
             className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >
@@ -187,8 +354,8 @@ export function AgentPanel() {
           </button>
           <button
             type="button"
-            title="Agent settings"
-            aria-label="Agent settings"
+            title={t("agent.settings")}
+            aria-label={t("agent.settings")}
             aria-pressed={showSettings}
             onClick={() => setShowSettings(!showSettings)}
             className={cn(
@@ -204,7 +371,9 @@ export function AgentPanel() {
       {showSettings && (
         <div className="space-y-2 border-b border-aether-border px-3 pb-3 text-xs">
           <label className="block">
-            <span className="text-[11px] text-aether-fg-dim">Base URL</span>
+            <span className="text-[11px] text-aether-fg-dim">
+              {t("settings.agent.baseUrl")}
+            </span>
             <input
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
@@ -213,7 +382,9 @@ export function AgentPanel() {
             />
           </label>
           <label className="block">
-            <span className="text-[11px] text-aether-fg-dim">API key</span>
+            <span className="text-[11px] text-aether-fg-dim">
+              {t("settings.agent.apiKey")}
+            </span>
             <input
               type="password"
               value={apiKey}
@@ -224,7 +395,9 @@ export function AgentPanel() {
             />
           </label>
           <label className="block">
-            <span className="text-[11px] text-aether-fg-dim">Model</span>
+            <span className="text-[11px] text-aether-fg-dim">
+              {t("settings.agent.model")}
+            </span>
             <input
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -238,7 +411,7 @@ export function AgentPanel() {
               checked={includeActiveFile}
               onChange={(e) => setIncludeActiveFile(e.target.checked)}
             />
-            Attach active file
+            {t("settings.agent.attachFile")}
           </label>
           <label className="flex items-center gap-2 text-aether-fg">
             <input
@@ -246,12 +419,10 @@ export function AgentPanel() {
               checked={includeProblems}
               onChange={(e) => setIncludeProblems(e.target.checked)}
             />
-            Attach Problems
+            {t("settings.agent.attachProblems")}
           </label>
           <p className="text-[11px] leading-relaxed text-aether-fg-dim">
-            Supports full-file fences,{" "}
-            <code className="text-aether-fg">SEARCH/REPLACE</code> patches, and{" "}
-            <code className="text-aether-fg">diff</code> hunks with Preview.
+            {t("agent.settingsHint")}
           </p>
         </div>
       )}
@@ -262,8 +433,7 @@ export function AgentPanel() {
       >
         {messages.length === 0 ? (
           <p className="text-xs leading-relaxed text-aether-fg-dim">
-            Ask about firmware, builds, or serial debugging. Prefer asking for a
-            SEARCH/REPLACE or diff patch — Preview then Apply.
+            {t("agent.emptyHint")}
           </p>
         ) : (
           messages.map((msg) =>
@@ -273,7 +443,7 @@ export function AgentPanel() {
                 className="rounded bg-aether-accent-muted px-2 py-1.5 text-xs leading-relaxed whitespace-pre-wrap break-words text-aether-fg"
               >
                 <div className="mb-1 text-[10px] uppercase tracking-wide text-aether-fg-dim">
-                  You
+                  {t("agent.roleYou")}
                 </div>
                 {msg.content}
               </div>
@@ -301,17 +471,102 @@ export function AgentPanel() {
         </div>
       )}
 
-      <div className="shrink-0 border-t border-aether-border p-2">
+      <div
+        className={cn(
+          "shrink-0 border-t border-aether-border p-2",
+          dragOver && "bg-aether-accent-muted/40",
+        )}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragOver(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragOver(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragOver(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragOver(false);
+          if (busy) return;
+          void onDropFiles(e.dataTransfer.files);
+        }}
+      >
+        {pendingAttachments.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap gap-1">
+            {pendingAttachments.map((a) => (
+              <span
+                key={a.id}
+                className="inline-flex max-w-full items-center gap-1 rounded border border-aether-border bg-aether-bg px-1.5 py-0.5 text-[10px] text-aether-fg"
+                title={a.path ?? a.name}
+              >
+                <span className="truncate">
+                  {a.name}
+                  {a.truncated ? "…" : ""}
+                </span>
+                <button
+                  type="button"
+                  title={t("agent.removeAttachment")}
+                  disabled={busy}
+                  onClick={() => removePendingAttachment(a.id)}
+                  className="shrink-0 text-aether-fg-muted hover:text-aether-fg disabled:opacity-40"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-1">
+          <button
+            type="button"
+            title={t("agent.attach")}
+            aria-label={t("agent.attach")}
+            disabled={busy}
+            onClick={() => {
+              void onAttachClick();
+            }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
+          >
+            <Paperclip size={14} />
+          </button>
+          <button
+            type="button"
+            title={listening ? t("agent.voiceStop") : t("agent.voiceStart")}
+            aria-label={listening ? t("agent.voiceStop") : t("agent.voiceStart")}
+            aria-pressed={listening}
+            disabled={busy}
+            onClick={toggleVoice}
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+              listening &&
+                "border-aether-danger bg-aether-danger/15 text-aether-danger animate-pulse",
+            )}
+          >
+            <Mic size={14} />
+          </button>
           <textarea
             value={draft}
             rows={3}
             disabled={busy}
-            placeholder="Ask the agent…"
+            placeholder={
+              dragOver ? t("agent.dropHint") : t("agent.placeholder")
+            }
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
+                if (listening) {
+                  recognitionRef.current?.stop();
+                  setListening(false);
+                }
                 void send();
               }
             }}
@@ -320,7 +575,7 @@ export function AgentPanel() {
           {busy ? (
             <button
               type="button"
-              title="Stop"
+              title={t("agent.stop")}
               onClick={() => {
                 void cancel();
               }}
@@ -331,9 +586,13 @@ export function AgentPanel() {
           ) : (
             <button
               type="button"
-              title="Send"
-              disabled={!draft.trim()}
+              title={t("agent.send")}
+              disabled={!canSend}
               onClick={() => {
+                if (listening) {
+                  recognitionRef.current?.stop();
+                  setListening(false);
+                }
                 void send();
               }}
               className="flex h-8 w-8 items-center justify-center rounded bg-aether-accent text-white hover:opacity-90 disabled:opacity-40"

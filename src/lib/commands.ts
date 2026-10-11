@@ -14,6 +14,7 @@ export type CommandCategory =
   | "View"
   | "PlatformIO"
   | "iNav"
+  | "БПЛА-Студия"
   | "Git"
   | "Debug"
   | "Agent"
@@ -242,64 +243,87 @@ export function getCommands(): Command[] {
     },
     {
       id: "view.inav",
-      title: "Show FC Configurator",
+      title: "Show БПЛА-Студия bridge",
       category: "View",
-      keywords: "drone flight fc inav кли дроны конфигуратор",
+      keywords: "drone flight fc inav кли дроны конфигуратор бпла студия",
       run: () => view("inav"),
     },
     {
       id: "inav.focus",
-      title: "FC Configurator: Focus",
-      category: "iNav",
+      title: "БПЛА-Студия: Focus bridge",
+      category: "БПЛА-Студия",
       keywords: "drone flight fc inav дроны",
       run: () => view("inav"),
     },
     {
       id: "inav.connect",
-      title: "FC Configurator: Connect via Aether",
-      category: "iNav",
-      keywords: "drone serial com connect подключить aether",
+      title: "БПЛА-Студия: Open with COM handoff",
+      category: "БПЛА-Студия",
+      keywords: "drone serial com connect подключить aether bpla",
       run: async () => {
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");
-        await useInavStore.getState().connectSession();
+        const { useSerialStore } = await import("@/stores/serialStore");
+        const { openBplaStudio } = await import("@/lib/bplaStudio");
+        const { t } = await import("@/hooks/useI18n");
+        await useInavStore.getState().releasePort();
+        const serial = useSerialStore.getState();
+        try {
+          await openBplaStudio({
+            port: serial.selectedPath || undefined,
+            baud: serial.baudRate,
+          });
+          useSettingsStore.getState().flashNotice(t("studio.bridge.launched"));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              msg.includes("BPLA_STUDIO_MISSING")
+                ? t("studio.bridge.missing")
+                : msg,
+            );
+        }
       },
     },
     {
       id: "inav.disconnect",
-      title: "FC Configurator: Disconnect",
-      category: "iNav",
+      title: "БПЛА-Студия: Release COM in Aether",
+      category: "БПЛА-Студия",
       keywords: "drone serial disconnect отключить",
       run: async () => {
         const { useInavStore } = await import("@/stores/inavStore");
-        await useInavStore.getState().disconnectSession();
+        await useInavStore.getState().releasePort();
       },
     },
     {
       id: "inav.openConfigurator",
-      title: "FC Configurator: Open external iNav app",
-      category: "iNav",
-      keywords: "configurator electron launch конфигуратор external",
+      title: "БПЛА-Студия: Open",
+      category: "БПЛА-Студия",
+      keywords: "configurator bpla студия конфигуратор",
       run: async () => {
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");
-        const { detectInavConfigurator, openInavConfigurator, INAV_CONFIGURATOR_DOWNLOAD_URL } =
-          await import("@/lib/inavConfigurator");
-        const { openExternalUrl } = await import("@/lib/comDrivers");
+        const { useSerialStore } = await import("@/stores/serialStore");
+        const { openBplaStudio } = await import("@/lib/bplaStudio");
         const { t } = await import("@/hooks/useI18n");
         await useInavStore.getState().releasePort();
+        const serial = useSerialStore.getState();
         try {
-          const info = await detectInavConfigurator();
-          if (!info.installed) {
-            const go = window.confirm(t("inav.configuratorMissing"));
-            if (go) await openExternalUrl(INAV_CONFIGURATOR_DOWNLOAD_URL);
-            return;
-          }
-          await openInavConfigurator();
-          useSettingsStore.getState().flashNotice(t("inav.configuratorLaunched"));
-        } catch {
-          const go = window.confirm(t("inav.configuratorMissing"));
-          if (go) await openExternalUrl(INAV_CONFIGURATOR_DOWNLOAD_URL);
+          await openBplaStudio({
+            port: serial.selectedPath || undefined,
+            baud: serial.baudRate,
+          });
+          useSettingsStore.getState().flashNotice(t("studio.bridge.launched"));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          useSettingsStore
+            .getState()
+            .flashNotice(
+              msg.includes("BPLA_STUDIO_MISSING")
+                ? t("studio.bridge.missing")
+                : msg,
+            );
         }
       },
     },

@@ -1,16 +1,9 @@
-# iNav / FC Configurator notes (Aether)
+# iNav / MSP notes
 
-Aether’s **FC Configurator** is a full main-window workspace: connect the flight controller **through Aether** (Activity → FC Config → Connect via Aether). No external Electron app is required for day-to-day setup.
+> **Moved:** The full FC configurator lives in **БПЛА-Студия** (`apps/bpla-studio`).  
+> See [`docs/BPLA_STUDIO.md`](BPLA_STUDIO.md). Aether only launches that app and can hand off COM (`--port` / `--baud`).
 
-It talks to iNav (and compatible MSP) flight controllers over the same COM session used for FC CLI. It combines:
-
-| Source | What we take |
-|--------|----------------|
-| **iNav Configurator** | Status, Ports, Modes, GPS/Nav, airplane/wing mixer, CLI diff, DFU flash |
-| **Betaflight Configurator** | PID table, rates/expo/TPA, live RX channel bars, feature chips |
-| **ArduPilot / Mission Planner** | Searchable parameter tree, vehicle presets, RTH-first failsafe philosophy |
-
-Safety: no arm / motor / calibration MSP. Writes confirm + auto-backup under `Documents/Aether/drones/diffs/`. EEPROM is never implied.
+MSP protocol helpers used by the studio (and residual Aether serial tooling) remain documented below for implementers.
 
 ## Supported (Modes)
 
@@ -29,21 +22,8 @@ Safety: no arm / motor / calibration MSP. Writes confirm + auto-backup under `Do
 | `MSP_CF_SERIAL_CONFIG` | 54 | **Deprecated and unused** on modern iNav |
 | `MSP_SET_CF_SERIAL_CONFIG` | 55 | **Deprecated and unused** on modern iNav |
 
-Aether **probes** 54 first. When the FC returns nothing (typical for iNav), Ports falls back to CLI:
-
-```
-#          → enter CLI
-serial     → list UART function masks + baud rates
-exit       → leave CLI
-```
-
-Writes use the same CLI `serial <id> <mask> <msp> <gps> <telem> <bb>` form, after an automatic text backup under `Documents/Aether/drones/diffs/`.
-
-There is no dedicated MSP2 serial-config command in current iNav headers (`msp_protocol_v2_inav.h`). Prefer the official Configurator for complex UART layouts.
+When MSP 54 returns nothing (typical for iNav), Ports falls back to CLI (`serial` / `exit`). Diff backups for the studio go under `Documents/BPLA-Studio/diffs/`.
 
 ## Safety
 
-- No arm / motor / calibration MSP commands.
-- Writes require a confirm dialog.
-- EEPROM save is a separate confirm (never implied by Ports/Modes Apply).
-- Before flash DFU, Aether disconnects serial.
+No arm / motor / calibration MSP from the host. Writes confirm + backup; EEPROM save is explicit.

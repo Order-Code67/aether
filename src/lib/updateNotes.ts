@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.27": {
+    en: "AI chat: attach text/code files (paperclip + drag-drop) and voice input via Web Speech API when available.",
+    ru: "AI-чат: вложения текста/кода (скрепка + drag-and-drop) и голосовой ввод через Web Speech API, если доступно.",
+  },
   "0.2.26": {
     en: "Offline mode: short timeouts, status-bar Offline hint, skip auto update/registry when offline.",
     ru: "Офлайн-режим: короткие таймауты, подсказка «Офлайн» в статусе, без авто-проверки обновлений и реестра без сети.",

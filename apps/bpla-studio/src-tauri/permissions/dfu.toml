@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-dfu"
+description = "Detect dfu-util, list DFU devices, and flash .hex firmware."
+commands.allow = ["dfu_util_detect", "dfu_list_devices", "dfu_flash_hex"]

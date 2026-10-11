@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { DebugToolbar } from "@/components/debug/DebugToolbar";
 import { EditorEncryptBar } from "@/components/editor/EditorEncryptBar";
 import { EditorTabs, MonacoEditor, WelcomeView } from "@/components/editor";
-import { InavConfiguratorWorkspace } from "@/components/inav/InavConfiguratorWorkspace";
 import {
   MergeConflictBanner,
   MergeConflictEditor,
@@ -11,14 +10,11 @@ import { BuildToolbar } from "@/components/platformio/BuildToolbar";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { conflictCount, hasConflictMarkers } from "@/lib/mergeConflict";
 import { useEditorStore } from "@/stores/editorStore";
-import { useLayoutStore } from "@/stores/layoutStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSerialStore } from "@/stores/serialStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function EditorArea() {
-  const fcConfiguratorOpen =
-    useLayoutStore((s) => s.activeActivity) === "inav";
   const hasTabs = useEditorStore((s) => s.tabs.length > 0);
   const activeTab = useEditorStore((s) => {
     const id = s.activeTabId;
@@ -41,17 +37,6 @@ export function EditorArea() {
       setShowResolver(true);
     }
   }, [activeTab?.path, conflicted, conflicts]);
-
-  if (fcConfiguratorOpen) {
-    return (
-      <section
-        className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-aether-bg"
-        aria-label="FC Configurator"
-      >
-        <InavConfiguratorWorkspace />
-      </section>
-    );
-  }
 
   return (
     <section

@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-bpla-studio"
+description = "Detect and launch БПЛА-Студия with optional COM handoff."
+commands.allow = ["bpla_studio_detect", "open_bpla_studio"]

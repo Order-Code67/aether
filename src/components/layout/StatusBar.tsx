@@ -6,7 +6,6 @@ import {
   CloudOff,
   Folder,
   GitBranch,
-  Plane,
   Radio,
   Wifi,
 } from "lucide-react";
@@ -14,7 +13,6 @@ import { useI18n } from "@/hooks/useI18n";
 import { languageLabel, tabNameFromPath } from "@/types/editor";
 import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
-import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useLspStore } from "@/stores/lspStore";
 import { useOfflineStore } from "@/stores/offlineStore";
@@ -40,7 +38,6 @@ export function StatusBar() {
   const serialConnected = useSerialStore((s) => s.connected);
   const serialPath = useSerialStore((s) => s.selectedPath);
   const serialBaud = useSerialStore((s) => s.baudRate);
-  const fcSession = useInavStore((s) => s.sessionActive && serialConnected);
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
   const pioInstalled = usePlatformIoStore((s) => s.info?.installed ?? false);
   const isProject = usePlatformIoStore((s) => s.isProject);
@@ -274,18 +271,6 @@ export function StatusBar() {
             <CloudOff size={12} />
             {t("status.offline")}
           </span>
-        )}
-        {fcSession && (
-          <button
-            type="button"
-            title={t("status.fcSessionTitle")}
-            onClick={() => setActiveActivity("inav")}
-            className="flex items-center gap-1 text-emerald-200 hover:opacity-100"
-            data-testid="status-fc-session"
-          >
-            <Plane size={12} />
-            {t("status.fcSession", { port: serialPath || "COM" })}
-          </button>
         )}
         <button
           type="button"

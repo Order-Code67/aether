@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-cli-args"
+description = "Read process argv for Aether COM handoff."
+commands.allow = ["get_cli_args"]

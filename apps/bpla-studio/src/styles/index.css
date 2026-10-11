@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+/* Default = dark (existing users). Light overrides via [data-theme="light"]. */
+:root,
+[data-theme="dark"] {
+  --aether-bg: #1e1e1e;
+  --aether-surface: #252526;
+  --aether-surface-raised: #2d2d2d;
+  --aether-activity: #181818;
+  --aether-border: #2b2b2b;
+  --aether-border-subtle: #3c3c3c;
+  --aether-fg: #cccccc;
+  --aether-fg-muted: #858585;
+  --aether-fg-dim: #6a6a6a;
+  --aether-accent: #3d9eff;
+  --aether-accent-muted: #264f78;
+  --aether-status: #007acc;
+  --aether-danger: #f14c4c;
+  --aether-warning: #cca700;
+  --aether-success: #89d185;
+}
+
+[data-theme="light"] {
+  --aether-bg: #f3f3f3;
+  --aether-surface: #ffffff;
+  --aether-surface-raised: #ececec;
+  --aether-activity: #e8e8e8;
+  --aether-border: #d4d4d4;
+  --aether-border-subtle: #c0c0c0;
+  --aether-fg: #1e1e1e;
+  --aether-fg-muted: #5a5a5a;
+  --aether-fg-dim: #7a7a7a;
+  --aether-accent: #0078d4;
+  --aether-accent-muted: #cce4f7;
+  --aether-status: #0078d4;
+  --aether-danger: #c42b1c;
+  --aether-warning: #9a6700;
+  --aether-success: #0e7a0d;
+}
+
+@theme {
+  --color-aether-bg: var(--aether-bg);
+  --color-aether-surface: var(--aether-surface);
+  --color-aether-surface-raised: var(--aether-surface-raised);
+  --color-aether-activity: var(--aether-activity);
+  --color-aether-border: var(--aether-border);
+  --color-aether-border-subtle: var(--aether-border-subtle);
+  --color-aether-fg: var(--aether-fg);
+  --color-aether-fg-muted: var(--aether-fg-muted);
+  --color-aether-fg-dim: var(--aether-fg-dim);
+  --color-aether-accent: var(--aether-accent);
+  --color-aether-accent-muted: var(--aether-accent-muted);
+  --color-aether-status: var(--aether-status);
+  --color-aether-danger: var(--aether-danger);
+  --color-aether-warning: var(--aether-warning);
+  --color-aether-success: var(--aether-success);
+
+  --font-sans: "Segoe UI", "SF Pro Text", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+
+  --spacing-activity: 48px;
+  --spacing-statusbar: 22px;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-aether-bg);
+    color: var(--color-aether-fg);
+    /* Do NOT set user-select:none on body/ancestors — WebView2 + Monaco
+       silently drops keyboard input when an ancestor forbids selection. */
+  }
+
+  /* Chrome-only: avoid accidental text selection on toolbars/labels. */
+  .aether-no-select,
+  [data-aether-chrome] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select,
+  option,
+  [contenteditable="true"],
+  .monaco-editor,
+  .monaco-editor .view-lines,
+  .monaco-editor textarea,
+  .monaco-editor .inputarea,
+  .xterm,
+  .xterm textarea,
+  .xterm-helper-textarea {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-aether-accent) 35%, transparent);
+  }
+
+  button {
+    font: inherit;
+  }
+
+  /* Thin scrollbar for IDE panels */
+  .aether-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-aether-border-subtle) transparent;
+  }
+
+  .aether-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .aether-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-aether-border-subtle);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .aether-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .codicon-aether-breakpoint::before,
+  .aether-breakpoint-glyph {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: var(--color-aether-danger);
+  }
+
+  .aether-debug-line {
+    background: color-mix(in srgb, var(--color-aether-accent) 22%, transparent);
+  }
+
+  body.aether-resizing,
+  body.aether-resizing * {
+    cursor: inherit !important;
+  }
+
+  /* Welcome PCB backdrop — subtle; paused when tab hidden / reduced motion */
+  .aether-circuit-pan {
+    animation: aether-circuit-pan 48s linear infinite;
+    will-change: transform;
+  }
+
+  .aether-circuit-pulse path {
+    stroke-dasharray: 12 48;
+    animation: aether-circuit-trace 7s linear infinite;
+  }
+
+  .aether-circuit-pulse path:nth-child(2) {
+    animation-duration: 9s;
+    animation-delay: -2s;
+  }
+
+  .aether-circuit-pulse path:nth-child(3) {
+    animation-duration: 6s;
+    animation-delay: -1s;
+  }
+
+  .aether-circuit-node {
+    animation: aether-circuit-glow 4.5s ease-in-out infinite;
+  }
+
+  .aether-circuit-node-core {
+    animation: aether-circuit-glow 4.5s ease-in-out infinite;
+  }
+
+  .aether-circuit-vias circle:nth-child(odd) {
+    animation: aether-circuit-via 5s ease-in-out infinite;
+  }
+
+  .aether-circuit-vias circle:nth-child(even) {
+    animation: aether-circuit-via 6.5s ease-in-out infinite reverse;
+  }
+
+  .aether-circuit-paused .aether-circuit-pan,
+  .aether-circuit-paused .aether-circuit-pulse path,
+  .aether-circuit-paused .aether-circuit-node,
+  .aether-circuit-paused .aether-circuit-node-core,
+  .aether-circuit-paused .aether-circuit-vias circle {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .aether-circuit-pan,
+    .aether-circuit-pulse path,
+    .aether-circuit-node,
+    .aether-circuit-node-core,
+    .aether-circuit-vias circle {
+      animation: none !important;
+    }
+  }
+
+  @keyframes aether-circuit-pan {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+    50% {
+      transform: translate3d(-1.5%, -1%, 0) scale(1.04);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.02);
+    }
+  }
+
+  @keyframes aether-circuit-trace {
+    to {
+      stroke-dashoffset: -120;
+    }
+  }
+
+  @keyframes aether-circuit-glow {
+    0%,
+    100% {
+      opacity: 0.45;
+      filter: drop-shadow(0 0 0 transparent);
+    }
+    50% {
+      opacity: 1;
+      filter: drop-shadow(0 0 6px color-mix(in srgb, #5ec8d4 45%, transparent));
+    }
+  }
+
+  @keyframes aether-circuit-via {
+    0%,
+    100% {
+      fill: #3d6a74;
+      opacity: 0.7;
+    }
+    50% {
+      fill: #5ec8d4;
+      opacity: 1;
+    }
+  }
+
+  @keyframes aetherPanelIn {
+    from {
+      opacity: 0.55;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-\[aetherPanelIn_160ms_ease-out\] {
+      animation: none !important;
+    }
+  }
+}

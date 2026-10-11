@@ -7,6 +7,11 @@ import {
   listenAiStatus,
   type AiMessage,
 } from "@/lib/ai";
+import {
+  attachmentDisplaySuffix,
+  packAttachmentsBlock,
+  type PendingAttachment,
+} from "@/lib/agentAttachments";
 import { writeEditorContent } from "@/lib/applyEdit";
 import {
   applyAgentEdit,
@@ -42,6 +47,7 @@ interface AgentState {
   error: string | null;
   messages: ChatMessage[];
   draft: string;
+  pendingAttachments: PendingAttachment[];
   applyStatus: string | null;
   preview: EditPreview | null;
   previewEditId: string | null;
@@ -52,6 +58,9 @@ interface AgentState {
   setIncludeProblems: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
   setDraft: (v: string) => void;
+  setPendingAttachments: (items: PendingAttachment[]) => void;
+  removePendingAttachment: (id: string) => void;
+  clearPendingAttachments: () => void;
   clearChat: () => void;
   clearPreview: () => void;
   cancel: () => Promise<void>;
@@ -141,6 +150,7 @@ export const useAgentStore = create<AgentState>()(
       error: null,
       messages: [],
       draft: "",
+      pendingAttachments: [],
       applyStatus: null,
       preview: null,
       previewEditId: null,
@@ -152,6 +162,12 @@ export const useAgentStore = create<AgentState>()(
       setIncludeProblems: (v) => set({ includeProblems: v }),
       setShowSettings: (v) => set({ showSettings: v }),
       setDraft: (v) => set({ draft: v }),
+      setPendingAttachments: (items) => set({ pendingAttachments: items }),
+      removePendingAttachment: (id) =>
+        set((s) => ({
+          pendingAttachments: s.pendingAttachments.filter((a) => a.id !== id),
+        })),
+      clearPendingAttachments: () => set({ pendingAttachments: [] }),
 
       clearChat: () =>
         set({
@@ -160,6 +176,7 @@ export const useAgentStore = create<AgentState>()(
           applyStatus: null,
           preview: null,
           previewEditId: null,
+          pendingAttachments: [],
         }),
 
       clearPreview: () => set({ preview: null, previewEditId: null }),
@@ -246,7 +263,8 @@ export const useAgentStore = create<AgentState>()(
 
       send: async () => {
         const text = get().draft.trim();
-        if (!text || get().busy) return;
+        const attachments = get().pendingAttachments;
+        if ((!text && attachments.length === 0) || get().busy) return;
 
         if (!isTauriRuntime()) {
           set({
@@ -269,10 +287,12 @@ export const useAgentStore = create<AgentState>()(
           return;
         }
 
+        const displayText =
+          (text || "(attached files)") + attachmentDisplaySuffix(attachments);
         const userMsg: ChatMessage = {
           id: `u-${Date.now()}`,
           role: "user",
-          content: text,
+          content: displayText,
           at: Date.now(),
         };
         const assistantId = `a-${Date.now()}`;
@@ -286,6 +306,7 @@ export const useAgentStore = create<AgentState>()(
 
         set((s) => ({
           draft: "",
+          pendingAttachments: [],
           busy: true,
           error: null,
           applyStatus: null,
@@ -293,9 +314,14 @@ export const useAgentStore = create<AgentState>()(
         }));
 
         const context = buildContextBlock();
-        const userContent = context
-          ? `${context}\n\n---\n\nUser request:\n${text}`
-          : text;
+        const attachBlock = packAttachmentsBlock(attachments);
+        const requestBody = text || "Please review the attached files.";
+        const sections = [
+          context,
+          attachBlock,
+          `User request:\n${requestBody}`,
+        ].filter(Boolean);
+        const userContent = sections.join("\n\n---\n\n");
 
         const history: AiMessage[] = [
           { role: "system", content: buildSystemPrompt() },

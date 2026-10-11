@@ -33,7 +33,7 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **About** — live app version in Settings → About
 - **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
 - **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
-- **FC Configurator** — Activity **FC Config**: iNav drones & planes with Betaflight-style PID/rates/RX, ArduPilot-style parameter browser & presets, Ports/Modes, CLI/diff, DFU flash (see [`docs/INAV_MSP.md`](docs/INAV_MSP.md))
+- **БПЛА-Студия bridge** — Activity **БПЛА**: launch the standalone FC configurator with optional COM handoff (see [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md); app lives in `apps/bpla-studio/`)
 
 ## Not yet
 
@@ -178,11 +178,13 @@ Offline toolchain pack (separate from the installer): `npm run build:offline-cac
 4. Ask about firmware, builds, pins, serial debugging (Enter to send; Stop cancels stream)
 5. Edits: full-file fence, or `SEARCH/REPLACE` / `diff` patch → **Preview** (eye) then **Apply**
 
-## FC Configurator (iNav)
+## БПЛА-Студия (standalone FC configurator)
 
-1. Activity Bar → **FC Config** (or Welcome Hub → FC Configurator) — opens the **full configurator in the main window**
-2. Left panel: pick COM port → **Connect via Aether** (owns the serial port; Serial Monitor disconnects first)
-3. Session HUD shows craft name / voltage / GPS / armed; **Save EEPROM** is on the HUD
-4. Sections: Setup · PID · Rates · Receiver · Battery · Failsafe · GPS/Nav · Mixer · Ports · Modes · Parameters · Presets · CLI · Diff · Flash
-5. Writes go to FC RAM with confirm + auto-backup under `Documents/Aether/drones/diffs/`
-6. Never arms motors from Aether; see [`docs/INAV_MSP.md`](docs/INAV_MSP.md)
+Aether does **not** embed the full drone configurator. Use the sibling app:
+
+```bash
+npm run studio:dev      # develop БПЛА-Студия
+npm run studio:build    # NSIS installer
+```
+
+From Aether: Activity **БПЛА** → pick COM (optional) → **Open БПЛА-Студия**. Details: [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md).

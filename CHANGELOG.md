@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+## 0.2.27 — 2026-10-11
+
+- **AI attachments** — paperclip multi-select + drag-drop onto the composer; text/code files packed into the next user message (≈150KB total budget, truncated); chips with remove; cleared after send; images skipped with a clear RU/EN notice (backend is string-only, no vision)
+- **AI voice input** — mic button uses Web Speech API when available (`webkitSpeechRecognition` / `SpeechRecognition`); interim+final transcript appends to the draft; language follows app locale (`ru-RU` / `en-US`); recording pulse; friendly errors if unsupported or mic denied
+
 ## 0.2.26 — 2026-10-11
 
 - **Offline mode** — detect offline (`navigator.onLine` + short probe); status-bar «Офлайн» / Offline; suppress auto update check, registry search on panel open, and remote marketplace fetch when offline
 - **Timeouts** — updater / HTTP fetches race at ~4.5s; PlatformIO / arduino-cli registry search kill after 12s; AI connect timeout 5s; friendly RU/EN errors instead of long freezes
 - **Libraries** — Search button required for registry queries (chip/tab switches no longer auto-hit the network)
-- **FC Configurator (full, in Aether)** — main-window workspace (not just a sidebar): connect FC through Aether (left Connect + status HUD + Save EEPROM); tabs Setup/PID/Rates/RX/Battery/Failsafe/GPS/Mixer/Ports/Modes/Parameters/Presets/CLI/Diff/Flash; auto MSP poll on connect; status-bar FC chip; external Electron optional; RU/EN
+- **БПЛА-Студия** — standalone Tauri FC configurator in `apps/bpla-studio` (iNav/Betaflight/ArduPilot boards, own installer via `npm run studio:build`); Aether keeps only a thin bridge (detect/launch + COM `--port/--baud` handoff); full FC workspace removed from the IDE; docs in `docs/BPLA_STUDIO.md`
 
 ## 0.2.25 — 2026-10-11
 

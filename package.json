@@ -1,9 +1,12 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.26",
+  "version": "0.2.27",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
+  "workspaces": [
+    "apps/bpla-studio"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -17,6 +20,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "studio:dev": "npm run tauri:dev -w bpla-studio",
+    "studio:build": "npm run tauri:build -w bpla-studio",
     "build:offline-cache": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-offline-cache.ps1"
   },
   "dependencies": {
