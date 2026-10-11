@@ -23,9 +23,10 @@ export const en = {
   "plotter.clear": "Clear plot",
   "plotter.hint": "Parses temp:23.5, value=12, or CSV 23.5,40.1",
   "plotter.hintMavlink":
-    "MAVLink Telemetry: HEARTBEAT + ATTITUDE (deg) + SYS_STATUS voltage — not a full GCS.",
+    "MAVLink HUD: HEARTBEAT, ATTITUDE, SYS_STATUS/BATTERY, GPS, VFR_HUD — not a full GCS / map / missions.",
   "plotter.waiting": "Connected — waiting for numeric data…",
-  "plotter.waitingMavlink": "Connected — waiting for MAVLink HEARTBEAT / ATTITUDE…",
+  "plotter.waitingMavlink":
+    "Connected — waiting for MAVLink HEARTBEAT / ATTITUDE / GPS…",
   "plotter.connectHint": "Connect Serial Monitor, then open Plotter for live charts.",
   "plotter.toggleChannel": "Toggle {channel}",
   "plotter.mode": "Parse mode",
@@ -34,6 +35,11 @@ export const en = {
   "plotter.vehicle": "{type} · {armed}",
   "plotter.armed": "armed",
   "plotter.disarmed": "disarmed",
+  "plotter.hud": "MAVLink telemetry HUD",
+  "plotter.hudType": "Vehicle type / custom mode",
+  "plotter.hudGps": "GPS fix and satellite count",
+  "plotter.hudBattery": "Battery remaining, voltage, current",
+  "plotter.hudPosition": "Latitude / longitude",
   "plotter.pausedBadge": "Paused",
   "plotter.zoom": "Horizontal zoom",
   "plotter.zoomIn": "Zoom in (fewer samples)",
@@ -76,6 +82,9 @@ export const en = {
   "camera.recordFailed": "Series recording failed.",
   "camera.keepLastFrame": "Keep last frame",
   "camera.desktopOnly": "Camera save/record requires the desktop app.",
+  "camera.powerHint":
+    "ESP32-CAM needs stable 5 V (external supply preferred). Weak USB power causes brownouts and failed camera init — see the esp32-cam example README.",
+  "camera.powerHintDocs": "Open example README",
   "profiles.title": "Firmware profiles",
   "profiles.hint":
     "Named presets: env, upload port, optional project/sketch path and monitor baud. Stored on this machine; export JSON for backup.",

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.2.20 — 2026-10-11
+
+- **MAVLink Telemetry HUD** — Plotter MAVLink mode expands beyond HEARTBEAT/ATTITUDE: GPS_RAW_INT / GLOBAL_POSITION_INT (lat/lon/alt/fix/sats), SYS_STATUS + BATTERY_STATUS (%, V, A), VFR_HUD (speed/heading/throttle/alt); HUD strip above plots; channels for alt, speed, battery, roll/pitch/yaw; unit tests; RU/EN — still not a GCS / map / missions
+- **ESP32-CAM** — bundled example: proper AI-Thinker init, `/capture` JPEG + `/stream` MJPEG, Serial Capture/Stream URLs, 5 V / brownout notes in README + sketch; Camera panel RU/EN power hint when env/URL looks like ESP32-CAM
+
 ## 0.2.19 — 2026-10-11
 
 - **Playwright E2E** — `@playwright/test` smoke against Vite preview (Welcome, Settings, Command Palette); `npm run test:e2e`; Vitest contracts moved to `npm run test:contracts`; expanded `docs/E2E_SMOKE.md` checklist (Monaco, Search, Terminal, VS Code, Upload/Serial, Quick Start, Libraries, Camera/Plotter)

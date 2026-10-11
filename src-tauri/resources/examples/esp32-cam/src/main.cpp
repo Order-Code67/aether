@@ -1,3 +1,16 @@
+/*
+ * Aether ESP32-CAM (AI-Thinker) — Wi‑Fi + JPEG /capture + MJPEG /stream
+ *
+ * POWER: Use a stable 5 V supply that can handle camera peak current.
+ * Inadequate USB-UART adapter power commonly causes brownouts, failed
+ * esp_camera_init, and Wi‑Fi drops. Prefer a dedicated 5 V / ≥1 A supply
+ * on the 5V pin (common ground). Brownout detector may reset the chip
+ * under load — that is a power issue, not a sketch bug.
+ *
+ * Upload: GPIO0 → GND for download mode, then reset; monitor @ 115200.
+ * PlatformIO board id: esp32cam
+ */
+
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -61,13 +74,17 @@ bool initCamera() {
 
   if (psramFound()) {
     config.frame_size = FRAMESIZE_SVGA;
+    config.jpeg_quality = 10;
     config.fb_count = 2;
     config.fb_location = CAMERA_FB_IN_PSRAM;
+    config.grab_mode = CAMERA_GRAB_LATEST;
   }
 
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed: 0x%x\n", err);
+    Serial.println(
+        "Hint: brownout / weak 5V? Use external 5V supply (not only USB-UART).");
     return false;
   }
   return true;
@@ -88,9 +105,38 @@ void handleCapture() {
   esp_camera_fb_return(fb);
 }
 
+void handleStream() {
+  WiFiClient client = server.client();
+  String response = "HTTP/1.1 200 OK\r\n";
+  response += "Access-Control-Allow-Origin: *\r\n";
+  response += "Content-Type: multipart/x-mixed-replace; boundary=frame\r\n";
+  response += "Cache-Control: no-cache, no-store\r\n\r\n";
+  client.print(response);
+
+  while (client.connected()) {
+    camera_fb_t *fb = esp_camera_fb_get();
+    if (!fb) {
+      Serial.println("Stream: capture failed");
+      break;
+    }
+    client.printf(
+        "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n",
+        static_cast<unsigned>(fb->len));
+    client.write(fb->buf, fb->len);
+    client.print("\r\n");
+    esp_camera_fb_return(fb);
+    // Yield so Wi‑Fi stack stays healthy
+    delay(1);
+    if (!client.connected()) break;
+  }
+}
+
 void handleRoot() {
   server.send(200, "text/plain",
-              "Aether ESP32-CAM\nGET /capture — JPEG snapshot\n");
+              "Aether ESP32-CAM\n"
+              "GET /capture — JPEG snapshot\n"
+              "GET /stream  — MJPEG stream\n"
+              "Power: stable 5V required (see README).\n");
 }
 
 void setup() {
@@ -99,9 +145,10 @@ void setup() {
   delay(500);
   Serial.println();
   Serial.println("Aether esp32-cam");
+  Serial.println("Power: use stable 5V; USB-UART alone often brownouts.");
 
   if (!initCamera()) {
-    Serial.println("Camera failed — check power (5V) and board wiring.");
+    Serial.println("Camera failed — check 5V power and AI-Thinker wiring.");
   } else {
     Serial.println("Camera ready");
   }
@@ -121,17 +168,22 @@ void setup() {
     Serial.println("WiFi connected");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    // Autofill-compatible lines for Aether Camera panel
     Serial.print("Capture URL: http://");
     Serial.print(WiFi.localIP());
     Serial.println("/capture");
+    Serial.print("Stream URL: http://");
+    Serial.print(WiFi.localIP());
+    Serial.println("/stream");
   } else {
     Serial.println("WiFi not connected — set WIFI_SSID / WIFI_PASS in main.cpp");
   }
 
   server.on("/", HTTP_GET, handleRoot);
   server.on("/capture", HTTP_GET, handleCapture);
+  server.on("/stream", HTTP_GET, handleStream);
   server.begin();
-  Serial.println("HTTP server on :80 (/capture)");
+  Serial.println("HTTP server on :80 (/capture, /stream)");
 }
 
 void loop() {

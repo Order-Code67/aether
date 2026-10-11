@@ -4,6 +4,7 @@ import {
   MavlinkMinimalParser,
   mavlinkToPlotSample,
   type MavlinkHeartbeat,
+  type MavlinkParseResult,
 } from "@/lib/mavlinkMinimal";
 import {
   clampPlotterZoom,
@@ -20,12 +21,32 @@ export interface PlotPoint {
   values: Record<string, number>;
 }
 
-export interface TelemetryVehicleInfo {
+/** Live MAVLink HUD snapshot (not a full GCS). */
+export interface TelemetryHud {
   vehicleType: string;
   armed: boolean;
   autopilot: number;
   systemStatus: number;
+  customMode: number;
+  lat: number | null;
+  lon: number | null;
+  alt: number | null;
+  fixType: number | null;
+  satellites: number | null;
+  voltage: number | null;
+  current: number | null;
+  batteryRemaining: number | null;
+  groundspeed: number | null;
+  airspeed: number | null;
+  heading: number | null;
+  throttle: number | null;
 }
+
+/** @deprecated Prefer TelemetryHud — kept for callers that only need vehicle bits. */
+export type TelemetryVehicleInfo = Pick<
+  TelemetryHud,
+  "vehicleType" | "armed" | "autopilot" | "systemStatus"
+>;
 
 interface PlotterState {
   paused: boolean;
@@ -35,7 +56,8 @@ interface PlotterState {
   /** Channel id → visible */
   visibility: Record<string, boolean>;
   seq: number;
-  vehicle: TelemetryVehicleInfo | null;
+  /** Full HUD; null until first HEARTBEAT (or clear). */
+  vehicle: TelemetryHud | null;
   /** Visible sample count (horizontal zoom). */
   zoomSamples: number;
   /** Samples scrolled back from the latest point. */
@@ -54,6 +76,115 @@ interface PlotterState {
 }
 
 const mavParser = new MavlinkMinimalParser();
+
+function emptyHudFromHeartbeat(hb: MavlinkHeartbeat): TelemetryHud {
+  return {
+    vehicleType: hb.vehicleType,
+    armed: hb.armed,
+    autopilot: hb.autopilot,
+    systemStatus: hb.systemStatus,
+    customMode: hb.customMode,
+    lat: null,
+    lon: null,
+    alt: null,
+    fixType: null,
+    satellites: null,
+    voltage: null,
+    current: null,
+    batteryRemaining: null,
+    groundspeed: null,
+    airspeed: null,
+    heading: null,
+    throttle: null,
+  };
+}
+
+function applyResultToHud(
+  prev: TelemetryHud | null,
+  result: MavlinkParseResult,
+): TelemetryHud | null {
+  if (result.kind === "heartbeat") {
+    const base = prev ?? emptyHudFromHeartbeat(result.data);
+    return {
+      ...base,
+      vehicleType: result.data.vehicleType,
+      armed: result.data.armed,
+      autopilot: result.data.autopilot,
+      systemStatus: result.data.systemStatus,
+      customMode: result.data.customMode,
+    };
+  }
+  // Allow HUD updates before HEARTBEAT so GPS/batt still show
+  const hud: TelemetryHud = prev ?? {
+    vehicleType: "generic",
+    armed: false,
+    autopilot: 0,
+    systemStatus: 0,
+    customMode: 0,
+    lat: null,
+    lon: null,
+    alt: null,
+    fixType: null,
+    satellites: null,
+    voltage: null,
+    current: null,
+    batteryRemaining: null,
+    groundspeed: null,
+    airspeed: null,
+    heading: null,
+    throttle: null,
+  };
+
+  if (result.kind === "sys_status") {
+    return {
+      ...hud,
+      voltage: result.data.voltage,
+      current: result.data.current,
+      batteryRemaining: result.data.batteryRemaining,
+    };
+  }
+  if (result.kind === "battery_status") {
+    return {
+      ...hud,
+      voltage: result.data.voltage ?? hud.voltage,
+      current: result.data.current ?? hud.current,
+      batteryRemaining:
+        result.data.batteryRemaining ?? hud.batteryRemaining,
+    };
+  }
+  if (result.kind === "gps_raw_int") {
+    return {
+      ...hud,
+      lat: result.data.lat,
+      lon: result.data.lon,
+      alt: result.data.alt,
+      fixType: result.data.fixType,
+      satellites: result.data.satellitesVisible,
+      groundspeed: result.data.vel ?? hud.groundspeed,
+    };
+  }
+  if (result.kind === "global_position_int") {
+    return {
+      ...hud,
+      lat: result.data.lat,
+      lon: result.data.lon,
+      alt: result.data.alt,
+      groundspeed: result.data.groundspeed,
+      heading: result.data.hdg ?? hud.heading,
+    };
+  }
+  if (result.kind === "vfr_hud") {
+    return {
+      ...hud,
+      alt: result.data.alt,
+      groundspeed: result.data.groundspeed,
+      airspeed: result.data.airspeed,
+      heading: result.data.heading,
+      throttle: result.data.throttle,
+    };
+  }
+  return hud;
+}
 
 function appendSample(
   state: Pick<PlotterState, "points" | "channels" | "visibility" | "seq">,
@@ -80,15 +211,6 @@ function appendSample(
       points.length > MAX_POINTS
         ? points.slice(points.length - MAX_POINTS)
         : points,
-  };
-}
-
-function vehicleFromHeartbeat(hb: MavlinkHeartbeat): TelemetryVehicleInfo {
-  return {
-    vehicleType: hb.vehicleType,
-    armed: hb.armed,
-    autopilot: hb.autopilot,
-    systemStatus: hb.systemStatus,
   };
 }
 
@@ -184,13 +306,10 @@ export const usePlotterStore = create<PlotterState>()(
             vehicle: state.vehicle,
           };
           for (const result of results) {
-            if (result.kind === "heartbeat") {
-              next = {
-                ...next,
-                vehicle: vehicleFromHeartbeat(result.data),
-              };
-              continue;
-            }
+            next = {
+              ...next,
+              vehicle: applyResultToHud(next.vehicle, result),
+            };
             const sample = mavlinkToPlotSample(result);
             if (sample) {
               const appended = appendSample(next, sample);

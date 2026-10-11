@@ -40,9 +40,9 @@ const LOCALIZED: Record<
   },
   "esp32-cam": {
     descEn:
-      "AI-Thinker ESP32-CAM: Wi‑Fi + HTTP /capture JPEG for Aether Camera panel. Set SSID/password first.",
+      "AI-Thinker ESP32-CAM: Wi‑Fi + /capture JPEG + /stream MJPEG for Camera panel. Needs stable 5V; set SSID/password first.",
     descRu:
-      "AI-Thinker ESP32-CAM: Wi‑Fi + HTTP /capture JPEG для панели Камера. Сначала укажите SSID/пароль.",
+      "AI-Thinker ESP32-CAM: Wi‑Fi + /capture JPEG + /stream MJPEG для панели Камера. Нужен стабильный 5 В; сначала SSID/пароль.",
     tags: ["ESP32", "CAM", "Wi-Fi"],
   },
   "pixhawk-ardupilot-stub": {

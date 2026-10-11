@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { gpsFixLabel } from "@/lib/mavlinkMinimal";
 import { plotPointsToCsv, slicePlotWindow } from "@/lib/plotterExport";
 import { channelColor } from "@/lib/serialPlotter";
 import { cn } from "@/lib/cn";
@@ -19,6 +20,16 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { documentDir, join } from "@tauri-apps/api/path";
 import { save } from "@tauri-apps/plugin-dialog";
 import { mkdir, writeTextFile } from "@tauri-apps/plugin-fs";
+
+function fmtCoord(v: number | null): string {
+  if (v == null || !Number.isFinite(v)) return "—";
+  return v.toFixed(6);
+}
+
+function fmtNum(v: number | null, digits = 1, suffix = ""): string {
+  if (v == null || !Number.isFinite(v)) return "—";
+  return `${v.toFixed(digits)}${suffix}`;
+}
 
 export function SerialPlotter() {
   const { t, locale } = useI18n();
@@ -306,16 +317,6 @@ export function SerialPlotter() {
             {t("plotter.pausedBadge")}
           </span>
         )}
-        {parseMode === "mavlink" && vehicle && (
-          <span className="text-[11px] text-aether-fg-muted">
-            {t("plotter.vehicle", {
-              type: vehicle.vehicleType,
-              armed: vehicle.armed
-                ? t("plotter.armed")
-                : t("plotter.disarmed"),
-            })}
-          </span>
-        )}
         <div className="ml-auto flex max-w-full flex-wrap items-center gap-1">
           {channels.map((ch, i) => {
             const on = visibility[ch] !== false;
@@ -345,6 +346,59 @@ export function SerialPlotter() {
           })}
         </div>
       </div>
+      {parseMode === "mavlink" && vehicle && (
+        <div
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-aether-border bg-aether-surface/60 px-2 py-1 font-mono text-[10px] text-aether-fg-muted"
+          role="status"
+          aria-label={t("plotter.hud")}
+        >
+          <span
+            className={cn(
+              "rounded px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase tracking-wide",
+              vehicle.armed
+                ? "bg-aether-danger/20 text-aether-danger"
+                : "bg-aether-surface-raised text-aether-fg-dim",
+            )}
+          >
+            {vehicle.armed ? t("plotter.armed") : t("plotter.disarmed")}
+          </span>
+          <span title={t("plotter.hudType")}>
+            {vehicle.vehicleType}
+            {vehicle.customMode
+              ? ` · mode ${vehicle.customMode}`
+              : ""}
+          </span>
+          <span title={t("plotter.hudGps")}>
+            GPS {gpsFixLabel(vehicle.fixType)}
+            {vehicle.satellites != null ? ` · ${vehicle.satellites}sat` : ""}
+          </span>
+          <span title={t("plotter.hudBattery")}>
+            {vehicle.batteryRemaining != null
+              ? `${vehicle.batteryRemaining}%`
+              : "—%"}
+            {vehicle.voltage != null
+              ? ` · ${fmtNum(vehicle.voltage, 2, "V")}`
+              : ""}
+            {vehicle.current != null
+              ? ` · ${fmtNum(vehicle.current, 1, "A")}`
+              : ""}
+          </span>
+          <span title={t("plotter.hudPosition")}>
+            {fmtCoord(vehicle.lat)}, {fmtCoord(vehicle.lon)}
+          </span>
+          {(vehicle.alt != null || vehicle.groundspeed != null) && (
+            <span>
+              {vehicle.alt != null ? `${fmtNum(vehicle.alt, 1, "m")}` : ""}
+              {vehicle.groundspeed != null
+                ? ` · ${fmtNum(vehicle.groundspeed, 1, "m/s")}`
+                : ""}
+              {vehicle.heading != null
+                ? ` · hdg ${Math.round(vehicle.heading)}°`
+                : ""}
+            </span>
+          )}
+        </div>
+      )}
       <div
         className="relative min-h-0 flex-1"
         onWheel={(e) => {

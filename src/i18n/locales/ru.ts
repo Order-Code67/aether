@@ -25,10 +25,10 @@ export const ru: Record<MessageKey, string> = {
   "plotter.clear": "Очистить график",
   "plotter.hint": "Разбирает temp:23.5, value=12 или CSV 23.5,40.1",
   "plotter.hintMavlink":
-    "Телеметрия MAVLink: HEARTBEAT + ATTITUDE (град) + SYS_STATUS напряжение — не полноценный GCS.",
+    "HUD MAVLink: HEARTBEAT, ATTITUDE, SYS_STATUS/BATTERY, GPS, VFR_HUD — не полноценный GCS / карта / миссии.",
   "plotter.waiting": "Подключено — ожидание числовых данных…",
   "plotter.waitingMavlink":
-    "Подключено — ожидание MAVLink HEARTBEAT / ATTITUDE…",
+    "Подключено — ожидание MAVLink HEARTBEAT / ATTITUDE / GPS…",
   "plotter.connectHint":
     "Подключите Serial Monitor, затем откройте Плоттер для живых графиков.",
   "plotter.toggleChannel": "Переключить {channel}",
@@ -38,6 +38,11 @@ export const ru: Record<MessageKey, string> = {
   "plotter.vehicle": "{type} · {armed}",
   "plotter.armed": "armed",
   "plotter.disarmed": "disarmed",
+  "plotter.hud": "HUD телеметрии MAVLink",
+  "plotter.hudType": "Тип аппарата / custom mode",
+  "plotter.hudGps": "Фикс GPS и число спутников",
+  "plotter.hudBattery": "Заряд батареи, напряжение, ток",
+  "plotter.hudPosition": "Широта / долгота",
   "plotter.pausedBadge": "Пауза",
   "plotter.zoom": "Масштаб по горизонтали",
   "plotter.zoomIn": "Приблизить (меньше точек)",
@@ -80,6 +85,9 @@ export const ru: Record<MessageKey, string> = {
   "camera.recordFailed": "Не удалось записать серию.",
   "camera.keepLastFrame": "Держать последний кадр",
   "camera.desktopOnly": "Сохранение/запись камеры — в десктоп-приложении.",
+  "camera.powerHint":
+    "ESP32-CAM нужен стабильный 5 В (лучше внешний БП). Слабое питание с USB даёт brownout и сбой init камеры — см. README примера esp32-cam.",
+  "camera.powerHintDocs": "Открыть README примера",
   "profiles.title": "Профили прошивки",
   "profiles.hint":
     "Именованные пресеты: env, порт загрузки, опционально путь проекта/скетча и baud монитора. На этом ПК; экспорт JSON — для бэкапа.",

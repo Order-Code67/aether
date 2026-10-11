@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.20": {
+    en: "MAVLink telemetry HUD (GPS, battery, VFR_HUD), ESP32-CAM /stream + 5V power hints.",
+    ru: "HUD телеметрии MAVLink (GPS, батарея, VFR_HUD), ESP32-CAM /stream и подсказки про питание 5 В.",
+  },
   "0.2.19": {
     en: "Playwright E2E smoke (Vite preview), expanded UI smoke checklist, Vitest contracts via test:contracts.",
     ru: "Playwright E2E smoke (Vite preview), расширенный UI smoke-чеклист, Vitest-контракты через test:contracts.",

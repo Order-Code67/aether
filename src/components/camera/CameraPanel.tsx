@@ -11,10 +11,16 @@ import {
   recordCameraSeriesToFolder,
   saveCameraFrameToDisk,
 } from "@/lib/cameraCapture";
+import { looksLikeEsp32Cam } from "@/lib/cameraIp";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useCameraStore } from "@/stores/cameraStore";
+import { useFirmwareProfileStore } from "@/stores/firmwareProfileStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSettingsStore } from "@/stores/settingsStore";
+
+const ESP32_CAM_README_URL =
+  "https://github.com/Order-Code67/aether/blob/main/src-tauri/resources/examples/esp32-cam/README.md";
 
 export function CameraPanel() {
   const { t, locale } = useI18n();
@@ -38,7 +44,17 @@ export function CameraPanel() {
   const setRecording = useCameraStore((s) => s.setRecording);
   const setRecordProgress = useCameraStore((s) => s.setRecordProgress);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
+  const profiles = useFirmwareProfileStore((s) => s.profiles);
   const abortRef = useRef(false);
+
+  const activeProfile = profiles.find(
+    (p) => p.env && selectedEnv && p.env === selectedEnv,
+  );
+  const showPowerHint = looksLikeEsp32Cam(url, {
+    env: selectedEnv,
+    profileName: activeProfile?.name,
+  });
 
   useEffect(() => {
     if (refreshMs <= 0 || status === "idle" || recording) return;
@@ -240,6 +256,26 @@ export function CameraPanel() {
           {statusLabel}
         </span>
       </div>
+
+      {showPowerHint && (
+        <div
+          className="flex flex-wrap items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-100/90"
+          role="note"
+        >
+          <span className="min-w-0 flex-1">{t("camera.powerHint")}</span>
+          <button
+            type="button"
+            className="shrink-0 underline decoration-amber-400/60 underline-offset-2 hover:text-amber-50"
+            onClick={() => {
+              void import("@tauri-apps/plugin-opener").then(({ openUrl }) =>
+                openUrl(ESP32_CAM_README_URL),
+              );
+            }}
+          >
+            {t("camera.powerHintDocs")}
+          </button>
+        </div>
+      )}
 
       <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black/40">
         {shownSrc || displaySrc ? (

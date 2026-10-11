@@ -81,3 +81,31 @@ export function normalizeCameraUrl(input: string): string {
     return s;
   }
 }
+
+/**
+ * True when the URL or PlatformIO env looks like ESP32-CAM so we can show
+ * the 5 V / brownout power hint in the Camera panel.
+ */
+export function looksLikeEsp32Cam(
+  url: string,
+  opts?: { env?: string; profileName?: string },
+): boolean {
+  const env = opts?.env ?? "";
+  const profile = opts?.profileName ?? "";
+  if (/esp32\s*-?\s*cam|ai-?thinker/i.test(env) || /esp32\s*-?\s*cam/i.test(profile)) {
+    return true;
+  }
+  const u = url.trim();
+  if (!u) return false;
+  if (/esp32\s*-?\s*cam|ai-?thinker/i.test(u)) return true;
+  // Common bundled sketch paths: /capture or /stream on a private IP
+  if (/\/(capture|stream)(?:\b|$|\?)/i.test(u)) {
+    if (
+      /\b(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|169\.254\.)/i.test(u) ||
+      /\/\/(?:localhost|127\.0\.0\.1)\b/i.test(u)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
