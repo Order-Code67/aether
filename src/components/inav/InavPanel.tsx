@@ -22,6 +22,7 @@ import { splitDiffForCliSend } from "@/lib/inavDiff";
 import { loadInavDiffFromFile, saveInavDiffToFile } from "@/lib/inavDiffFile";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
+import { InavStatusCard } from "@/components/inav/InavStatusCard";
 import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useSerialStore } from "@/stores/serialStore";
@@ -329,6 +330,8 @@ export function InavPanel() {
           </div>
           {error && <p className="text-[11px] text-aether-danger">{error}</p>}
         </section>
+
+        <InavStatusCard connected={connected} sessionActive={sessionActive} />
 
         <section className="flex min-h-[180px] flex-1 flex-col gap-1.5">
           <div className="flex items-center justify-between">

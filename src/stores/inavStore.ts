@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { MspStatusSnapshot } from "@/lib/mspMinimal";
+import { pollMspStatus } from "@/lib/mspStatusPoll";
 import { releaseSerialBeforeUpload } from "@/lib/uploadGate";
 import { useSerialStore } from "@/stores/serialStore";
 
@@ -28,6 +30,11 @@ interface InavState {
   draftNotes: string;
   error: string | null;
 
+  /** Last MSP Status snapshot (read-only). */
+  mspSnapshot: MspStatusSnapshot | null;
+  mspPolling: boolean;
+  mspError: string | null;
+
   appendCliLine: (line: string) => void;
   clearCli: () => void;
   setDiffBuffer: (text: string) => void;
@@ -44,6 +51,10 @@ interface InavState {
   disconnectSession: () => Promise<void>;
   /** Ensure Aether releases the COM port (e.g. before Configurator). */
   releasePort: () => Promise<void>;
+
+  /** Poll MSP identity / status / analog / GPS (read-only). */
+  refreshMspStatus: () => Promise<void>;
+  clearMspStatus: () => void;
 
   saveProfile: (
     input: Omit<InavProfile, "id" | "updatedAt"> & { id?: string },
@@ -69,6 +80,9 @@ export const useInavStore = create<InavState>()(
       draftName: "",
       draftNotes: "",
       error: null,
+      mspSnapshot: null,
+      mspPolling: false,
+      mspError: null,
 
       appendCliLine: (line) =>
         set((state) => {
@@ -120,15 +134,41 @@ export const useInavStore = create<InavState>()(
       },
 
       disconnectSession: async () => {
-        set({ sessionActive: false });
+        set({ sessionActive: false, mspPolling: false });
         await useSerialStore.getState().disconnect();
       },
 
       releasePort: async () => {
-        set({ sessionActive: false });
+        set({ sessionActive: false, mspPolling: false });
         const serial = useSerialStore.getState();
         await releaseSerialBeforeUpload(serial);
       },
+
+      refreshMspStatus: async () => {
+        const serial = useSerialStore.getState();
+        if (!serial.connected || !get().sessionActive) {
+          set({ mspError: "MSP_NEED_CONNECT" });
+          return;
+        }
+        if (get().mspPolling) return;
+        set({ mspPolling: true, mspError: null });
+        const result = await pollMspStatus();
+        if (result.ok) {
+          set({
+            mspSnapshot: result.snapshot,
+            mspPolling: false,
+            mspError: null,
+          });
+        } else {
+          set({
+            mspSnapshot: result.snapshot,
+            mspPolling: false,
+            mspError: result.error,
+          });
+        }
+      },
+
+      clearMspStatus: () => set({ mspSnapshot: null, mspError: null }),
 
       saveProfile: (input) => {
         const id = input.id ?? newId();

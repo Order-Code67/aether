@@ -7,6 +7,7 @@ import {
   listSerialPorts,
   openSerialPort,
   writeSerial,
+  writeSerialBytes,
   type SerialPortInfo,
   type SerialStatus,
 } from "@/lib/serial";
@@ -30,6 +31,8 @@ interface SerialState {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   send: (text: string, appendNewline?: boolean) => Promise<void>;
+  /** Binary write for MSP / MAVLink frames. */
+  sendBytes: (bytes: number[] | Uint8Array) => Promise<void>;
   appendLine: (line: string) => void;
   clearLines: () => void;
   applyStatus: (status: SerialStatus) => void;
@@ -139,6 +142,24 @@ export const useSerialStore = create<SerialState>()(
         const payload = appendNewline && !text.endsWith("\n") ? `${text}\n` : text;
         try {
           await writeSerial(payload);
+          set({ error: null });
+        } catch (error) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to write to serial port.",
+          });
+        }
+      },
+
+      sendBytes: async (bytes) => {
+        if (!get().connected) {
+          set({ error: "Not connected to a serial port." });
+          return;
+        }
+        try {
+          await writeSerialBytes(bytes);
           set({ error: null });
         } catch (error) {
           set({

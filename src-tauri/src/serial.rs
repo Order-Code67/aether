@@ -269,3 +269,22 @@ pub fn serial_write(state: State<'_, SerialState>, data: String) -> Result<(), S
     port.flush().map_err(|e| format!("Flush failed: {e}"))?;
     Ok(())
 }
+
+/// Write raw bytes (MSP / MAVLink). Prefer this over `serial_write` for binary frames.
+#[tauri::command]
+pub fn serial_write_bytes(state: State<'_, SerialState>, bytes: Vec<u8>) -> Result<(), String> {
+    let guard = state.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let open = guard
+        .as_ref()
+        .ok_or_else(|| "Serial port is not connected".to_string())?;
+
+    let mut port = open
+        .writer
+        .lock()
+        .map_err(|_| "Serial port lock poisoned".to_string())?;
+
+    port.write_all(&bytes)
+        .map_err(|e| format!("Write failed: {e}"))?;
+    port.flush().map_err(|e| format!("Flush failed: {e}"))?;
+    Ok(())
+}

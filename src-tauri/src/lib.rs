@@ -46,6 +46,7 @@ pub fn run() {
             serial::serial_open,
             serial::serial_close,
             serial::serial_write,
+            serial::serial_write_bytes,
             serial::serial_get_status,
             terminal::terminal_create,
             terminal::terminal_write,

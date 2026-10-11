@@ -47,6 +47,12 @@ export async function writeSerial(data: string): Promise<void> {
   return invoke("serial_write", { data });
 }
 
+/** Write raw bytes (MSP / binary protocols). */
+export async function writeSerialBytes(bytes: number[] | Uint8Array): Promise<void> {
+  const list = bytes instanceof Uint8Array ? Array.from(bytes) : bytes;
+  return invoke("serial_write_bytes", { bytes: list });
+}
+
 export async function getSerialStatus(): Promise<SerialStatus> {
   if (!isTauriRuntime()) {
     return { connected: false, path: null, baudRate: null, error: null };

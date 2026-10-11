@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.22": {
+    en: "iNav MSP Status / Setup (read-only): FC identity, armed, voltage, GPS snapshot over serial.",
+    ru: "iNav MSP Статус / Setup (только чтение): идентификация FC, armed, напряжение, GPS по serial.",
+  },
   "0.2.21": {
     en: "iNav activity: FC CLI console, diffs, profiles, Configurator launch, Plotter shortcut.",
     ru: "Вкладка iNav: CLI полётника, diff, профили, запуск Configurator, ярлык Плоттера.",

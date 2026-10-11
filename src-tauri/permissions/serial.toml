@@ -6,5 +6,6 @@ commands.allow = [
   "serial_open",
   "serial_close",
   "serial_write",
+  "serial_write_bytes",
   "serial_get_status"
 ]
