@@ -586,7 +586,10 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
   if (phase === "checking") statusLine = t("updater.checking");
   else if (phase === "uptodate") statusLine = t("updater.uptodate");
   else if (phase === "unavailable")
-    statusLine = error ?? t("updater.unavailable");
+    statusLine =
+      error === "offline"
+        ? t("updater.offline")
+        : (error ?? t("updater.unavailable"));
   else if (phase === "available")
     statusLine = t("updater.available", { version: availableVersion ?? "?" });
   else if (phase === "downloading")

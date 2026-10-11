@@ -1,10 +1,11 @@
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::path::{Component, Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Command, Output, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
@@ -124,7 +125,7 @@ fn run_pio(
     command: &str,
     args: &[String],
     cwd: Option<&Path>,
-) -> Result<std::process::Output, String> {
+) -> Result<Output, String> {
     let mut cmd = Command::new(command);
     cmd.args(args)
         .stdout(Stdio::piped())
@@ -135,6 +136,76 @@ fn run_pio(
     configure_pio_command(&mut cmd);
     cmd.output()
         .map_err(|e| format!("Failed to run PlatformIO ({command}): {e}"))
+}
+
+/// Run PlatformIO with a hard wall-clock timeout; kill the child on expiry.
+/// Used for registry-bound commands so offline DNS hangs cannot freeze the UI.
+fn run_pio_with_timeout(
+    command: &str,
+    args: &[String],
+    cwd: Option<&Path>,
+    timeout: Duration,
+) -> Result<Output, String> {
+    let mut cmd = Command::new(command);
+    cmd.args(args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(dir) = cwd {
+        cmd.current_dir(dir);
+    }
+    configure_pio_command(&mut cmd);
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to run PlatformIO ({command}): {e}"))?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let stdout_handle = thread::spawn(move || {
+        let mut buf = Vec::new();
+        if let Some(mut out) = stdout {
+            let _ = out.read_to_end(&mut buf);
+        }
+        buf
+    });
+    let stderr_handle = thread::spawn(move || {
+        let mut buf = Vec::new();
+        if let Some(mut err) = stderr {
+            let _ = err.read_to_end(&mut buf);
+        }
+        buf
+    });
+
+    let started = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let stdout = stdout_handle.join().unwrap_or_default();
+                let stderr = stderr_handle.join().unwrap_or_default();
+                return Ok(Output {
+                    status,
+                    stdout,
+                    stderr,
+                });
+            }
+            Ok(None) => {
+                if started.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    let _ = stdout_handle.join();
+                    let _ = stderr_handle.join();
+                    return Err(format!(
+                        "PlatformIO timed out after {}s (offline or slow registry?).",
+                        timeout.as_secs()
+                    ));
+                }
+                thread::sleep(Duration::from_millis(40));
+            }
+            Err(e) => {
+                let _ = child.kill();
+                return Err(format!("Failed to wait for PlatformIO: {e}"));
+            }
+        }
+    }
 }
 
 fn parse_envs_from_ini(contents: &str) -> Vec<String> {
@@ -1153,7 +1224,13 @@ pub fn pio_lib_search(
             args.push(q.to_string());
         }
 
-        let output = match run_pio(&command, &args, None) {
+        // Registry search must fail fast when offline (DNS / TLS hang).
+        let output = match run_pio_with_timeout(
+            &command,
+            &args,
+            None,
+            Duration::from_secs(12),
+        ) {
             Ok(o) => o,
             Err(e) => {
                 last_err = e;
@@ -1210,8 +1287,8 @@ pub fn pio_lib_search(
         "--sort".into(),
         "popularity".into(),
     ];
-    let output = run_pio(&command, &pkg_args, None)?;
-
+    let output =
+        run_pio_with_timeout(&command, &pkg_args, None, Duration::from_secs(12))?;
     if !output.status.success() {
         return Err(if last_err.is_empty() {
             command_failure_detail(&output, "Library search failed.")

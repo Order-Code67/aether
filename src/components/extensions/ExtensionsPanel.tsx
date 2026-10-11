@@ -13,6 +13,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useExtensionStore } from "@/stores/extensionStore";
+import { useOfflineStore } from "@/stores/offlineStore";
 import type { ExtensionCategory, ExtensionManifest } from "@/types/extensions";
 
 const CATEGORY_LABEL: Record<ExtensionCategory, string> = {
@@ -44,6 +45,7 @@ export function ExtensionsPanel() {
   const error = useExtensionStore((s) => s.error);
   const preferredPanelTab = useExtensionStore((s) => s.preferredPanelTab);
   const setPreferredPanelTab = useExtensionStore((s) => s.setPreferredPanelTab);
+  const offline = useOfflineStore((s) => s.offline);
   const [tab, setTab] = useState<PanelTab>("installed");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -210,6 +212,11 @@ export function ExtensionsPanel() {
         <p className="px-3 pb-2 text-[11px] text-aether-danger">{error}</p>
       )}
 
+      {tab === "marketplace" && offline && (
+        <p className="px-3 pb-2 text-[11px] text-amber-600 dark:text-amber-300">
+          {t("extensions.offline")}
+        </p>
+      )}
       {tab === "marketplace" ? (
         <div className="aether-scroll min-h-0 flex-1 overflow-auto border-t border-aether-border">
           <div className="space-y-2 border-b border-aether-border px-3 py-2">

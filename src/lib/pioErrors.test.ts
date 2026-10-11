@@ -27,4 +27,17 @@ describe("friendlyPioError", () => {
       /PlatformIO CLI not found/,
     );
   });
+
+  it("maps registry timeout (en/ru)", () => {
+    const en = friendlyPioError(
+      "PlatformIO timed out after 12s (offline or slow registry?).",
+      "en",
+    );
+    expect(en.toLowerCase()).toMatch(/timed out|offline/);
+    const ru = friendlyPioError(
+      "PlatformIO timed out after 12s (offline or slow registry?).",
+      "ru",
+    );
+    expect(ru).toMatch(/таймаут|офлайн/i);
+  });
 });

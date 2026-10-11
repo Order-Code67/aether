@@ -1,6 +1,14 @@
-# iNav MSP notes (Aether)
+# iNav / FC Configurator notes (Aether)
 
-Aether talks to iNav flight controllers over the same COM session used for FC CLI.
+Aether’s **FC Configurator** talks to iNav (and compatible MSP) flight controllers over the same COM session used for FC CLI. It combines:
+
+| Source | What we take |
+|--------|----------------|
+| **iNav Configurator** | Status, Ports, Modes, GPS/Nav, airplane/wing mixer, CLI diff, DFU flash |
+| **Betaflight Configurator** | PID table, rates/expo/TPA, live RX channel bars, feature chips |
+| **ArduPilot / Mission Planner** | Searchable parameter tree, vehicle presets, RTH-first failsafe philosophy |
+
+Safety: no arm / motor / calibration MSP. Writes confirm + auto-backup under `Documents/Aether/drones/diffs/`. EEPROM is never implied.
 
 ## Supported (Modes)
 

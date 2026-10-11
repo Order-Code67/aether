@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { HTTP_TIMEOUT_MS, TimeoutError, withTimeout } from "@/lib/offline";
 import { isTauriRuntime } from "@/lib/tauri";
 
 export type UpdateChannel = "stable" | "beta";
@@ -33,16 +34,27 @@ export async function checkForAppUpdate(
     };
   }
   try {
-    const info = await invoke<ChannelUpdateInfo | null>("updater_check_channel", {
-      channel,
-    });
+    const info = await withTimeout(
+      invoke<ChannelUpdateInfo | null>("updater_check_channel", {
+        channel,
+      }),
+      HTTP_TIMEOUT_MS,
+      "Update check timed out.",
+    );
     if (!info) return { kind: "uptodate" };
     return { kind: "available", info };
   } catch (error) {
+    if (error instanceof TimeoutError) {
+      return { kind: "unavailable" };
+    }
     const message =
       error instanceof Error ? error.message : "Failed to check for updates.";
     // Common when endpoint 404 / network offline during early releases
-    if (/404|failed to fetch|error sending request|tls|dns/i.test(message)) {
+    if (
+      /404|failed to fetch|error sending request|tls|dns|timed out|offline|network/i.test(
+        message,
+      )
+    ) {
       return {
         kind: "unavailable",
       };

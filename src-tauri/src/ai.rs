@@ -122,6 +122,7 @@ pub async fn ai_chat_completion(request: AiChatRequest) -> Result<String, String
 
     let url = normalize_base_url(&request.base_url);
     let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(5))
         .timeout(std::time::Duration::from_secs(120))
         .build()
         .map_err(|e| format!("HTTP client error: {e}"))?;
@@ -229,6 +230,7 @@ async fn run_stream(
 ) -> Result<(), String> {
     let url = normalize_base_url(&request.base_url);
     let client = reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(5))
         .timeout(std::time::Duration::from_secs(180))
         .build()
         .map_err(|e| format!("HTTP client error: {e}"))?;

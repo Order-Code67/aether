@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   BrainCircuit,
   Bug,
+  CloudOff,
   Folder,
   GitBranch,
   Radio,
@@ -14,6 +15,7 @@ import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useLspStore } from "@/stores/lspStore";
+import { useOfflineStore } from "@/stores/offlineStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useProblemsStore } from "@/stores/problemsStore";
 import { useScmStore } from "@/stores/scmStore";
@@ -73,6 +75,7 @@ export function StatusBar() {
   const lspError = useLspStore((s) => s.error);
   const debugActive = useDebugStore((s) => s.sessionActive);
   const debugState = useDebugStore((s) => s.execState);
+  const offline = useOfflineStore((s) => s.offline);
 
   let saveLabel: string | null = null;
   if (saveStatus.kind === "saving") {
@@ -259,6 +262,16 @@ export function StatusBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3 opacity-95">
+        {offline && (
+          <span
+            className="flex items-center gap-1 text-amber-200"
+            title={t("status.offlineTip")}
+            data-testid="status-offline"
+          >
+            <CloudOff size={12} />
+            {t("status.offline")}
+          </span>
+        )}
         <button
           type="button"
           title="Open Serial Monitor"

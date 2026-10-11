@@ -254,6 +254,13 @@ export const useAgentStore = create<AgentState>()(
           });
           return;
         }
+        const { isAppOffline } = await import("@/stores/offlineStore");
+        if (isAppOffline()) {
+          set({
+            error: "Offline — AI requires an internet connection.",
+          });
+          return;
+        }
         if (!get().apiKey.trim()) {
           set({
             error: "Set an API key in Agent settings.",

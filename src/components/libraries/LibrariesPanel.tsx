@@ -31,6 +31,7 @@ import {
 } from "@/lib/platformio";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useLibrariesPrefsStore } from "@/stores/librariesPrefsStore";
+import { isAppOffline } from "@/stores/offlineStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
@@ -274,6 +275,13 @@ export function LibrariesPanel() {
         setError(t("libraries.needDesktop"));
         return;
       }
+      if (isAppOffline()) {
+        setResults([]);
+        setHasSearched(true);
+        setLoading(false);
+        setError(t("libraries.offline"));
+        return;
+      }
       setLoading(true);
       setError(null);
       setHasSearched(true);
@@ -291,7 +299,7 @@ export function LibrariesPanel() {
             query: q,
             platform: chip.platform,
             framework: chip.framework,
-            pages: 3,
+            pages: 2,
           });
           setResults(entries);
         }
@@ -305,37 +313,12 @@ export function LibrariesPanel() {
     [query, chip, t, pioInfo, mapLibError, useArduinoCli],
   );
 
+  /** Chip/preset only filters local UI — registry search waits for Search click. */
   const selectPreset = (id: PlatformPreset) => {
     setPreset(id);
     setError(null);
-    const next = PLATFORM_CHIPS.find((c) => c.id === id);
-    if (next && chipHasFilter(next)) {
-      void (async () => {
-        if (!isTauriRuntime()) {
-          setError(t("libraries.needDesktop"));
-          return;
-        }
-        setLoading(true);
-        setHasSearched(true);
-        try {
-          const entries = await searchPioLibraries({
-            query: query.trim(),
-            platform: next.platform,
-            framework: next.framework,
-            pages: 2,
-          });
-          setResults(entries);
-        } catch (err) {
-          setResults([]);
-          setError(mapLibError(err));
-        } finally {
-          setLoading(false);
-        }
-      })();
-    } else if (!query.trim()) {
-      setResults([]);
-      setHasSearched(false);
-    }
+    setResults([]);
+    setHasSearched(false);
   };
 
   const install = async (
@@ -349,6 +332,10 @@ export function LibrariesPanel() {
     }
     if (!rootPath || !isProject) {
       setError(t("libraries.needProject"));
+      return;
+    }
+    if (isAppOffline()) {
+      setError(t("libraries.offline"));
       return;
     }
     const display = options?.displayName ?? library;
@@ -536,39 +523,22 @@ export function LibrariesPanel() {
             onClick={() => {
               setManagerTab(id);
               setError(null);
+              setResults([]);
+              setHasSearched(false);
               if (id === "arduino") {
                 setPreset("arduino");
-                void (async () => {
-                  if (!isTauriRuntime()) return;
-                  setLoading(true);
-                  setHasSearched(true);
-                  try {
-                    const info = await detectArduinoCli();
-                    setArduinoCli(info);
-                    if (info.installed && query.trim()) {
-                      const entries = await searchArduinoCliLibraries(
-                        query.trim(),
-                      );
-                      setResults(entries);
-                    } else if (!info.installed) {
-                      const entries = await searchPioLibraries({
-                        query: query.trim(),
-                        platform: null,
-                        framework: "arduino",
-                        pages: 2,
-                      });
-                      setResults(entries);
-                    } else {
-                      setResults([]);
-                      setHasSearched(false);
-                    }
-                  } catch (err) {
-                    setResults([]);
-                    setError(mapLibError(err));
-                  } finally {
-                    setLoading(false);
-                  }
-                })();
+                // Local detect only — registry search waits for Search click.
+                if (isTauriRuntime()) {
+                  void detectArduinoCli()
+                    .then(setArduinoCli)
+                    .catch(() =>
+                      setArduinoCli({
+                        installed: false,
+                        path: null,
+                        version: null,
+                      }),
+                    );
+                }
               }
             }}
             className={cn(

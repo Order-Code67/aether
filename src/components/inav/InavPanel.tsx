@@ -10,6 +10,22 @@ import {
   Save,
   Send,
 } from "lucide-react";
+import { InavBatteryCard } from "@/components/inav/InavBatteryCard";
+import { InavFailsafeCard } from "@/components/inav/InavFailsafeCard";
+import { InavFlashCard } from "@/components/inav/InavFlashCard";
+import { InavGpsNavCard } from "@/components/inav/InavGpsNavCard";
+import { InavMixerCard } from "@/components/inav/InavMixerCard";
+import { InavModesCard } from "@/components/inav/InavModesCard";
+import { InavOnboardingChecklist } from "@/components/inav/InavOnboardingChecklist";
+import { InavParamsCard } from "@/components/inav/InavParamsCard";
+import { InavPidCard } from "@/components/inav/InavPidCard";
+import { InavPortsCard } from "@/components/inav/InavPortsCard";
+import { InavPresetsCard } from "@/components/inav/InavPresetsCard";
+import { InavRatesCard } from "@/components/inav/InavRatesCard";
+import { InavReceiverCard } from "@/components/inav/InavReceiverCard";
+import { InavStatusCard } from "@/components/inav/InavStatusCard";
+import { InavTabBar } from "@/components/inav/InavTabBar";
+import type { InavConfiguratorTab } from "@/components/inav/inavTabs";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { openExternalUrl } from "@/lib/comDrivers";
@@ -22,11 +38,6 @@ import { splitDiffForCliSend } from "@/lib/inavDiff";
 import { loadInavDiffFromFile, saveInavDiffToFile } from "@/lib/inavDiffFile";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
-import { InavFlashCard } from "@/components/inav/InavFlashCard";
-import { InavModesCard } from "@/components/inav/InavModesCard";
-import { InavOnboardingChecklist } from "@/components/inav/InavOnboardingChecklist";
-import { InavPortsCard } from "@/components/inav/InavPortsCard";
-import { InavStatusCard } from "@/components/inav/InavStatusCard";
 import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useSerialStore } from "@/stores/serialStore";
@@ -40,6 +51,7 @@ export function InavPanel() {
   const tauri = isTauriRuntime();
   const [input, setInput] = useState("");
   const [sendingDiff, setSendingDiff] = useState(false);
+  const [tab, setTab] = useState<InavConfiguratorTab>("setup");
   const logRef = useRef<HTMLDivElement>(null);
 
   const ports = useSerialStore((s) => s.ports);
@@ -236,9 +248,11 @@ export function InavPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="inav-panel">
       <header className="flex h-9 shrink-0 items-center justify-between gap-2 px-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
-          {t("inav.title")}
-        </h2>
+        <div className="min-w-0">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-aether-fg-muted">
+            {t("inav.title")}
+          </h2>
+        </div>
         <button
           type="button"
           title={t("inav.openPlotter")}
@@ -250,323 +264,376 @@ export function InavPanel() {
         </button>
       </header>
 
-      <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 pb-4 text-xs">
-        <p className="text-[11px] leading-relaxed text-aether-fg-dim">
-          {t("inav.hint")}
-        </p>
-
-        <InavOnboardingChecklist
-          onOpenConfigurator={() => void onOpenConfigurator()}
-          onRefreshStatus={() => void useInavStore.getState().refreshMspStatus()}
-          onGetDiff={onGetDiff}
-        />
-
-        <section className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
-            {t("inav.connection")}
-          </p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <select
-              value={selectedPath}
-              disabled={connected || connecting}
-              onChange={(e) => setSelectedPath(e.target.value)}
-              className="h-7 min-w-[120px] max-w-[180px] rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-              aria-label={t("inav.port")}
-              data-testid="inav-port"
-            >
-              {ports.length === 0 ? (
-                <option value="">{t("inav.noPorts")}</option>
-              ) : (
-                ports.map((port) => (
-                  <option key={port.path} value={port.path}>
-                    {port.path}
-                    {port.portType ? ` — ${port.portType}` : ""}
-                  </option>
-                ))
-              )}
-            </select>
-            <select
-              value={baudRate}
-              disabled={connected || connecting}
-              onChange={(e) => setBaudRate(Number(e.target.value))}
-              className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-              aria-label={t("inav.baud")}
-              data-testid="inav-baud"
-            >
-              {BAUD_RATES.map((rate) => (
-                <option key={rate} value={rate}>
-                  {rate}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              title={t("common.refresh")}
-              onClick={() => void refreshPorts()}
-              className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
-            >
-              <RefreshCw size={12} />
-            </button>
-            {connected ? (
-              <button
-                type="button"
-                data-testid="inav-disconnect"
-                onClick={() => void disconnectSession()}
-                className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
-              >
-                <Plug size={12} />
-                {t("inav.disconnect")}
-              </button>
-            ) : (
-              <button
-                type="button"
-                data-testid="inav-connect"
-                disabled={connecting || !selectedPath}
-                onClick={() => void connectSession()}
-                className="flex h-7 items-center gap-1 rounded border border-aether-accent bg-aether-accent-muted px-2 text-[11px] text-aether-fg hover:opacity-90 disabled:opacity-40"
-              >
-                <PlugZap size={12} />
-                {connecting ? t("inav.connecting") : t("inav.connect")}
-              </button>
-            )}
-            <span
-              className={cn(
-                "text-[10px]",
-                live ? "text-emerald-400" : "text-aether-fg-dim",
-              )}
-            >
-              {live ? t("inav.sessionOn") : t("inav.sessionOff")}
-            </span>
-          </div>
-          {error && <p className="text-[11px] text-aether-danger">{error}</p>}
-        </section>
-
-        <InavStatusCard connected={connected} sessionActive={sessionActive} />
-        <InavPortsCard connected={connected} sessionActive={sessionActive} />
-        <InavModesCard connected={connected} sessionActive={sessionActive} />
-        <InavFlashCard />
-
-        <section className="flex min-h-[180px] flex-1 flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
-              {t("inav.cli")}
-            </p>
-            <button
-              type="button"
-              onClick={() => clearCli()}
-              className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
-            >
-              <Eraser size={11} />
-              {t("inav.clear")}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {QUICK_CMDS.map((cmd) => (
-              <button
-                key={cmd}
-                type="button"
-                disabled={!connected}
-                onClick={() => onSend(cmd)}
-                className="rounded border border-aether-border px-1.5 py-0.5 font-mono text-[10px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
-              >
-                {cmd}
-              </button>
-            ))}
-            <button
-              type="button"
-              disabled={!connected}
-              onClick={onDump}
-              className="rounded border border-aether-border px-1.5 py-0.5 font-mono text-[10px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
-            >
-              dump
-            </button>
-          </div>
-          <div
-            ref={logRef}
-            data-testid="inav-cli-log"
-            className="aether-scroll min-h-[120px] flex-1 overflow-auto rounded border border-aether-border bg-aether-bg p-2 font-mono text-[11px] leading-relaxed text-aether-fg"
+      <div className="shrink-0 space-y-1.5 border-b border-aether-border px-3 pb-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <select
+            value={selectedPath}
+            disabled={connected || connecting}
+            onChange={(e) => setSelectedPath(e.target.value)}
+            className="h-7 min-w-[120px] max-w-[180px] rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+            aria-label={t("inav.port")}
+            data-testid="inav-port"
           >
-            {cliLines.length === 0 ? (
-              <span className="text-aether-fg-dim">{t("inav.cliEmpty")}</span>
+            {ports.length === 0 ? (
+              <option value="">{t("inav.noPorts")}</option>
             ) : (
-              cliLines.map((line, i) => (
-                <div
-                  key={`${i}-${line.slice(0, 12)}`}
-                  className="whitespace-pre-wrap break-all"
-                >
-                  {line}
-                </div>
+              ports.map((port) => (
+                <option key={port.path} value={port.path}>
+                  {port.path}
+                  {port.portType ? ` — ${port.portType}` : ""}
+                </option>
               ))
             )}
-          </div>
-          <div className="flex gap-1">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  onSubmit();
-                }
-              }}
-              disabled={!connected}
-              placeholder={t("inav.cliPlaceholder")}
-              data-testid="inav-cli-input"
-              className="h-7 flex-1 rounded border border-aether-border bg-aether-bg px-2 font-mono text-[11px] text-aether-fg outline-none focus:border-aether-accent disabled:opacity-40"
-            />
-            <button
-              type="button"
-              disabled={!connected}
-              onClick={onSubmit}
-              className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
-            >
-              <Send size={12} />
-              {t("inav.send")}
-            </button>
-          </div>
-        </section>
-
-        <section className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
-            {t("inav.diff")}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              disabled={!connected || capturingDiff}
-              onClick={onGetDiff}
-              data-testid="inav-get-diff"
-              className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
-            >
-              {capturingDiff ? t("inav.diffCapturing") : t("inav.getDiff")}
-            </button>
-            <button
-              type="button"
-              disabled={!diffBuffer.trim()}
-              onClick={() => void onSaveDiff()}
-              className="flex items-center gap-1 rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
-            >
-              <Save size={11} />
-              {t("inav.saveDiff")}
-            </button>
-            <button
-              type="button"
-              disabled={sendingDiff}
-              onClick={() => void onLoadDiff()}
-              className="flex items-center gap-1 rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
-            >
-              <FolderOpen size={11} />
-              {t("inav.loadDiff")}
-            </button>
-            <button
-              type="button"
-              disabled={!connected || sendingDiff || !diffBuffer.trim()}
-              onClick={() => void onSendBuffer()}
-              className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
-            >
-              {t("inav.sendDiff")}
-            </button>
-          </div>
-          {lastDiffPath && (
-            <p
-              className="truncate text-[10px] text-aether-fg-dim"
-              title={lastDiffPath}
-            >
-              {t("inav.lastDiff")}: {lastDiffPath}
-            </p>
-          )}
-          <textarea
-            value={diffBuffer}
-            onChange={(e) => setDiffBuffer(e.target.value)}
-            rows={4}
-            spellCheck={false}
-            data-testid="inav-diff-buffer"
-            className="aether-scroll w-full resize-y rounded border border-aether-border bg-aether-bg p-2 font-mono text-[10px] text-aether-fg outline-none focus:border-aether-accent"
-            placeholder={t("inav.diffPlaceholder")}
-          />
-        </section>
-
-        <section className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
-            {t("inav.profiles")}
-          </p>
-          <input
-            value={draftName}
-            onChange={(e) => setDraftName(e.target.value)}
-            placeholder={t("inav.profileName")}
-            className="h-7 w-full rounded border border-aether-border bg-aether-bg px-2 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          />
-          <textarea
-            value={draftNotes}
-            onChange={(e) => setDraftNotes(e.target.value)}
-            rows={2}
-            placeholder={t("inav.profileNotes")}
-            className="w-full resize-y rounded border border-aether-border bg-aether-bg p-2 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          />
+          </select>
+          <select
+            value={baudRate}
+            disabled={connected || connecting}
+            onChange={(e) => setBaudRate(Number(e.target.value))}
+            className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+            aria-label={t("inav.baud")}
+            data-testid="inav-baud"
+          >
+            {BAUD_RATES.map((rate) => (
+              <option key={rate} value={rate}>
+                {rate}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
-            onClick={onSaveProfile}
-            className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+            title={t("common.refresh")}
+            onClick={() => void refreshPorts()}
+            className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >
-            {t("inav.saveProfile")}
+            <RefreshCw size={12} />
           </button>
-          {profiles.length === 0 ? (
-            <p className="text-[11px] text-aether-fg-dim">
-              {t("inav.profilesEmpty")}
-            </p>
+          {connected ? (
+            <button
+              type="button"
+              data-testid="inav-disconnect"
+              onClick={() => void disconnectSession()}
+              className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+            >
+              <Plug size={12} />
+              {t("inav.disconnect")}
+            </button>
           ) : (
-            <ul className="space-y-1">
-              {profiles.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between gap-2 rounded border border-aether-border px-2 py-1"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      applyProfile(p.id);
-                      flash(t("inav.profileApplied", { name: p.name }));
-                    }}
-                    className="min-w-0 flex-1 text-left hover:text-aether-accent"
-                  >
-                    <span className="block truncate font-medium text-aether-fg">
-                      {p.name}
-                    </span>
-                    <span className="block truncate text-[10px] text-aether-fg-dim">
-                      {p.port || "—"} · {p.baud}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm(t("inav.deleteProfileConfirm"))) {
-                        deleteProfile(p.id);
-                      }
-                    }}
-                    className="shrink-0 text-[10px] text-aether-fg-dim hover:text-aether-danger"
-                  >
-                    {t("inav.delete")}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              data-testid="inav-connect"
+              disabled={connecting || !selectedPath}
+              onClick={() => void connectSession()}
+              className="flex h-7 items-center gap-1 rounded border border-aether-accent bg-aether-accent-muted px-2 text-[11px] text-aether-fg hover:opacity-90 disabled:opacity-40"
+            >
+              <PlugZap size={12} />
+              {connecting ? t("inav.connecting") : t("inav.connect")}
+            </button>
           )}
-        </section>
-
-        <section className="space-y-1.5">
-          <button
-            type="button"
-            data-testid="inav-open-configurator"
-            onClick={() => void onOpenConfigurator()}
-            className="flex w-full items-center justify-center gap-1.5 rounded border border-aether-border px-2 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+          <span
+            className={cn(
+              "text-[10px]",
+              live ? "text-emerald-400" : "text-aether-fg-dim",
+            )}
           >
-            <ExternalLink size={12} />
-            {t("inav.openConfigurator")}
-          </button>
-          <p className="text-[10px] leading-relaxed text-aether-fg-dim">
-            {t("inav.configuratorHint")}
-          </p>
-        </section>
+            {live ? t("inav.sessionOn") : t("inav.sessionOff")}
+          </span>
+        </div>
+        {error && <p className="text-[11px] text-aether-danger">{error}</p>}
+      </div>
+
+      <InavTabBar active={tab} onChange={setTab} />
+
+      <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 py-2 text-xs">
+        {tab === "setup" && (
+          <>
+            <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+              {t("inav.hint")}
+            </p>
+            <InavOnboardingChecklist
+              onOpenConfigurator={() => void onOpenConfigurator()}
+              onRefreshStatus={() =>
+                void useInavStore.getState().refreshMspStatus()
+              }
+              onGetDiff={onGetDiff}
+            />
+            <InavStatusCard
+              connected={connected}
+              sessionActive={sessionActive}
+            />
+            <section className="space-y-1.5">
+              <button
+                type="button"
+                data-testid="inav-open-configurator"
+                onClick={() => void onOpenConfigurator()}
+                className="flex w-full items-center justify-center gap-1.5 rounded border border-aether-border px-2 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+              >
+                <ExternalLink size={12} />
+                {t("inav.openConfigurator")}
+              </button>
+              <p className="text-[10px] leading-relaxed text-aether-fg-dim">
+                {t("inav.configuratorHint")}
+              </p>
+            </section>
+            <section className="space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
+                {t("inav.profiles")}
+              </p>
+              <input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder={t("inav.profileName")}
+                className="h-7 w-full rounded border border-aether-border bg-aether-bg px-2 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+              />
+              <textarea
+                value={draftNotes}
+                onChange={(e) => setDraftNotes(e.target.value)}
+                rows={2}
+                placeholder={t("inav.profileNotes")}
+                className="w-full resize-y rounded border border-aether-border bg-aether-bg p-2 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
+              />
+              <button
+                type="button"
+                onClick={onSaveProfile}
+                className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+              >
+                {t("inav.saveProfile")}
+              </button>
+              {profiles.length === 0 ? (
+                <p className="text-[11px] text-aether-fg-dim">
+                  {t("inav.profilesEmpty")}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {profiles.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center justify-between gap-2 rounded border border-aether-border px-2 py-1"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          applyProfile(p.id);
+                          flash(t("inav.profileApplied", { name: p.name }));
+                        }}
+                        className="min-w-0 flex-1 text-left hover:text-aether-accent"
+                      >
+                        <span className="block truncate font-medium text-aether-fg">
+                          {p.name}
+                        </span>
+                        <span className="block truncate text-[10px] text-aether-fg-dim">
+                          {p.port || "—"} · {p.baud}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(t("inav.deleteProfileConfirm"))) {
+                            deleteProfile(p.id);
+                          }
+                        }}
+                        className="shrink-0 text-[10px] text-aether-fg-dim hover:text-aether-danger"
+                      >
+                        {t("inav.delete")}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+
+        {tab === "pid" && (
+          <InavPidCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "rates" && (
+          <InavRatesCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "receiver" && (
+          <InavReceiverCard
+            connected={connected}
+            sessionActive={sessionActive}
+          />
+        )}
+        {tab === "battery" && (
+          <InavBatteryCard
+            connected={connected}
+            sessionActive={sessionActive}
+          />
+        )}
+        {tab === "failsafe" && (
+          <InavFailsafeCard
+            connected={connected}
+            sessionActive={sessionActive}
+          />
+        )}
+        {tab === "gps" && (
+          <InavGpsNavCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "mixer" && (
+          <InavMixerCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "ports" && (
+          <InavPortsCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "modes" && (
+          <InavModesCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "params" && (
+          <InavParamsCard connected={connected} sessionActive={sessionActive} />
+        )}
+        {tab === "presets" && (
+          <InavPresetsCard
+            connected={connected}
+            sessionActive={sessionActive}
+          />
+        )}
+
+        {tab === "cli" && (
+          <section className="flex min-h-[220px] flex-1 flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
+                {t("inav.cli")}
+              </p>
+              <button
+                type="button"
+                onClick={() => clearCli()}
+                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
+              >
+                <Eraser size={11} />
+                {t("inav.clear")}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {QUICK_CMDS.map((cmd) => (
+                <button
+                  key={cmd}
+                  type="button"
+                  disabled={!connected}
+                  onClick={() => onSend(cmd)}
+                  className="rounded border border-aether-border px-1.5 py-0.5 font-mono text-[10px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
+                >
+                  {cmd}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={!connected}
+                onClick={onDump}
+                className="rounded border border-aether-border px-1.5 py-0.5 font-mono text-[10px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
+              >
+                dump
+              </button>
+            </div>
+            <div
+              ref={logRef}
+              data-testid="inav-cli-log"
+              className="aether-scroll min-h-[140px] flex-1 overflow-auto rounded border border-aether-border bg-aether-bg p-2 font-mono text-[11px] leading-relaxed text-aether-fg"
+            >
+              {cliLines.length === 0 ? (
+                <span className="text-aether-fg-dim">{t("inav.cliEmpty")}</span>
+              ) : (
+                cliLines.map((line, i) => (
+                  <div
+                    key={`${i}-${line.slice(0, 12)}`}
+                    className="whitespace-pre-wrap break-all"
+                  >
+                    {line}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="flex gap-1">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onSubmit();
+                  }
+                }}
+                disabled={!connected}
+                placeholder={t("inav.cliPlaceholder")}
+                data-testid="inav-cli-input"
+                className="h-7 flex-1 rounded border border-aether-border bg-aether-bg px-2 font-mono text-[11px] text-aether-fg outline-none focus:border-aether-accent disabled:opacity-40"
+              />
+              <button
+                type="button"
+                disabled={!connected}
+                onClick={onSubmit}
+                className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                <Send size={12} />
+                {t("inav.send")}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {tab === "diff" && (
+          <section className="space-y-1.5">
+            <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
+              {t("inav.diff")}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                disabled={!connected || capturingDiff}
+                onClick={onGetDiff}
+                data-testid="inav-get-diff"
+                className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                {capturingDiff ? t("inav.diffCapturing") : t("inav.getDiff")}
+              </button>
+              <button
+                type="button"
+                disabled={!diffBuffer.trim()}
+                onClick={() => void onSaveDiff()}
+                className="flex items-center gap-1 rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                <Save size={11} />
+                {t("inav.saveDiff")}
+              </button>
+              <button
+                type="button"
+                disabled={sendingDiff}
+                onClick={() => void onLoadDiff()}
+                className="flex items-center gap-1 rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                <FolderOpen size={11} />
+                {t("inav.loadDiff")}
+              </button>
+              <button
+                type="button"
+                disabled={!connected || sendingDiff || !diffBuffer.trim()}
+                onClick={() => void onSendBuffer()}
+                className="rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+              >
+                {t("inav.sendDiff")}
+              </button>
+            </div>
+            {lastDiffPath && (
+              <p
+                className="truncate text-[10px] text-aether-fg-dim"
+                title={lastDiffPath}
+              >
+                {t("inav.lastDiff")}: {lastDiffPath}
+              </p>
+            )}
+            <textarea
+              value={diffBuffer}
+              onChange={(e) => setDiffBuffer(e.target.value)}
+              rows={12}
+              spellCheck={false}
+              data-testid="inav-diff-buffer"
+              className="aether-scroll w-full resize-y rounded border border-aether-border bg-aether-bg p-2 font-mono text-[10px] text-aether-fg outline-none focus:border-aether-accent"
+              placeholder={t("inav.diffPlaceholder")}
+            />
+          </section>
+        )}
+
+        {tab === "flash" && <InavFlashCard />}
       </div>
     </div>
   );

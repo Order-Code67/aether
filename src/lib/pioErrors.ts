@@ -60,6 +60,15 @@ export function friendlyPioError(message: string, locale: Locale): string {
       ? "Не удалось определить папку ~/.platformio."
       : "Could not resolve PlatformIO home (~/.platformio).";
   }
+  if (
+    lower.includes("timed out") ||
+    lower.includes("timeout") ||
+    lower.includes("offline or slow registry")
+  ) {
+    return ru
+      ? "Таймаут PlatformIO (офлайн или медленный реестр). Проверьте сеть или используйте офлайн-кэш."
+      : "PlatformIO timed out (offline or slow registry). Check the network or use the offline cache.";
+  }
 
   // Port busy / Access denied
   if (

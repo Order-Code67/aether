@@ -5,6 +5,14 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.26": {
+    en: "Offline mode: short timeouts, status-bar Offline hint, skip auto update/registry when offline.",
+    ru: "Офлайн-режим: короткие таймауты, подсказка «Офлайн» в статусе, без авто-проверки обновлений и реестра без сети.",
+  },
+  "0.2.25": {
+    en: "Install to any drive/folder (NSIS both modes + directory page); silent /S /D= path.",
+    ru: "Установка на любой диск/папку (NSIS both + страница каталога); тихая /S /D=.",
+  },
   "0.2.24": {
     en: "Welcome Hub modules; iNav Ports/Modes (MSP + CLI fallback), onboarding checklist, DFU .hex flash via dfu-util.",
     ru: "Хаб Welcome; iNav Ports/Modes (MSP + CLI), чеклист, DFU-прошивка .hex через dfu-util.",

@@ -33,6 +33,7 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **About** — live app version in Settings → About
 - **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
 - **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
+- **FC Configurator** — Activity **FC Config**: iNav drones & planes with Betaflight-style PID/rates/RX, ArduPilot-style parameter browser & presets, Ports/Modes, CLI/diff, DFU flash (see [`docs/INAV_MSP.md`](docs/INAV_MSP.md))
 
 ## Not yet
 
@@ -176,3 +177,11 @@ Offline toolchain pack (separate from the installer): `npm run build:offline-cac
 3. Optionally attach active editor file and Problems
 4. Ask about firmware, builds, pins, serial debugging (Enter to send; Stop cancels stream)
 5. Edits: full-file fence, or `SEARCH/REPLACE` / `diff` patch → **Preview** (eye) then **Apply**
+
+## FC Configurator (iNav)
+
+1. Activity Bar → **FC Config** (or Welcome Hub → FC Configurator)
+2. Pick COM port → **Connect** (owns the serial port; Serial Monitor disconnects first)
+3. Use tabs: Setup · PID · Rates · Receiver · Battery · Failsafe · GPS/Nav · Mixer · Ports · Modes · Parameters · Presets · CLI · Diff · Flash
+4. Writes go to FC RAM with confirm + auto-backup under `Documents/Aether/drones/diffs/` — Save EEPROM / CLI `save` separately
+5. Never arms motors from Aether; see [`docs/INAV_MSP.md`](docs/INAV_MSP.md)

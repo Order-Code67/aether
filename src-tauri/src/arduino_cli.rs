@@ -1,8 +1,11 @@
 //! Arduino CLI detection, library search, and install into project `lib/`.
 
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Command, Output, Stdio};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
@@ -30,7 +33,7 @@ fn resolve_arduino_cli() -> Option<PathBuf> {
     None
 }
 
-fn run_cli(cli: &Path, args: &[&str], cwd: Option<&Path>) -> Result<std::process::Output, String> {
+fn run_cli(cli: &Path, args: &[&str], cwd: Option<&Path>) -> Result<Output, String> {
     let mut cmd = Command::new(cli);
     cmd.args(args)
         .stdin(Stdio::null())
@@ -47,6 +50,80 @@ fn run_cli(cli: &Path, args: &[&str], cwd: Option<&Path>) -> Result<std::process
     }
     cmd.output()
         .map_err(|e| format!("Failed to run arduino-cli: {e}"))
+}
+
+fn run_cli_with_timeout(
+    cli: &Path,
+    args: &[&str],
+    cwd: Option<&Path>,
+    timeout: Duration,
+) -> Result<Output, String> {
+    let mut cmd = Command::new(cli);
+    cmd.args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(dir) = cwd {
+        cmd.current_dir(dir);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to run arduino-cli: {e}"))?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let stdout_handle = thread::spawn(move || {
+        let mut buf = Vec::new();
+        if let Some(mut out) = stdout {
+            let _ = out.read_to_end(&mut buf);
+        }
+        buf
+    });
+    let stderr_handle = thread::spawn(move || {
+        let mut buf = Vec::new();
+        if let Some(mut err) = stderr {
+            let _ = err.read_to_end(&mut buf);
+        }
+        buf
+    });
+
+    let started = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let stdout = stdout_handle.join().unwrap_or_default();
+                let stderr = stderr_handle.join().unwrap_or_default();
+                return Ok(Output {
+                    status,
+                    stdout,
+                    stderr,
+                });
+            }
+            Ok(None) => {
+                if started.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    let _ = stdout_handle.join();
+                    let _ = stderr_handle.join();
+                    return Err(format!(
+                        "arduino-cli timed out after {}s (offline or slow registry?).",
+                        timeout.as_secs()
+                    ));
+                }
+                thread::sleep(Duration::from_millis(40));
+            }
+            Err(e) => {
+                let _ = child.kill();
+                return Err(format!("Failed to wait for arduino-cli: {e}"));
+            }
+        }
+    }
 }
 
 fn failure_detail(output: &std::process::Output, fallback: &str) -> String {
@@ -124,7 +201,12 @@ pub fn arduino_cli_lib_search(query: String) -> Result<Vec<PioLibEntry>, String>
         return Err("Search query too long.".into());
     }
 
-    let output = run_cli(&cli, &["lib", "search", q, "--format", "json"], None)?;
+    let output = run_cli_with_timeout(
+        &cli,
+        &["lib", "search", q, "--format", "json"],
+        None,
+        Duration::from_secs(12),
+    )?;
     if !output.status.success() {
         return Err(failure_detail(&output, "arduino-cli lib search failed."));
     }

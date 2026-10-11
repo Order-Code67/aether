@@ -1,6 +1,8 @@
 import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/plugin-fs";
+import { fetchWithTimeout, HTTP_TIMEOUT_MS } from "@/lib/offline";
 import { joinPath } from "@/lib/paths";
+import { isAppOffline } from "@/stores/offlineStore";
 import { isTauriRuntime } from "@/lib/tauri";
 import type {
   ExtensionBoardPreset,
@@ -59,7 +61,10 @@ export async function loadExtensionFromUrl(
   if (!/^https?:\/\//i.test(trimmed)) {
     throw new Error("Only http(s) URLs are supported.");
   }
-  const res = await fetch(trimmed);
+  if (isAppOffline()) {
+    throw new Error("Offline — cannot download extensions.");
+  }
+  const res = await fetchWithTimeout(trimmed, undefined, HTTP_TIMEOUT_MS);
   if (!res.ok) {
     throw new Error(`Download failed (${res.status}).`);
   }

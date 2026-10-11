@@ -20,6 +20,7 @@ import { isTauriRuntime } from "@/lib/tauri";
 import { usePaletteStore } from "@/stores/paletteStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useOfflineStore } from "@/stores/offlineStore";
 import { useUpdaterStore } from "@/stores/updaterStore";
 import { ActivityBar } from "./ActivityBar";
 import { Sidebar } from "./Sidebar";
@@ -79,8 +80,9 @@ export function IdeLayout() {
     };
   }, []);
 
-  // Quiet update check on desktop startup — dialog only if an update is available.
+  // Offline detection + quiet update check (skipped when offline).
   useEffect(() => {
+    useOfflineStore.getState().init();
     if (!isTauriRuntime()) return;
     const timer = window.setTimeout(() => {
       void useUpdaterStore.getState().quietCheckOnStartup();

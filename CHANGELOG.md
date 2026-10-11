@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.26 — 2026-10-11
+
+- **Offline mode** — detect offline (`navigator.onLine` + short probe); status-bar «Офлайн» / Offline; suppress auto update check, registry search on panel open, and remote marketplace fetch when offline
+- **Timeouts** — updater / HTTP fetches race at ~4.5s; PlatformIO / arduino-cli registry search kill after 12s; AI connect timeout 5s; friendly RU/EN errors instead of long freezes
+- **Libraries** — Search button required for registry queries (chip/tab switches no longer auto-hit the network)
+- **FC Configurator (full)** — tabbed panel for iNav drones & planes: Setup, PID, Rates, Receiver (live MSP_RC), Battery, Failsafe, GPS/Nav, Mixer/Features, Ports, Modes, Parameters (ArduPilot-style search), vehicle Presets (BF + iNav + AP), CLI, Diff, Flash; CLI-first tuning with auto-backup; RU/EN; unit tests — no arm/motors; EEPROM explicit only
+
 ## 0.2.25 — 2026-10-11
 
 - **Install to any drive/folder** — NSIS `installMode: both` (per-user or all-users) plus directory page; pick e.g. `D:\Apps\Aether` or `E:\Aether`, not only Program Files; all-users still creates Public Desktop shortcut; custom `windows/installer.nsi` keeps `/D=` across MultiUser init

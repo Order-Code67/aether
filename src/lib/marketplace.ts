@@ -3,6 +3,8 @@ import {
   loadExtensionFromUrl,
   validateManifest,
 } from "@/lib/extensionLoader";
+import { fetchWithTimeout, HTTP_TIMEOUT_MS } from "@/lib/offline";
+import { isAppOffline } from "@/stores/offlineStore";
 import type { ExtensionManifest } from "@/types/extensions";
 
 export interface CatalogEntry {
@@ -59,11 +61,15 @@ export async function fetchCatalog(
   };
 
   let remoteOrBundled: ExtensionCatalog;
-  if (!remoteUrl?.trim()) {
+  if (!remoteUrl?.trim() || isAppOffline()) {
     remoteOrBundled = getBundledCatalog();
   } else {
     try {
-      const res = await fetch(remoteUrl.trim());
+      const res = await fetchWithTimeout(
+        remoteUrl.trim(),
+        undefined,
+        HTTP_TIMEOUT_MS,
+      );
       if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
       const data = (await res.json()) as ExtensionCatalog;
       if (!Array.isArray(data.entries)) {

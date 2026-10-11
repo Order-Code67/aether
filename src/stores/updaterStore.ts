@@ -7,6 +7,7 @@ import {
   type UpdateProgress,
 } from "@/lib/updater";
 import { isTauriRuntime } from "@/lib/tauri";
+import { isAppOffline } from "@/stores/offlineStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 
 type UpdaterPhase =
@@ -68,12 +69,37 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   quietCheckOnStartup: async () => {
     if (!isTauriRuntime() || get().quietChecked) return;
     set({ quietChecked: true });
-    await get().check({ quiet: true, openDialog: true });
+    // Never block startup offline — skip silently.
+    if (isAppOffline()) {
+      set({
+        phase: "unavailable",
+        error: null,
+        lastCheckedAt: Date.now(),
+        dialogOpen: false,
+      });
+      return;
+    }
+    // Fire-and-forget: do not await on the UI path beyond this store call.
+    void get().check({ quiet: true, openDialog: true });
   },
 
   check: async (opts) => {
     const quiet = opts?.quiet === true;
     const openDialog = opts?.openDialog === true;
+    if (isAppOffline()) {
+      set({
+        phase: "unavailable",
+        // Quiet startup: silent. Manual check: one-line notice via Settings.
+        error: quiet ? null : "offline",
+        lastCheckedAt: Date.now(),
+        dialogOpen: false,
+        progress: null,
+        availableVersion: null,
+        notes: null,
+        pending: null,
+      });
+      return;
+    }
     const channel = useSettingsStore.getState().updateChannel;
     set({
       phase: "checking",
