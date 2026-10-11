@@ -58,7 +58,7 @@ export const ru: Record<MessageKey, string> = {
     "Вкладка зарегистрирована в плагинах, но ещё не реализована. Для работы используйте встроенные вкладки MSP/MAVLink.",
   "about.title": "О Aether Configurator",
   "about.body":
-    "Экспериментальный компаньон (не мост IDE Aether). Вдохновлён Betaflight, iNav и ArduPilot — без аффилиации. Основной путь FC в Aether — БПЛА-Студия.",
+    "FC-компаньон для Aether. Вдохновлён Betaflight, iNav и ArduPilot — без аффилиации. Запускается из Activity БПЛА с передачей COM.",
   "about.version": "Версия",
   "about.stack": "Стек: Electron · React · TypeScript · Vite · Zustand · MSP · MAVLink",
   "theme.dark": "Тёмная",

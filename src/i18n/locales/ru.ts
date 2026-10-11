@@ -10,7 +10,7 @@ export const ru: Record<MessageKey, string> = {
   "activity.libraries": "Библиотеки",
   "activity.librariesTitle": "Библиотеки (книга) — поиск и установка",
   "activity.inav": "БПЛА",
-  "activity.inavTitle": "БПЛА-Студия — запуск отдельного конфигуратора FC",
+  "activity.inavTitle": "БПЛА: Aether Configurator + COM / MSP / прошивка",
   "activity.debug": "Отладка",
   "activity.agent": "ИИ-агент",
   "activity.extensions": "Расширения",
@@ -146,13 +146,13 @@ export const ru: Record<MessageKey, string> = {
     "Установка → Doctor (PIO) → Import OfflineLibs → Примеры → Сборка+загрузка. См. docs/CLEAN_WINDOWS.md.",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
-  "hub.tagline": "Выберите путь — Arduino, PlatformIO, БПЛА-Студия, VS Code или ИИ.",
+  "hub.tagline": "Выберите путь — Arduino, PlatformIO, Aether Configurator, VS Code или ИИ.",
   "hub.arduino": "Arduino",
   "hub.arduinoDesc": "Мастер быстрого старта и новый Arduino-проект.",
   "hub.platformio": "PlatformIO",
   "hub.platformioDesc": "Открыть папку и выбрать платы / окружения.",
-  "hub.inav": "БПЛА-Студия",
-  "hub.inavDesc": "Открыть отдельный конфигуратор FC дронов (передача COM).",
+  "hub.inav": "Aether Configurator",
+  "hub.inavDesc": "Запуск Configurator с передачей COM; быстрый MSP/CLI/flash в Aether.",
   "hub.vscode": "VS Code",
   "hub.vscodeDesc": "Открыть рабочую область в VS Code (десктоп).",
   "hub.ai": "ИИ-ассистент",
@@ -170,7 +170,8 @@ export const ru: Record<MessageKey, string> = {
     "Создайте проект Blink для выбранной платы или откройте встроенный пример.",
   "onboarding.projectReady": "Проект готов: {path}",
   "onboarding.createBlink": "Создать проект Blink…",
-  "onboarding.openExample": "Открыть пример Blink",
+  "onboarding.createServo": "Создать проект Servo…",
+  "onboarding.openExample": "Открыть стартовый пример",
   "onboarding.uploadHint":
     "Используется выбранный COM-порт. Откроется Вывод, чтобы следить за прогрессом.",
   "onboarding.buildUpload": "Сборка + загрузка",
@@ -197,7 +198,7 @@ export const ru: Record<MessageKey, string> = {
   "settings.showExternalInavConfigurator":
     "Показывать кнопку внешнего iNav Configurator",
   "settings.showExternalInavConfiguratorHint":
-    "По умолчанию выкл. Если включить — на вкладке Setup появится кнопка запуска официального Electron iNav Configurator (необязательно; лучше настраивать в Aether / БПЛА-Студии).",
+    "По умолчанию выкл. Если включить — на вкладке Setup появится кнопка запуска официального Electron iNav Configurator (необязательно; лучше Aether Configurator).",
   "settings.externalInavConfiguratorDisabled":
     "Внешний iNav Configurator отключён — включите в Настройки → Инструменты.",
   "libraries.tab.platformio": "PlatformIO",
@@ -664,22 +665,7 @@ export const ru: Record<MessageKey, string> = {
   "updater.feedHint":
     "Подписанные обновления через Tauri updater. Stable → latest.json; Beta → latest-beta.json (prerelease).",
   "status.fcSession": "FC · {port}",
-  "status.fcSessionTitle": "Открыть мост БПЛА-Студии",
-  "studio.bridge.title": "БПЛА-Студия",
-  "studio.bridge.hint":
-    "Aether — IDE. Настройка полётников — в отдельной программе «БПЛА-Студия». Выберите COM и нажмите Открыть: Aether освободит порт и передаст его студии.",
-  "studio.bridge.status": "Статус установки",
-  "studio.bridge.installed": "Найдено: {path}",
-  "studio.bridge.notInstalled":
-    "БПЛА-Студия не найдена. Соберите (npm run studio:build) или задайте AETHER_BPLA_STUDIO.",
-  "studio.bridge.handoff": "Передача COM (необязательно)",
-  "studio.bridge.open": "Открыть БПЛА-Студию",
-  "studio.bridge.launching": "Запуск…",
-  "studio.bridge.launched": "БПЛА-Студия запущена.",
-  "studio.bridge.missing":
-    "Исполняемый файл БПЛА-Студии не найден. npm run studio:build или AETHER_BPLA_STUDIO.",
-  "studio.bridge.desktopRequired":
-    "Мост БПЛА-Студии доступен в десктоп-приложении (npm run tauri:dev).",
+  "status.fcSessionTitle": "Открыть БПЛА / Aether Configurator",
   "inav.title": "FC Configurator",
   "inav.hint":
     "Подключите полётный контроллер через Aether (слева → Подключить). Полноценный конфигуратор iNav в этом окне: PID, rates, RX, nav, параметры, пресеты. Занимает COM-порт. Без моторов/arm. EEPROM — только явно.",
@@ -901,7 +887,39 @@ export const ru: Record<MessageKey, string> = {
   "inav.msp.sensors": "Датчики",
   "inav.msp.voltage": "Напряжение",
   "inav.msp.voltageValue": "{v} В",
+  "inav.msp.rssi": "RSSI",
+  "inav.msp.rssiValue": "{v}",
   "inav.msp.mah": "mAh",
+  "loraPath.title": "Путь LoRa",
+  "loraPath.wizard": "Мастер",
+  "loraPath.examples": "Примеры TX/RX",
+  "loraPath.pair": "Открыть пару TX + RX",
+  "loraPath.pairOpened": "LoRa TX + RX открыты (TX активен, RX — вторая папка).",
+  "loraPath.pairFailed": "Не удалось открыть пару LoRa TX/RX.",
+  "loraPath.step.pins": "Пины",
+  "loraPath.step.upload": "Прошивка",
+  "loraPath.step.plotter": "Plotter RSSI",
+  "loraPath.step.doctor": "Doctor",
+  "bplaPath.title": "БПЛА",
+  "bplaPath.hint":
+    "Полная настройка FC → Aether Configurator. Ниже: быстрый COM / MSP / CLI / DFU в IDE. Arduino остаётся основным путём.",
+  "bplaPath.step.com": "COM в Aether",
+  "bplaPath.step.msp": "MSP / телеметрия",
+  "bplaPath.step.cli": "CLI",
+  "bplaPath.step.flash": "Прошивка",
+  "bplaPath.openPlotter": "Открыть Plotter",
+  "bplaPath.liveTelemetry": "Живой MSP → Plotter",
+  "bplaPath.configuratorTitle": "Aether Configurator",
+  "bplaPath.configuratorHint":
+    "FC-приложение для БПЛА. Освобождает COM, передаёт --port/--baud. Сборка: npm run configurator:package.",
+  "bplaPath.configuratorOpen": "Открыть Aether Configurator",
+  "bplaPath.configuratorLaunching": "Запуск…",
+  "bplaPath.configuratorLaunched": "Aether Configurator запущен.",
+  "bplaPath.configuratorInstalled": "Найден: {path}",
+  "bplaPath.configuratorMissing":
+    "Aether Configurator не найден. npm run configurator:package или AETHER_CONFIGURATOR.",
+  "bplaPath.configuratorDesktop":
+    "Aether Configurator доступен в десктоп-приложении (npm run tauri:dev).",
   "inav.msp.gps": "GPS",
   "inav.msp.gpsValue": "{fix} · {sats} спутн.",
   "inav.msp.latLon": "Шир. / Долг.",

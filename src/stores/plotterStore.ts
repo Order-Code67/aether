@@ -76,6 +76,8 @@ interface PlotterState {
   setPanFromEnd: (pan: number) => void;
   nudgePan: (delta: number) => void;
   ingestLine: (line: string) => void;
+  /** Push a pre-built sample (e.g. MSP RSSI/voltage) without parsing a text line. */
+  ingestSample: (sample: Record<string, number>) => void;
   ingestBytes: (bytes: ArrayLike<number>) => void;
 }
 
@@ -295,6 +297,12 @@ export const usePlotterStore = create<PlotterState>()(
         const sample = parseSerialPlotLine(line);
         if (!sample) return;
 
+        set((state) => appendSample(state, sample));
+      },
+
+      ingestSample: (sample) => {
+        if (get().paused) return;
+        if (!sample || Object.keys(sample).length === 0) return;
         set((state) => appendSample(state, sample));
       },
 

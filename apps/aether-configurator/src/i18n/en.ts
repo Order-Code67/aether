@@ -56,7 +56,7 @@ export const en = {
     "This plugin tab is registered but not implemented yet. Use the built-in tabs for live MSP/MAVLink work.",
   "about.title": "About Aether Configurator",
   "about.body":
-    "Experimental companion (not the Aether IDE bridge). Inspired by Betaflight, iNav and ArduPilot — not affiliated. Primary FC path in Aether is БПЛА-Студия.",
+    "FC companion for Aether. Inspired by Betaflight, iNav and ArduPilot — not affiliated. Launched from Aether Activity БПЛА with COM handoff.",
   "about.version": "Version",
   "about.stack": "Stack: Electron · React · TypeScript · Vite · Zustand · MSP · MAVLink",
   "theme.dark": "Dark",

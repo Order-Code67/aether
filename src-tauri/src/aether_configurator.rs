@@ -1,4 +1,5 @@
-//! Detect and launch БПЛА-Студия (standalone FC configurator) with optional COM handoff.
+//! Detect and launch Aether Configurator (Electron FC companion) with optional COM handoff.
+//! Target path for БПЛА work — not a replacement for the Arduino IDE core.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -7,7 +8,7 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BplaStudioInfo {
+pub struct AetherConfiguratorInfo {
     pub installed: bool,
     pub path: Option<String>,
 }
@@ -17,14 +18,13 @@ fn path_ok(p: &Path) -> bool {
 }
 
 fn push_exe_variants(out: &mut Vec<PathBuf>, dir: PathBuf) {
-    out.push(dir.join("БПЛА-Студия.exe"));
-    out.push(dir.join("bpla-studio.exe"));
-    out.push(dir.join("BPLA Studio.exe"));
-    out.push(dir.join("bpla_studio.exe"));
+    out.push(dir.join("Aether Configurator.exe"));
+    out.push(dir.join("AetherConfigurator.exe"));
+    out.push(dir.join("aether-configurator.exe"));
 }
 
-fn resolve_bpla_studio() -> Option<PathBuf> {
-    if let Ok(override_path) = std::env::var("AETHER_BPLA_STUDIO") {
+fn resolve_aether_configurator() -> Option<PathBuf> {
+    if let Ok(override_path) = std::env::var("AETHER_CONFIGURATOR") {
         let p = PathBuf::from(override_path.trim());
         if path_ok(&p) {
             return Some(p);
@@ -35,20 +35,29 @@ fn resolve_bpla_studio() -> Option<PathBuf> {
     {
         let mut candidates: Vec<PathBuf> = Vec::new();
 
-        // Dev / sibling build next to Aether repo or installer
         if let Ok(exe) = std::env::current_exe() {
             if let Some(dir) = exe.parent() {
                 push_exe_variants(&mut candidates, dir.to_path_buf());
-                push_exe_variants(&mut candidates, dir.join("..").join("bpla-studio"));
-                // Monorepo release layout
+                push_exe_variants(
+                    &mut candidates,
+                    dir.join("..").join("Aether Configurator"),
+                );
+                // Monorepo electron-builder output
                 push_exe_variants(
                     &mut candidates,
                     dir.join("..")
                         .join("..")
                         .join("apps")
-                        .join("bpla-studio")
-                        .join("src-tauri")
-                        .join("target")
+                        .join("aether-configurator")
+                        .join("release")
+                        .join("win-unpacked"),
+                );
+                push_exe_variants(
+                    &mut candidates,
+                    dir.join("..")
+                        .join("..")
+                        .join("apps")
+                        .join("aether-configurator")
                         .join("release"),
                 );
             }
@@ -58,19 +67,17 @@ fn resolve_bpla_studio() -> Option<PathBuf> {
             let local = PathBuf::from(local);
             push_exe_variants(
                 &mut candidates,
-                local.join("Programs").join("БПЛА-Студия"),
+                local.join("Programs").join("Aether Configurator"),
             );
             push_exe_variants(
                 &mut candidates,
-                local.join("Programs").join("bpla-studio"),
+                local.join("Programs").join("aether-configurator"),
             );
-            push_exe_variants(&mut candidates, local.join("bpla-studio"));
         }
 
         if let Ok(pf) = std::env::var("ProgramFiles") {
             let pf = PathBuf::from(pf);
-            push_exe_variants(&mut candidates, pf.join("БПЛА-Студия"));
-            push_exe_variants(&mut candidates, pf.join("bpla-studio"));
+            push_exe_variants(&mut candidates, pf.join("Aether Configurator"));
         }
 
         if let Ok(path) = std::env::var("PATH") {
@@ -97,8 +104,7 @@ fn resolve_bpla_studio() -> Option<PathBuf> {
 
     #[cfg(not(windows))]
     {
-        let names = ["bpla-studio", "БПЛА-Студия"];
-        for name in names {
+        for name in ["aether-configurator", "Aether Configurator"] {
             if let Ok(output) = Command::new("which").arg(name).output() {
                 if output.status.success() {
                     let s = String::from_utf8_lossy(&output.stdout);
@@ -114,23 +120,24 @@ fn resolve_bpla_studio() -> Option<PathBuf> {
 }
 
 #[tauri::command]
-pub fn bpla_studio_detect() -> BplaStudioInfo {
-    match resolve_bpla_studio() {
-        Some(p) => BplaStudioInfo {
+pub fn aether_configurator_detect() -> AetherConfiguratorInfo {
+    match resolve_aether_configurator() {
+        Some(p) => AetherConfiguratorInfo {
             installed: true,
             path: Some(p.to_string_lossy().to_string()),
         },
-        None => BplaStudioInfo {
+        None => AetherConfiguratorInfo {
             installed: false,
             path: None,
         },
     }
 }
 
-/// Launch БПЛА-Студия. Optional COM handoff: `--port COMx --baud 115200`.
+/// Launch Aether Configurator. Optional COM handoff: `--port COMx --baud 115200`.
 #[tauri::command]
-pub fn open_bpla_studio(port: Option<String>, baud: Option<u32>) -> Result<(), String> {
-    let exe = resolve_bpla_studio().ok_or_else(|| "BPLA_STUDIO_MISSING".to_string())?;
+pub fn open_aether_configurator(port: Option<String>, baud: Option<u32>) -> Result<(), String> {
+    let exe =
+        resolve_aether_configurator().ok_or_else(|| "AETHER_CONFIGURATOR_MISSING".to_string())?;
 
     let mut args: Vec<String> = Vec::new();
     if let Some(p) = port.filter(|s| !s.trim().is_empty()) {
@@ -146,14 +153,18 @@ pub fn open_bpla_studio(port: Option<String>, baud: Option<u32>) -> Result<(), S
     {
         let exe_s = exe
             .to_str()
-            .ok_or_else(|| "БПЛА-Студия path is not valid UTF-8.".to_string())?;
-        // `start` with empty title; pass remaining args to the exe.
-        let mut cmd_args = vec!["/C".to_string(), "start".to_string(), "".to_string(), exe_s.to_string()];
+            .ok_or_else(|| "Aether Configurator path is not valid UTF-8.".to_string())?;
+        let mut cmd_args = vec![
+            "/C".to_string(),
+            "start".to_string(),
+            "".to_string(),
+            exe_s.to_string(),
+        ];
         cmd_args.extend(args);
         Command::new("cmd.exe")
             .args(&cmd_args)
             .spawn()
-            .map_err(|e| format!("Failed to launch БПЛА-Студия: {e}"))?;
+            .map_err(|e| format!("Failed to launch Aether Configurator: {e}"))?;
         return Ok(());
     }
 
@@ -162,7 +173,7 @@ pub fn open_bpla_studio(port: Option<String>, baud: Option<u32>) -> Result<(), S
         Command::new(&exe)
             .args(&args)
             .spawn()
-            .map_err(|e| format!("Failed to launch БПЛА-Студия: {e}"))?;
+            .map_err(|e| format!("Failed to launch Aether Configurator: {e}"))?;
         Ok(())
     }
 }

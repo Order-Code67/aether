@@ -33,13 +33,11 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **About** — live app version in Settings → About
 - **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
 - **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
-- **БПЛА-Студия bridge** — Activity **БПЛА**: launch the standalone FC configurator with optional COM handoff (see [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md); app lives in `apps/bpla-studio/`)
-- **Aether Configurator** (experimental Electron companion) — MSP/MAVLink tooling in `apps/aether-configurator/` (`npm run configurator:dev`); **not** wired into the IDE bridge yet — primary FC path remains БПЛА-Студия ([`docs/AETHER_CONFIGURATOR.md`](docs/AETHER_CONFIGURATOR.md))
+- **Aether Configurator** — Activity **БПЛА**: detect/launch with COM `--port`/`--baud` handoff (`AETHER_CONFIGURATOR`); app in `apps/aether-configurator/` ([`docs/AETHER_CONFIGURATOR.md`](docs/AETHER_CONFIGURATOR.md))
 
 ## Not yet
 
 - Signed remote extension store / cloud publisher accounts
-- IDE launch bridge for Aether Configurator (Electron); use `npm run configurator:dev` until then
 
 ## Prerequisites (Windows)
 
@@ -180,13 +178,15 @@ Offline toolchain pack (separate from the installer): `npm run build:offline-cac
 4. Ask about firmware, builds, pins, serial debugging (Enter to send; Stop cancels stream)
 5. Edits: full-file fence, or `SEARCH/REPLACE` / `diff` patch → **Preview** (eye) then **Apply**
 
-## БПЛА-Студия (standalone FC configurator)
+## Aether Configurator (FC companion)
 
-Aether does **not** embed the full drone configurator. Use the sibling app:
+Aether does **not** embed the full drone configurator. Activity **БПЛА** launches **Aether Configurator**:
 
 ```bash
-npm run studio:dev      # develop БПЛА-Студия
-npm run studio:build    # NSIS installer
+npm run configurator:dev
+npm run configurator:package
 ```
 
-From Aether: Activity **БПЛА** → pick COM (optional) → **Open БПЛА-Студия**. Details: [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md).
+From Aether: Activity **БПЛА** → pick COM (optional) → **Open Aether Configurator**. Details: [`docs/AETHER_CONFIGURATOR.md`](docs/AETHER_CONFIGURATOR.md).
+
+Legacy standalone БПЛА-Студия remains in the monorepo (`npm run studio:build`) but is **not** launched from the IDE — see [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md).

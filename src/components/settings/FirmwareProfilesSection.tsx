@@ -7,6 +7,7 @@ import {
   importFirmwareProfilesFromFile,
 } from "@/lib/firmwareProfilesFile";
 import { HARDWARE_PROFILE_PRESETS } from "@/lib/hardwareProfiles";
+import { openLoraTxRxPair } from "@/lib/loraPair";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
   useFirmwareProfileStore,
@@ -130,12 +131,40 @@ export function FirmwareProfilesSection() {
     }
   };
 
+  const openPair = async () => {
+    if (!isTauriRuntime()) {
+      flashNotice(t("profiles.desktopOnly"));
+      return;
+    }
+    setHwBusy("lora-pair");
+    try {
+      const env =
+        HARDWARE_PROFILE_PRESETS.find((p) => p.id === "heltec-v3")?.env ??
+        "heltec_wifi_lora_32_V3";
+      await openLoraTxRxPair(env);
+      flashNotice(t("loraPath.pairOpened"), 4000);
+    } catch (e) {
+      flashNotice(e instanceof Error ? e.message : t("loraPath.pairFailed"));
+    } finally {
+      setHwBusy(null);
+    }
+  };
+
   return (
     <div className="space-y-2 border-t border-aether-border pt-3">
       <p className="font-medium text-aether-fg">{t("profiles.hardwareTitle")}</p>
       <p className="text-[11px] text-aether-fg-muted">
         {t("profiles.hardwareHint")}
       </p>
+      <button
+        type="button"
+        data-testid="profiles-lora-pair"
+        disabled={hwBusy === "lora-pair"}
+        onClick={() => void openPair()}
+        className="h-8 w-full rounded border border-aether-accent/50 bg-aether-accent-muted px-2 text-[11px] text-aether-fg disabled:opacity-40"
+      >
+        {hwBusy === "lora-pair" ? t("wizard.creating") : t("loraPath.pair")}
+      </button>
       <ul className="space-y-1">
         {HARDWARE_PROFILE_PRESETS.map((p) => {
           const label = locale === "ru" ? p.labelRu : p.labelEn;

@@ -14,7 +14,7 @@ export type CommandCategory =
   | "View"
   | "PlatformIO"
   | "iNav"
-  | "БПЛА-Студия"
+  | "BPLA"
   | "Git"
   | "Debug"
   | "Agent"
@@ -243,44 +243,48 @@ export function getCommands(): Command[] {
     },
     {
       id: "view.inav",
-      title: "Show БПЛА-Студия bridge",
+      title: "Show BPLA / Aether Configurator",
       category: "View",
-      keywords: "drone flight fc inav кли дроны конфигуратор бпла студия",
+      keywords: "drone flight fc inav кли дроны конфигуратор бпла aether configurator",
       run: () => view("inav"),
     },
     {
       id: "inav.focus",
-      title: "БПЛА-Студия: Focus bridge",
-      category: "БПЛА-Студия",
+      title: "BPLA: Focus panel",
+      category: "BPLA",
       keywords: "drone flight fc inav дроны",
       run: () => view("inav"),
     },
     {
       id: "inav.connect",
-      title: "БПЛА-Студия: Open with COM handoff",
-      category: "БПЛА-Студия",
-      keywords: "drone serial com connect подключить aether bpla",
+      title: "Aether Configurator: Open with COM handoff",
+      category: "BPLA",
+      keywords: "drone serial com connect подключить aether configurator",
       run: async () => {
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");
         const { useSerialStore } = await import("@/stores/serialStore");
-        const { openBplaStudio } = await import("@/lib/bplaStudio");
+        const { openAetherConfigurator } = await import(
+          "@/lib/aetherConfigurator"
+        );
         const { t } = await import("@/hooks/useI18n");
         await useInavStore.getState().releasePort();
         const serial = useSerialStore.getState();
         try {
-          await openBplaStudio({
+          await openAetherConfigurator({
             port: serial.selectedPath || undefined,
             baud: serial.baudRate,
           });
-          useSettingsStore.getState().flashNotice(t("studio.bridge.launched"));
+          useSettingsStore
+            .getState()
+            .flashNotice(t("bplaPath.configuratorLaunched"));
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           useSettingsStore
             .getState()
             .flashNotice(
-              msg.includes("BPLA_STUDIO_MISSING")
-                ? t("studio.bridge.missing")
+              msg.includes("AETHER_CONFIGURATOR_MISSING")
+                ? t("bplaPath.configuratorMissing")
                 : msg,
             );
         }
@@ -288,8 +292,8 @@ export function getCommands(): Command[] {
     },
     {
       id: "inav.disconnect",
-      title: "БПЛА-Студия: Release COM in Aether",
-      category: "БПЛА-Студия",
+      title: "BPLA: Release COM in Aether",
+      category: "BPLA",
       keywords: "drone serial disconnect отключить",
       run: async () => {
         const { useInavStore } = await import("@/stores/inavStore");
@@ -299,7 +303,7 @@ export function getCommands(): Command[] {
     {
       id: "inav.openConfigurator",
       title: "iNav: Open external Configurator",
-      category: "БПЛА-Студия",
+      category: "BPLA",
       keywords: "configurator inav external внешний конфигуратор",
       run: async () => {
         const { t } = await import("@/hooks/useI18n");

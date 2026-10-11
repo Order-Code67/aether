@@ -1,7 +1,7 @@
 # Aether Configurator
 
-Experimental **Electron** companion for flight-controller setup (MSP + MAVLink scaffold).  
-It is **not** the primary FC path in Aether and does **not** replace [БПЛА-Студия](BPLA_STUDIO.md) or the official iNav Configurator.
+**Electron** companion for flight-controller setup (MSP + MAVLink).  
+Launched from Aether Activity **БПЛА** with COM handoff. Does **not** replace the official iNav Configurator.
 
 | Item | Path / command |
 |------|----------------|
@@ -13,8 +13,10 @@ It is **not** the primary FC path in Aether and does **not** replace [БПЛА-�
 
 ## Integration status (Aether IDE)
 
-- **Shipped bridge:** Activity **БПЛА** → launch [БПЛА-Студия](BPLA_STUDIO.md) with optional COM handoff.
-- **This Electron app:** monorepo workspace + docs only — no launch button in the IDE yet (avoids claiming a second full product). Use the npm scripts above for local development.
+- **Arduino-first:** the IDE core stays board → sketch → COM → upload. LoRa is Arduino + radio.
+- **БПЛА:** Activity **БПЛА** → **Open Aether Configurator** (detect / launch + COM `--port` / `--baud`). Env: `AETHER_CONFIGURATOR`.
+- Build locally: `npm run configurator:package` → `apps/aether-configurator/release/`.
+- БПЛА-Студия is **no longer** launched from the IDE.
 
 ## What works today
 

@@ -879,7 +879,19 @@ fn lora_pin_build_flags(board: &str) -> String {
 \t-DAETHER_OLED_SCL=15\n\
 \t-DAETHER_OLED_RST=16\n\
 \t-DAETHER_RADIO_SX127X=1\n",
-        "ttgo-lora32-v1" | "ttgo-lora32-v2" => "\
+        // TTGO V1 OLED is 4/15; V2 is 21/22 (keep in sync with src/lib/hardwarePinMaps.ts)
+        "ttgo-lora32-v1" => "\
+\t-DAETHER_LORA_NSS=18\n\
+\t-DAETHER_LORA_DIO=26\n\
+\t-DAETHER_LORA_RST=14\n\
+\t-DAETHER_LORA_BUSY=-1\n\
+\t-DAETHER_LORA_SCK=5\n\
+\t-DAETHER_LORA_MISO=19\n\
+\t-DAETHER_LORA_MOSI=27\n\
+\t-DAETHER_OLED_SDA=4\n\
+\t-DAETHER_OLED_SCL=15\n\
+\t-DAETHER_RADIO_SX127X=1\n",
+        "ttgo-lora32-v2" => "\
 \t-DAETHER_LORA_NSS=18\n\
 \t-DAETHER_LORA_DIO=26\n\
 \t-DAETHER_LORA_RST=14\n\

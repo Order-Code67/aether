@@ -35,7 +35,7 @@
     "allow-examples",
     "allow-vscode",
     "allow-inav",
-    "allow-bpla-studio",
+    "allow-aether-configurator",
     "allow-dfu",
     "updater:default",
     "process:default"

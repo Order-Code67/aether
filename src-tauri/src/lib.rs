@@ -1,6 +1,6 @@
 mod ai;
+mod aether_configurator;
 mod arduino_cli;
-mod bpla_studio;
 mod debug;
 mod dfu;
 mod examples;
@@ -126,8 +126,8 @@ pub fn run() {
             vscode::vscode_generate_config,
             inav::inav_configurator_detect,
             inav::open_external_inav_configurator,
-            bpla_studio::bpla_studio_detect,
-            bpla_studio::open_bpla_studio,
+            aether_configurator::aether_configurator_detect,
+            aether_configurator::open_aether_configurator,
             dfu::dfu_util_detect,
             dfu::dfu_list_devices,
             dfu::dfu_flash_hex,

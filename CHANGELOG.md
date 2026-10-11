@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.35 — 2026-10-12
+
+- **Arduino-first** — Quick Start Blink/Servo by board; LoRa TX+RX pair (TX active + RX second folder); LoRa guide + Doctor/Plotter glue
+- **БПЛА → Aether Configurator** — Activity БПЛА launches Configurator with COM handoff (`AETHER_CONFIGURATOR`); БПЛА-Студия removed from IDE bridge
+- **LoRa wow path** — guide strip; auto-open Plotter on RSSI/SNR; Doctor on serial/build/upload fail; radio tips on env change; TTGO V1 OLED 4/15
+- **BPLA in-IDE** — COM → MSP → CLI → DFU → live MSP→Plotter (quick path; full FC → Configurator)
+
 ## 0.2.34 — 2026-10-12
 
 - **Distribution** — Public Desktop shortcut on All Users install; auto-detect `Aether_OfflineCache_*` / `OfflineLibs_*` next to app / Desktop / Downloads with one-click import; `npm run build:offline-libs` + `package:dist` USB pack; Welcome clean-PC (~15 min) path + `docs/CLEAN_WINDOWS.md`

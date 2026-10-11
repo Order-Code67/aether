@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-aether-configurator"
+description = "Detect and launch Aether Configurator with optional COM handoff."
+commands.allow = ["aether_configurator_detect", "open_aether_configurator"]

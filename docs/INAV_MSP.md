@@ -1,9 +1,9 @@
 # iNav / MSP notes
 
-> **Moved:** The full FC configurator lives in **БПЛА-Студия** (`apps/bpla-studio`).  
-> See [`docs/BPLA_STUDIO.md`](BPLA_STUDIO.md). Aether only launches that app and can hand off COM (`--port` / `--baud`).
+> **FC path:** Activity **БПЛА** → **[Aether Configurator](AETHER_CONFIGURATOR.md)** (COM `--port` / `--baud`).  
+> Legacy standalone app: [`docs/BPLA_STUDIO.md`](BPLA_STUDIO.md) (not launched from the IDE).
 
-MSP protocol helpers used by the studio (and residual Aether serial tooling) remain documented below for implementers.
+MSP helpers used by the Configurator / residual Aether serial tooling are documented below for implementers.
 
 ## Supported (Modes)
 

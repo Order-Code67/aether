@@ -8,6 +8,7 @@ import {
 } from "@/components/merge/MergeConflictEditor";
 import { BoardHardwareStrip } from "@/components/platformio/BoardHardwareStrip";
 import { BuildToolbar } from "@/components/platformio/BuildToolbar";
+import { LoRaPathGuide } from "@/components/platformio/LoRaPathGuide";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { conflictCount, hasConflictMarkers } from "@/lib/mergeConflict";
 import { useEditorStore } from "@/stores/editorStore";
@@ -47,6 +48,7 @@ export function EditorArea() {
       <EditorTabs />
       <BuildToolbar />
       <BoardHardwareStrip />
+      <LoRaPathGuide />
       {kind === "folder" && isProject && (ports.length === 0 || pioError) && (
         <ComDriversHelp
           compact

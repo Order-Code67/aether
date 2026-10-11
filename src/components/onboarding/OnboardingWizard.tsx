@@ -27,25 +27,42 @@ type OnboardBoard = {
     | "wizard.board.mega"
     | "wizard.board.nano"
     | "wizard.board.esp32cam";
-  exampleId: string;
+  /** Bundled example when starter is blink */
+  blinkExampleId: string;
+  /** Bundled example when starter is servo (falls back to blink) */
+  servoExampleId: string;
+  /** PlatformIO wizard starters available for this board */
+  starters: Array<"blink" | "servo">;
 };
 
 const BOARDS: OnboardBoard[] = [
-  { id: "esp32dev", labelKey: "wizard.board.esp32", exampleId: "esp32-blink" },
+  {
+    id: "esp32dev",
+    labelKey: "wizard.board.esp32",
+    blinkExampleId: "esp32-blink",
+    servoExampleId: "esp32-blink",
+    starters: ["blink"],
+  },
   {
     id: "megaatmega2560",
     labelKey: "wizard.board.mega",
-    exampleId: "arduino-mega-servo",
+    blinkExampleId: "arduino-mega-servo",
+    servoExampleId: "arduino-mega-servo",
+    starters: ["blink", "servo"],
   },
   {
     id: "nanoatmega328",
     labelKey: "wizard.board.nano",
-    exampleId: "arduino-nano",
+    blinkExampleId: "arduino-nano",
+    servoExampleId: "arduino-nano",
+    starters: ["blink", "servo"],
   },
   {
     id: "esp32cam",
     labelKey: "wizard.board.esp32cam",
-    exampleId: "esp32-cam",
+    blinkExampleId: "esp32-cam",
+    servoExampleId: "esp32-cam",
+    starters: ["blink"],
   },
 ];
 
@@ -75,11 +92,17 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
 
   const [boardId, setBoardId] = useState("esp32dev");
+  const [starter, setStarter] = useState<"blink" | "servo">("blink");
   const [port, setPort] = useState("");
   const [busy, setBusy] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   const [projectReady, setProjectReady] = useState(false);
   const [uploadDone, setUploadDone] = useState(false);
+
+  const board = BOARDS.find((b) => b.id === boardId) ?? BOARDS[0]!;
+  const effectiveStarter: "blink" | "servo" = board.starters.includes(starter)
+    ? starter
+    : "blink";
 
   useEffect(() => {
     if (!open) return;
@@ -146,7 +169,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     setStepError(null);
   };
 
-  const createBlink = async () => {
+  const createStarterProject = async () => {
     if (!isTauriRuntime()) {
       setStepError(t("onboarding.needDesktop"));
       return;
@@ -159,13 +182,14 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
         setBusy(false);
         return;
       }
-      const board = BOARDS.find((b) => b.id === boardId) ?? BOARDS[0]!;
+      const name =
+        effectiveStarter === "servo" ? "servo_starter" : "blink_starter";
       const path = await initPioProject({
         parent,
-        name: "blink_starter",
+        name,
         board: board.id,
         framework: "arduino",
-        starter: "blink",
+        starter: effectiveStarter,
       });
       await openFolderAt(path);
       await refreshProject();
@@ -182,7 +206,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     }
   };
 
-  const openBlinkExample = async () => {
+  const openStarterExample = async () => {
     if (!isTauriRuntime()) {
       setStepError(t("onboarding.needDesktop"));
       return;
@@ -190,8 +214,11 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
     setBusy(true);
     setStepError(null);
     try {
-      const board = BOARDS.find((b) => b.id === boardId) ?? BOARDS[0]!;
-      const path = await materializeBundledExample(board.exampleId);
+      const exampleId =
+        effectiveStarter === "servo"
+          ? board.servoExampleId
+          : board.blinkExampleId;
+      const path = await materializeBundledExample(exampleId);
       await openFolderAt(path);
       await refreshProject();
       setProjectReady(true);
@@ -312,6 +339,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                   disabled={busy}
                   onClick={() => {
                     setBoardId(b.id);
+                    if (!b.starters.includes(starter)) setStarter("blink");
                     setStepError(null);
                   }}
                   className={cn(
@@ -325,6 +353,28 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                 </button>
               ))}
             </div>
+            {board.starters.length > 1 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {board.starters.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setStarter(s)}
+                    className={cn(
+                      "rounded border px-2 py-1 text-[11px]",
+                      effectiveStarter === s
+                        ? "border-aether-accent bg-aether-accent-muted text-aether-fg"
+                        : "border-aether-border text-aether-fg-muted hover:text-aether-fg",
+                    )}
+                  >
+                    {s === "servo"
+                      ? t("wizard.starter.servo")
+                      : t("wizard.starter.blink")}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="space-y-2">
@@ -381,7 +431,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void createBlink()}
+                onClick={() => void createStarterProject()}
                 className="inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white disabled:opacity-40"
               >
                 {busy ? (
@@ -389,12 +439,14 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                 ) : (
                   <FolderOpen size={12} />
                 )}
-                {t("onboarding.createBlink")}
+                {effectiveStarter === "servo"
+                  ? t("onboarding.createServo")
+                  : t("onboarding.createBlink")}
               </button>
               <button
                 type="button"
                 disabled={busy}
-                onClick={() => void openBlinkExample()}
+                onClick={() => void openStarterExample()}
                 className="inline-flex items-center gap-1 rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:border-aether-accent disabled:opacity-40"
               >
                 {t("onboarding.openExample")}

@@ -155,6 +155,8 @@ interface WorkspaceState {
   error: string | null;
   openFolder: () => Promise<void>;
   addFolder: () => Promise<void>;
+  /** Add an already-known folder path (no picker). Used by LoRa TX+RX pair. */
+  addFolderAt: (path: string) => Promise<void>;
   removeFolder: (path: string) => void;
   setActiveFolder: (path: string) => void;
   openDemoWorkspace: () => void;
@@ -272,17 +274,45 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         set({ loading: false });
         return;
       }
+      await get().addFolderAt(selected);
+    } catch (error) {
+      set({
+        loading: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to add folder.",
+      });
+    }
+  },
 
+  addFolderAt: async (path) => {
+    if (!isTauriRuntime()) {
+      set({
+        error:
+          "Add Folder requires the desktop app. Run: npm run tauri:dev",
+      });
+      return;
+    }
+
+    const { kind } = get();
+    if (kind === "demo") {
+      set({ error: "Close the demo workspace before adding folders." });
+      return;
+    }
+
+    const selected = path.trim();
+    if (!selected) return;
+
+    set({ loading: true, error: null });
+
+    try {
       const existing = get().folders;
       if (existing.some((f) => pathsEqual(f.path, selected))) {
-        set({
-          loading: false,
-          error: "That folder is already in the workspace.",
-        });
+        set({ loading: false, error: null });
         return;
       }
 
-      // Avoid nesting a root inside an existing root (and vice versa).
       for (const f of existing) {
         if (isUnderRoot(selected, f.path) || isUnderRoot(f.path, selected)) {
           set({

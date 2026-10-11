@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.34",
+  "version": "0.2.35",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "workspaces": [
@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:contracts": "vitest run src/lib/focusPolicy.test.ts src/lib/uploadGate.test.ts src/lib/supportReport.test.ts src/lib/pioErrors.test.ts src/lib/vscodeIntegration.test.ts src/lib/comDrivers.test.ts src/lib/serialPlotter.radio.test.ts src/lib/hardwarePinMaps.test.ts src/lib/distOffline.test.ts",
+    "test:contracts": "vitest run src/lib/focusPolicy.test.ts src/lib/uploadGate.test.ts src/lib/supportReport.test.ts src/lib/pioErrors.test.ts src/lib/vscodeIntegration.test.ts src/lib/comDrivers.test.ts src/lib/serialPlotter.radio.test.ts src/lib/hardwarePinMaps.test.ts src/lib/distOffline.test.ts src/lib/radioSerialDoctor.test.ts src/lib/mspPlotter.test.ts",
     "test:e2e": "npm run build && playwright test",
     "test:e2e:ui": "playwright test --ui",
     "smoke:ui": "node scripts/smoke-ui.mjs",

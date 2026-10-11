@@ -109,6 +109,8 @@ interface PlatformIoState {
   runTask: (task: PioTask) => Promise<void>;
   cancel: () => Promise<void>;
   runDoctor: () => Promise<void>;
+  /** Re-analyze LoRa/radio tips for the current (or given) env without a full doctor run. */
+  refreshRadioDoctorTips: (env?: string | null) => Promise<void>;
   installMissing: () => Promise<void>;
   refreshOfflineCache: () => Promise<void>;
   prepareOfflineCache: () => Promise<void>;
@@ -283,6 +285,8 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             ? { ...state.selectedEnvByRoot, [rootPath]: env }
             : state.selectedEnvByRoot,
         }));
+        // Keep Radio Doctor tips aligned with the selected env (multi-env LoRa examples).
+        void get().refreshRadioDoctorTips(env);
       },
 
       setUploadPort: (port) => {
@@ -517,6 +521,12 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           void import("@/lib/supportReport").then(({ persistLastErrorReport }) => {
             void persistLastErrorReport(useSettingsStore.getState().locale);
           });
+          // LoRa wow path: surface Radio Doctor tips on build/upload fail.
+          void get().refreshRadioDoctorTips().then(() => {
+            if (get().doctor.radio?.isRadioProject) {
+              get().showDoctor();
+            }
+          });
         }
 
         // After compiledb (or first build without a DB), restart clangd so it
@@ -640,6 +650,33 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             ),
           });
         }
+      },
+
+      refreshRadioDoctorTips: async (env) => {
+        const root = useWorkspaceStore.getState().rootPath;
+        const selectedEnv = env !== undefined ? env : get().selectedEnv;
+        if (!root || !get().isProject) {
+          set((state) => ({
+            doctor: { ...state.doctor, radio: null },
+          }));
+          return;
+        }
+        let radio: RadioDoctorHints | null = null;
+        try {
+          if (isTauriRuntime()) {
+            const iniText = await readTextFile(
+              joinPath(root, "platformio.ini"),
+            );
+            radio = analyzeRadioProject(iniText, selectedEnv);
+          } else {
+            radio = analyzeRadioProject(null, selectedEnv);
+          }
+        } catch {
+          radio = analyzeRadioProject(null, selectedEnv);
+        }
+        set((state) => ({
+          doctor: { ...state.doctor, radio },
+        }));
       },
 
       runDoctor: async () => {

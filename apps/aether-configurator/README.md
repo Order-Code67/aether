@@ -1,7 +1,9 @@
 # Aether Configurator
 
 Experimental desktop FC companion inspired by **Betaflight**, **iNav**, and **ArduPilot**.  
-**Not affiliated** with those projects. **Not** the primary Aether FC path — that is [БПЛА-Студия](../../docs/BPLA_STUDIO.md).
+**Not affiliated** with those projects.
+
+**Aether IDE:** Arduino-first. Activity **БПЛА** launches this Configurator with COM handoff (`AETHER_CONFIGURATOR`).
 
 **Stack:** Electron · React 19 · TypeScript · Vite · Tailwind CSS · Zustand · MSP · MAVLink · IndexedDB · dfu-util
 
@@ -14,7 +16,7 @@ Experimental desktop FC companion inspired by **Betaflight**, **iNav**, and **Ar
 | OSD / Profiles | Local editor / IndexedDB |
 | Navigation | Local mission + CLI export; FC upload **скоро** / coming soon |
 | Blackbox | Header preview only |
-| IDE integration | Docs + npm scripts only (no Activity Bar button yet) |
+| IDE integration | Activity **БПЛА** → Open Aether Configurator (COM `--port` / `--baud`) |
 
 ## Requirements
 

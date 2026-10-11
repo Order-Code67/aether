@@ -1,6 +1,8 @@
 # БПЛА-Студия
 
-Standalone Tauri app for configuring FPV drones and airplanes (iNav, Betaflight, ArduPilot targets). **Aether is the IDE** — it only detects/launches the studio and can pass a COM port.
+Standalone Tauri app for configuring FPV drones and airplanes (iNav, Betaflight, ArduPilot targets).
+
+> **IDE note (2026-10):** Aether no longer launches БПЛА-Студия. The Activity **БПЛА** bridge targets **[Aether Configurator](AETHER_CONFIGURATOR.md)** (`AETHER_CONFIGURATOR`). This app remains in the monorepo for optional standalone builds (`npm run studio:build`).
 
 ## Locations
 
@@ -11,17 +13,16 @@ Standalone Tauri app for configuring FPV drones and airplanes (iNav, Betaflight,
 | Build installer | `npm run studio:build` → NSIS under `apps/bpla-studio/src-tauri/target/release/bundle/` |
 | Diff backups | `Documents/BPLA-Studio/diffs/` |
 
-## Aether bridge
+## Aether IDE
 
-1. Activity **БПЛА** (or Welcome Hub → БПЛА-Студия)
-2. Optional: select COM + baud
-3. **Open БПЛА-Студия** — Aether releases the serial port and launches:
+The IDE **no longer** detects or launches this app. Use Activity **БПЛА** → **[Aether Configurator](AETHER_CONFIGURATOR.md)** instead.
 
-```text
-БПЛА-Студия.exe --port COMx --baud 115200
+To run БПЛА-Студия standalone from the monorepo:
+
+```bash
+npm run studio:dev
+npm run studio:build
 ```
-
-Detection order (Windows): `AETHER_BPLA_STUDIO` env → next to Aether.exe → `%LOCALAPPDATA%\Programs\…` → Program Files → PATH → monorepo `apps/bpla-studio/src-tauri/target/release`.
 
 ## Firmware families & boards
 
