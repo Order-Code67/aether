@@ -13,6 +13,7 @@ export type CommandCategory =
   | "Edit"
   | "View"
   | "PlatformIO"
+  | "iNav"
   | "Git"
   | "Debug"
   | "Agent"
@@ -238,6 +239,69 @@ export function getCommands(): Command[] {
       category: "View",
       keywords: "arduino lib pkg",
       run: () => view("libraries"),
+    },
+    {
+      id: "view.inav",
+      title: "Show iNav",
+      category: "View",
+      keywords: "drone flight fc inav кли дроны",
+      run: () => view("inav"),
+    },
+    {
+      id: "inav.focus",
+      title: "iNav: Focus",
+      category: "iNav",
+      keywords: "drone flight fc inav дроны",
+      run: () => view("inav"),
+    },
+    {
+      id: "inav.connect",
+      title: "iNav: Connect",
+      category: "iNav",
+      keywords: "drone serial com connect подключить",
+      run: async () => {
+        view("inav");
+        const { useInavStore } = await import("@/stores/inavStore");
+        await useInavStore.getState().connectSession();
+      },
+    },
+    {
+      id: "inav.disconnect",
+      title: "iNav: Disconnect",
+      category: "iNav",
+      keywords: "drone serial disconnect отключить",
+      run: async () => {
+        const { useInavStore } = await import("@/stores/inavStore");
+        await useInavStore.getState().disconnectSession();
+      },
+    },
+    {
+      id: "inav.openConfigurator",
+      title: "iNav: Open Configurator",
+      category: "iNav",
+      keywords: "configurator electron launch конфигуратор",
+      run: async () => {
+        view("inav");
+        const { useInavStore } = await import("@/stores/inavStore");
+        const { detectInavConfigurator, openInavConfigurator, INAV_CONFIGURATOR_DOWNLOAD_URL } =
+          await import("@/lib/inavConfigurator");
+        const { openExternalUrl } = await import("@/lib/comDrivers");
+        const { t } = await import("@/hooks/useI18n");
+        await useInavStore.getState().releasePort();
+        try {
+          const info = await detectInavConfigurator();
+          if (!info.installed) {
+            const go = window.confirm(t("inav.configuratorMissing"));
+            if (go) await openExternalUrl(INAV_CONFIGURATOR_DOWNLOAD_URL);
+            return;
+          }
+          await openInavConfigurator();
+          useSettingsStore.getState().flashNotice(t("inav.configuratorLaunched"));
+        } catch {
+          const go = window.confirm(t("inav.configuratorMissing"));
+          if (go) await openExternalUrl(INAV_CONFIGURATOR_DOWNLOAD_URL);
+        }
+      },
     },
     {
       id: "view.debug",

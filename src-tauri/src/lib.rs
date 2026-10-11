@@ -3,6 +3,7 @@ mod arduino_cli;
 mod debug;
 mod examples;
 mod git;
+mod inav;
 mod lsp;
 mod menu;
 mod platformio;
@@ -118,6 +119,8 @@ pub fn run() {
             vscode::open_external_vscode,
             vscode::vscode_detect,
             vscode::vscode_generate_config,
+            inav::inav_configurator_detect,
+            inav::open_external_inav_configurator,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aether");

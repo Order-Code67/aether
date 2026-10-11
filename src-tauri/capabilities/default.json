@@ -34,6 +34,7 @@
     "allow-debug",
     "allow-examples",
     "allow-vscode",
+    "allow-inav",
     "updater:default",
     "process:default"
   ]

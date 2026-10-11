@@ -80,6 +80,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
             )?,
             &MenuItem::with_id(app, "view.boards", "Boards & Targets", true, None::<&str>)?,
             &MenuItem::with_id(app, "view.libraries", "Libraries", true, None::<&str>)?,
+            &MenuItem::with_id(app, "view.inav", "iNav", true, None::<&str>)?,
             &MenuItem::with_id(app, "view.debug", "Run and Debug", true, Some("CmdOrCtrl+Shift+D"))?,
             &MenuItem::with_id(app, "view.agent", "AI Agent", true, None::<&str>)?,
             &MenuItem::with_id(app, "view.extensions", "Extensions", true, Some("CmdOrCtrl+Shift+X"))?,

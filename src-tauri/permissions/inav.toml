@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-inav"
+description = "Detect and launch iNav Configurator."
+commands.allow = ["inav_configurator_detect", "open_external_inav_configurator"]

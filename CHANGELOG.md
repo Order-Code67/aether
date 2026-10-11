@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.21 — 2026-10-11
+
+- **iNav activity** — Activity Bar **iNav** (Дроны / iNav): COM connect/disconnect (owns serial; releases Monitor first), FC CLI console with quick chips (`help` / `version` / `status` / `diff` / `dump`), Get/Save/Load/Send diff under `Documents/Aether/drones/diffs/`, persisted iNav profiles, Open iNav Configurator (detect common Windows paths + PATH; disconnect first; download hint), Plotter shortcut; View menu + Command Palette; RU/EN; unit tests for diff/path helpers — not MSP PID / DFU / Betaflight
+
 ## 0.2.20 — 2026-10-11
 
 - **MAVLink Telemetry HUD** — Plotter MAVLink mode expands beyond HEARTBEAT/ATTITUDE: GPS_RAW_INT / GLOBAL_POSITION_INT (lat/lon/alt/fix/sats), SYS_STATUS + BATTERY_STATUS (%, V, A), VFR_HUD (speed/heading/throttle/alt); HUD strip above plots; channels for alt, speed, battery, roll/pitch/yaw; unit tests; RU/EN — still not a GCS / map / missions

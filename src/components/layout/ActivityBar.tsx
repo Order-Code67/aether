@@ -7,6 +7,7 @@ import {
   Files,
   GitBranch,
   Library,
+  Plane,
   Search,
   Settings,
   Sparkles,
@@ -24,6 +25,7 @@ const ACTIVITY_ICONS: Record<ActivityId, LucideIcon> = {
   "source-control": GitBranch,
   boards: Cpu,
   libraries: Library,
+  inav: Plane,
   debug: Bug,
   agent: Sparkles,
   extensions: Blocks,
@@ -32,6 +34,7 @@ const ACTIVITY_ICONS: Record<ActivityId, LucideIcon> = {
 /** Hidden behind "More" when Arduino simplified UI is on. */
 const ARDUINO_ADVANCED: ReadonlySet<ActivityId> = new Set([
   "source-control",
+  "inav",
   "agent",
   "extensions",
 ]);

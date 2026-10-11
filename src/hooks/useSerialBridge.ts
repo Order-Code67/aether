@@ -7,6 +7,7 @@ import {
   listenSerialStatus,
 } from "@/lib/serial";
 import { useCameraStore } from "@/stores/cameraStore";
+import { useInavStore } from "@/stores/inavStore";
 import { usePlotterStore } from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
 
@@ -32,6 +33,15 @@ export function useSerialBridge(): void {
       unlistenData = await listenSerialData((line) => {
         if (disposed) return;
         appendLine(line);
+        const inav = useInavStore.getState();
+        if (inav.sessionActive) {
+          inav.appendCliLine(line);
+          if (inav.capturingDiff) {
+            inav.appendDiffCapture(
+              line.endsWith("\n") ? line : `${line}\n`,
+            );
+          }
+        }
         usePlotterStore.getState().ingestLine(line);
         const suggested = suggestCameraUrlFromSerialLine(line);
         if (suggested) {
@@ -43,7 +53,13 @@ export function useSerialBridge(): void {
         usePlotterStore.getState().ingestBytes(bytes);
       });
       unlistenStatus = await listenSerialStatus((status) => {
-        if (!disposed) applyStatus(status);
+        if (!disposed) {
+          applyStatus(status);
+          if (!status.connected) {
+            useInavStore.getState().setSessionActive(false);
+            useInavStore.getState().setCapturingDiff(false);
+          }
+        }
       });
     })();
 
