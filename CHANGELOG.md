@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.24-beta.1 — 2026-10-11
+
+- **Public beta** — first downloadable prerelease on the open GitHub repo; signed NSIS installer only (WiX/MSI skipped for SemVer prerelease)
+- **Beta updater feed** — `latest-beta.json` points at `v0.2.24-beta.1` (stable `latest.json` remains 0.2.23)
+- Feature set matches 0.2.23 (hub branding icon, per-machine desktop shortcut)
+
 ## 0.2.23 — 2026-10-11
 
 - **Hub branding icon** — desktop/app icon replaced with the hub concept art; regenerated `src-tauri/icons/*` (incl. `icon.ico`) and About UI `public/aether-icon.png`

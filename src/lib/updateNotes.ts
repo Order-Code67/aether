@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.24-beta.1": {
+    en: "Public beta: signed NSIS build of the 0.2.23 feature set; use Settings → About → Updates → Beta to get prerelease builds.",
+    ru: "Публичная бета: подписанный NSIS-сборку на базе 0.2.23; канал Beta в Настройки → О программе → Обновления.",
+  },
   "0.2.23": {
     en: "Hub branding icon for the app and desktop shortcut; per-machine NSIS install creates the shortcut for all users.",
     ru: "Иконка хаба для приложения и ярлыка на рабочем столе; установка NSIS для всех пользователей создаёт ярлык на Public Desktop.",
