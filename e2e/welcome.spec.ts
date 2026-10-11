@@ -5,10 +5,13 @@ test.describe("Welcome / chrome smoke (Vite preview)", () => {
     await page.goto("/");
   });
 
-  test("shows Welcome with brand and Quick Start", async ({ page }) => {
+  test("shows Welcome Hub with brand and modules", async ({ page }) => {
     const welcome = page.getByTestId("welcome-screen");
     await expect(welcome).toBeVisible();
     await expect(welcome.getByTestId("welcome-brand")).toHaveText("Aether");
+    await expect(page.getByTestId("welcome-hub")).toBeVisible();
+    await expect(page.getByTestId("hub-arduino")).toBeVisible();
+    await expect(page.getByTestId("hub-inav")).toBeVisible();
     await expect(page.getByTestId("welcome-quick-start")).toBeVisible();
     await expect(page.getByTestId("welcome-open-folder")).toBeVisible();
   });

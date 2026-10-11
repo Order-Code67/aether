@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.2.24 — 2026-10-11
+
+- **Welcome Hub** — five large modules (Arduino Quick Start, PlatformIO/boards, iNav, VS Code, AI) with subtle hub watermark; secondary links kept; RU/EN
+- **iNav Ports + Modes** — UART roles via MSP_CF_SERIAL_CONFIG best-effort + CLI `serial` fallback (iNav deprecates 54/55 — see `docs/INAV_MSP.md`); Modes via MSP_MODE_RANGES / BOXNAMES / BOXIDS; confirm + auto diff backup under `Documents/Aether/drones/diffs` before write; explicit EEPROM save; unit tests; never arm/motors
+- **iNav onboarding checklist** — Port → Connect → Status → Diff → Configurator (optional); persisted, dismissible; RU/EN
+- **FC .hex Flash** — pick hex, detect DFU (`dfu-util -l`), flash via dfu-util on PATH with Output log; disconnect serial first; confirm dialog; clear RU/EN install / not-in-DFU hints
+
 ## 0.2.23 — 2026-10-11
 
 - **Hub branding icon** — desktop/app icon replaced with the hub concept art; regenerated `src-tauri/icons/*` (incl. `icon.ico`) and About UI `public/aether-icon.png`

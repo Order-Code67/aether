@@ -22,6 +22,10 @@ import { splitDiffForCliSend } from "@/lib/inavDiff";
 import { loadInavDiffFromFile, saveInavDiffToFile } from "@/lib/inavDiffFile";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
+import { InavFlashCard } from "@/components/inav/InavFlashCard";
+import { InavModesCard } from "@/components/inav/InavModesCard";
+import { InavOnboardingChecklist } from "@/components/inav/InavOnboardingChecklist";
+import { InavPortsCard } from "@/components/inav/InavPortsCard";
 import { InavStatusCard } from "@/components/inav/InavStatusCard";
 import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -251,6 +255,12 @@ export function InavPanel() {
           {t("inav.hint")}
         </p>
 
+        <InavOnboardingChecklist
+          onOpenConfigurator={() => void onOpenConfigurator()}
+          onRefreshStatus={() => void useInavStore.getState().refreshMspStatus()}
+          onGetDiff={onGetDiff}
+        />
+
         <section className="space-y-1.5">
           <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
             {t("inav.connection")}
@@ -332,6 +342,9 @@ export function InavPanel() {
         </section>
 
         <InavStatusCard connected={connected} sessionActive={sessionActive} />
+        <InavPortsCard connected={connected} sessionActive={sessionActive} />
+        <InavModesCard connected={connected} sessionActive={sessionActive} />
+        <InavFlashCard />
 
         <section className="flex min-h-[180px] flex-1 flex-col gap-1.5">
           <div className="flex items-center justify-between">

@@ -1,6 +1,7 @@
 mod ai;
 mod arduino_cli;
 mod debug;
+mod dfu;
 mod examples;
 mod git;
 mod inav;
@@ -28,6 +29,7 @@ pub fn run() {
         .manage(ai::AiState::default())
         .manage(lsp::LspState::default())
         .manage(debug::DebugState::default())
+        .manage(dfu::DfuState::default())
         .manage(updater_channel::PendingUpdateState::default())
         .setup(|app| {
             #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
@@ -122,6 +124,9 @@ pub fn run() {
             vscode::vscode_generate_config,
             inav::inav_configurator_detect,
             inav::open_external_inav_configurator,
+            dfu::dfu_util_detect,
+            dfu::dfu_list_devices,
+            dfu::dfu_flash_hex,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Aether");

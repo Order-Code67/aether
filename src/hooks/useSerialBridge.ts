@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { suggestCameraUrlFromSerialLine } from "@/lib/cameraIp";
 import { isTauriRuntime } from "@/lib/tauri";
-import { ingestMspPollBytes } from "@/lib/mspStatusPoll";
+import { ingestMspBytes } from "@/lib/mspIngest";
 import {
   listenSerialBytes,
   listenSerialData,
@@ -51,7 +51,7 @@ export function useSerialBridge(): void {
       });
       unlistenBytes = await listenSerialBytes((bytes) => {
         if (disposed) return;
-        ingestMspPollBytes(bytes);
+        ingestMspBytes(bytes);
         usePlotterStore.getState().ingestBytes(bytes);
       });
       unlistenStatus = await listenSerialStatus((status) => {

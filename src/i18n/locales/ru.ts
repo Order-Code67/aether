@@ -130,6 +130,17 @@ export const ru: Record<MessageKey, string> = {
   "welcome.quickStart": "Быстрый старт (60 с)",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
+  "hub.tagline": "Выберите путь — Arduino, PlatformIO, iNav, VS Code или ИИ.",
+  "hub.arduino": "Arduino",
+  "hub.arduinoDesc": "Мастер быстрого старта и новый Arduino-проект.",
+  "hub.platformio": "PlatformIO",
+  "hub.platformioDesc": "Открыть папку и выбрать платы / окружения.",
+  "hub.inav": "iNav Configurator",
+  "hub.inavDesc": "FC CLI, MSP Ports/Modes, diff и DFU-прошивка.",
+  "hub.vscode": "VS Code",
+  "hub.vscodeDesc": "Открыть рабочую область в VS Code (десктоп).",
+  "hub.ai": "ИИ-ассистент",
+  "hub.aiDesc": "Чат с агентом о проекте и прошивке.",
   "onboarding.title": "Быстрый старт",
   "onboarding.subtitle":
     "Плата → COM-порт → Blink → загрузка примерно за минуту.",
@@ -550,7 +561,7 @@ export const ru: Record<MessageKey, string> = {
     "Подписанные обновления через Tauri updater. Stable → latest.json; Beta → latest-beta.json (prerelease).",
   "inav.title": "iNav",
   "inav.hint":
-    "CLI полётного контроллера iNav и read-only MSP Status по serial. Подключение занимает COM-порт — Serial Monitor сначала отключается. Не MSP PID / запись EEPROM / DFU / Betaflight.",
+    "iNav FC CLI, MSP Status/Ports/Modes, diff и DFU .hex. Подключение занимает COM-порт — Serial Monitor сначала отключается. Без моторов/arm. EEPROM — только явная кнопка.",
   "inav.connection": "Подключение",
   "inav.port": "COM-порт",
   "inav.baud": "Скорость",
@@ -640,4 +651,74 @@ export const ru: Record<MessageKey, string> = {
   "inav.msp.sensor.sonar": "SONAR",
   "inav.msp.sensor.gyro": "GYRO",
   "inav.msp.sensor.opticalflow": "FLOW",
+  "inav.ports.title": "Порты (UART)",
+  "inav.ports.hint":
+    "Чтение назначения UART. На современном iNav MSP_CF_SERIAL_CONFIG не используется — fallback на CLI serial. Запись с подтверждением и авто-бэкапом; EEPROM отдельно.",
+  "inav.ports.refresh": "Читать порты",
+  "inav.ports.refreshing": "Чтение…",
+  "inav.ports.empty": "Нажмите «Читать порты», чтобы загрузить роли UART.",
+  "inav.ports.loaded": "Загружено портов: {count}.",
+  "inav.ports.cliFallback":
+    "MSP serial config недоступен (ожидаемо на iNav) — показан список CLI serial.",
+  "inav.ports.noData":
+    "Нет данных serial из MSP или CLI. Подключитесь, проверьте MSP/CLI на UART, повторите.",
+  "inav.ports.mask": "Маска функций",
+  "inav.ports.write": "Записать порты…",
+  "inav.ports.writeConfirm":
+    "Записать назначение UART в FC (RAM)? Бэкап сохранится в Documents/Aether/drones/diffs. EEPROM НЕ пишется, пока не нажмёте «Сохранить EEPROM».",
+  "inav.ports.writeOk": "Порты записаны (RAM). Для сохранения — «Сохранить EEPROM».",
+  "inav.ports.writeOkBackup":
+    "Порты записаны (RAM). Бэкап: {path}. Для сохранения — «Сохранить EEPROM».",
+  "inav.modes.title": "Режимы",
+  "inav.modes.hint":
+    "MSP_MODE_RANGES / BOXNAMES. Правка PWM-диапазонов, подтверждение записи (авто-бэкап). EEPROM отдельно. Не армит моторы.",
+  "inav.modes.refresh": "Читать режимы",
+  "inav.modes.refreshing": "Чтение…",
+  "inav.modes.empty": "Нажмите «Читать режимы», чтобы загрузить диапазоны.",
+  "inav.modes.loaded": "Загружено слотов: {count}.",
+  "inav.modes.noResponse":
+    "Нет ответа MSP modes. Выйдите из CLI (exit) и проверьте MSP на UART.",
+  "inav.modes.start": "Старт",
+  "inav.modes.end": "Конец",
+  "inav.modes.write": "Записать режимы…",
+  "inav.modes.writeConfirm":
+    "Записать диапазоны режимов в FC (RAM)? Бэкап в Documents/Aether/drones/diffs. EEPROM НЕ пишется, пока не нажмёте «Сохранить EEPROM».",
+  "inav.modes.writeOk": "Режимы записаны (RAM). Для сохранения — «Сохранить EEPROM».",
+  "inav.modes.writeOkBackup":
+    "Режимы записаны (RAM). Бэкап: {path}. Для сохранения — «Сохранить EEPROM».",
+  "inav.eeprom.save": "Сохранить EEPROM…",
+  "inav.eeprom.confirm":
+    "Записать текущие настройки RAM в EEPROM и перезагрузить FC? Это сохранит изменения Ports/Modes.",
+  "inav.eeprom.saved": "Команда записи EEPROM отправлена.",
+  "inav.checklist.title": "Чеклист iNav",
+  "inav.checklist.hint":
+    "Пошаговая настройка — прогресс сохраняется. Configurator необязателен.",
+  "inav.checklist.dismiss": "Скрыть чеклист",
+  "inav.checklist.port": "Выбрать COM-порт",
+  "inav.checklist.connect": "Подключить сессию iNav",
+  "inav.checklist.status": "Обновить MSP Status",
+  "inav.checklist.diff": "Получить / сохранить diff",
+  "inav.checklist.configurator": "Открыть Configurator (необяз.)",
+  "inav.flash.title": "Прошивка FC (.hex)",
+  "inav.flash.hint":
+    "Переведите FC в DFU (кнопка boot), отключите serial, затем прошейте через dfu-util в PATH. Лог — в Output. Неверный hex может «кирпичнуть» — подтверждайте осторожно.",
+  "inav.flash.detect": "Найти DFU",
+  "inav.flash.pickHex": "Выбрать .hex…",
+  "inav.flash.flash": "Прошить",
+  "inav.flash.flashing": "Прошивка…",
+  "inav.flash.needHex": "Сначала выберите файл .hex.",
+  "inav.flash.confirm":
+    "Прошить этот .hex через DFU? Aether сначала отключит serial. Неверный образ может «кирпичнуть» FC. Продолжить?",
+  "inav.flash.started": "DFU-прошивка запущена — смотрите Output.",
+  "inav.flash.toolOk": "dfu-util: {path}",
+  "inav.flash.toolMissing":
+    "dfu-util не найден в PATH. Установите dfu-util (например Zadig + dfu-util на Windows) и перезапустите Aether.",
+  "inav.flash.notInDfu":
+    "DFU-устройство не найдено. Зажмите boot на FC, переподключите USB и снова «Найти DFU».",
+  "inav.flash.dfuFound": "Строк DFU: {count}",
+  "inav.flash.hexMissing": "Файл hex не найден.",
+  "inav.flash.hexInvalid": "Выберите файл прошивки .hex или .bin.",
+  "inav.flash.failed": "dfu-util сообщил об ошибке — см. Output.",
+  "inav.flash.needDfuUtil":
+    "Нужен dfu-util в PATH (STM32CubeProgrammer CLI здесь не подключён).",
 };

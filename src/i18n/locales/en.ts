@@ -126,6 +126,17 @@ export const en = {
   "welcome.quickStart": "Quick start (60s)",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
+  "hub.tagline": "Choose a path — Arduino, PlatformIO, iNav, VS Code, or AI.",
+  "hub.arduino": "Arduino",
+  "hub.arduinoDesc": "Quick Start wizard and new Arduino-style project.",
+  "hub.platformio": "PlatformIO",
+  "hub.platformioDesc": "Open a folder and pick boards / environments.",
+  "hub.inav": "iNav Configurator",
+  "hub.inavDesc": "FC CLI, MSP Ports/Modes, diffs, and DFU flash.",
+  "hub.vscode": "VS Code",
+  "hub.vscodeDesc": "Open the workspace in VS Code (desktop).",
+  "hub.ai": "AI Assistant",
+  "hub.aiDesc": "Chat with the agent about your project and firmware.",
   "onboarding.title": "Quick start",
   "onboarding.subtitle": "Board → COM port → Blink → Upload in about a minute.",
   "onboarding.step.board": "1. Choose board",
@@ -544,7 +555,7 @@ export const en = {
     "Signed updates via Tauri updater. Stable → latest.json (non-prerelease); Beta → latest-beta.json (prerelease when published).",
   "inav.title": "iNav",
   "inav.hint":
-    "iNav flight-controller CLI + read-only MSP Status over serial. Connect owns the COM port — Serial Monitor is disconnected first. Not MSP PID / EEPROM write / DFU / Betaflight.",
+    "iNav FC CLI, MSP Status/Ports/Modes, diffs, and DFU .hex flash. Connecting owns the COM port — Serial Monitor disconnects first. No motors/arm. EEPROM save is explicit only.",
   "inav.connection": "Connection",
   "inav.port": "COM port",
   "inav.baud": "Baud rate",
@@ -633,6 +644,74 @@ export const en = {
   "inav.msp.sensor.sonar": "SONAR",
   "inav.msp.sensor.gyro": "GYRO",
   "inav.msp.sensor.opticalflow": "FLOW",
+  "inav.ports.title": "Ports (UART)",
+  "inav.ports.hint":
+    "Read UART function mapping. On modern iNav, MSP_CF_SERIAL_CONFIG is unused — falls back to CLI serial. Write confirms + auto-backup; EEPROM save is separate.",
+  "inav.ports.refresh": "Read ports",
+  "inav.ports.refreshing": "Reading…",
+  "inav.ports.empty": "Press Read ports to load UART roles.",
+  "inav.ports.loaded": "Loaded {count} serial port(s).",
+  "inav.ports.cliFallback":
+    "MSP serial config unavailable (expected on iNav) — showing CLI serial listing.",
+  "inav.ports.noData":
+    "No serial port data from MSP or CLI. Connect, ensure MSP/CLI on this UART, try again.",
+  "inav.ports.mask": "Function mask",
+  "inav.ports.write": "Write ports…",
+  "inav.ports.writeConfirm":
+    "Write UART function mapping to the FC (RAM)? A backup is saved under Documents/Aether/drones/diffs. EEPROM is NOT saved until you press Save EEPROM.",
+  "inav.ports.writeOk": "Ports written (RAM). Use Save EEPROM to persist.",
+  "inav.ports.writeOkBackup":
+    "Ports written (RAM). Backup: {path}. Use Save EEPROM to persist.",
+  "inav.modes.title": "Modes",
+  "inav.modes.hint":
+    "MSP_MODE_RANGES / BOXNAMES. Edit PWM ranges, confirm write (auto-backup). Save EEPROM separately. Never arms motors.",
+  "inav.modes.refresh": "Read modes",
+  "inav.modes.refreshing": "Reading…",
+  "inav.modes.empty": "Press Read modes to load box ranges.",
+  "inav.modes.loaded": "Loaded {count} mode slot(s).",
+  "inav.modes.noResponse":
+    "No MSP modes response. Leave CLI (exit) and ensure MSP on this UART.",
+  "inav.modes.start": "Start",
+  "inav.modes.end": "End",
+  "inav.modes.write": "Write modes…",
+  "inav.modes.writeConfirm":
+    "Write mode ranges to the FC (RAM)? A backup is saved under Documents/Aether/drones/diffs. EEPROM is NOT saved until you press Save EEPROM.",
+  "inav.modes.writeOk": "Modes written (RAM). Use Save EEPROM to persist.",
+  "inav.modes.writeOkBackup":
+    "Modes written (RAM). Backup: {path}. Use Save EEPROM to persist.",
+  "inav.eeprom.save": "Save EEPROM…",
+  "inav.eeprom.confirm":
+    "Write current RAM settings to EEPROM and reboot the FC? This persists Ports/Modes changes.",
+  "inav.eeprom.saved": "EEPROM write sent.",
+  "inav.checklist.title": "iNav checklist",
+  "inav.checklist.hint": "Guided setup — progress is saved. Optional Configurator step.",
+  "inav.checklist.dismiss": "Dismiss checklist",
+  "inav.checklist.port": "Select COM port",
+  "inav.checklist.connect": "Connect iNav session",
+  "inav.checklist.status": "Refresh MSP Status",
+  "inav.checklist.diff": "Get / Save diff",
+  "inav.checklist.configurator": "Open Configurator (optional)",
+  "inav.flash.title": "FC firmware (.hex)",
+  "inav.flash.hint":
+    "Put the FC in DFU (boot button), disconnect serial, then flash with dfu-util on PATH. Log streams to Output. Wrong hex can brick — confirm carefully.",
+  "inav.flash.detect": "Detect DFU",
+  "inav.flash.pickHex": "Select .hex…",
+  "inav.flash.flash": "Flash",
+  "inav.flash.flashing": "Flashing…",
+  "inav.flash.needHex": "Select a .hex file first.",
+  "inav.flash.confirm":
+    "Flash this .hex via DFU? Aether will disconnect serial first. A wrong image can brick the FC. Continue?",
+  "inav.flash.started": "DFU flash started — watch Output.",
+  "inav.flash.toolOk": "dfu-util: {path}",
+  "inav.flash.toolMissing":
+    "dfu-util not found on PATH. Install dfu-util (e.g. Zadig + dfu-util for Windows, or package manager) and restart Aether.",
+  "inav.flash.notInDfu":
+    "No DFU device listed. Hold the FC boot button, reconnect USB, then Detect DFU again.",
+  "inav.flash.dfuFound": "DFU device line(s): {count}",
+  "inav.flash.hexMissing": "Hex file not found.",
+  "inav.flash.hexInvalid": "Select a .hex or .bin firmware file.",
+  "inav.flash.failed": "dfu-util reported failure — see Output.",
+  "inav.flash.needDfuUtil": "Use dfu-util on PATH (STM32CubeProgrammer CLI is not wired here).",
 } as const;
 
 export type MessageKey = keyof typeof en;

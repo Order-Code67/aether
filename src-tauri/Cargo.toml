@@ -1,6 +1,6 @@
 [package]
 name = "aether"
-version = "0.2.23"
+version = "0.2.24"
 description = "Modern IDE for robots, drones, and embedded systems"
 authors = ["Aether"]
 edition = "2021"

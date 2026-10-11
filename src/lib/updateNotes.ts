@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.24": {
+    en: "Welcome Hub modules; iNav Ports/Modes (MSP + CLI fallback), onboarding checklist, DFU .hex flash via dfu-util.",
+    ru: "Хаб Welcome; iNav Ports/Modes (MSP + CLI), чеклист, DFU-прошивка .hex через dfu-util.",
+  },
   "0.2.23": {
     en: "Hub branding icon for the app and desktop shortcut; per-machine NSIS install creates the shortcut for all users.",
     ru: "Иконка хаба для приложения и ярлыка на рабочем столе; установка NSIS для всех пользователей создаёт ярлык на Public Desktop.",
