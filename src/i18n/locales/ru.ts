@@ -861,4 +861,9 @@ export const ru: Record<MessageKey, string> = {
   "inav.flash.failed": "dfu-util сообщил об ошибке — см. Output.",
   "inav.flash.needDfuUtil":
     "Нужен dfu-util в PATH (STM32CubeProgrammer CLI здесь не подключён).",
+  "inav.hudDisconnected": "FC отключён",
+  "inav.hudConnected": "Подключено · {port} @ {baud}",
+  "inav.connectThroughAether": "Подключение через Aether",
+  "inav.connectAether": "Подключить",
+  "inav.sessionOnHud": "Сессия · {port}",
 };

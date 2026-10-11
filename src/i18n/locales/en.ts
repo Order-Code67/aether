@@ -851,6 +851,11 @@
   "inav.flash.hexInvalid": "Select a .hex or .bin firmware file.",
   "inav.flash.failed": "dfu-util reported failure — see Output.",
   "inav.flash.needDfuUtil": "Use dfu-util on PATH (STM32CubeProgrammer CLI is not wired here).",
+  "inav.hudDisconnected": "FC disconnected",
+  "inav.hudConnected": "Connected · {port} @ {baud}",
+  "inav.connectThroughAether": "Connect through Aether",
+  "inav.connectAether": "Connect",
+  "inav.sessionOnHud": "Session · {port}",
 } as const;
 
 export type MessageKey = keyof typeof en;
