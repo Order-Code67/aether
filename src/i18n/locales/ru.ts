@@ -37,6 +37,13 @@ export const ru: Record<MessageKey, string> = {
   "plotter.mode": "Режим разбора",
   "plotter.modeText": "Текст",
   "plotter.modeMavlink": "MAVLink",
+  "plotter.radioBadge": "Радио RSSI/SNR",
+  "plotter.radioHint":
+    "Обнаружены каналы LoRa/радио (RSSI, SNR). Держите Serial Monitor на RX-скетче.",
+  "boardStrip.label": "Плата",
+  "boardStrip.hint":
+    "Выбранный env, регион LoRa и карта пинов (NSS/DIO/RST). Из Примеров или мастера проекта.",
+  "boardStrip.radioLibs": "Радио-библиотеки в lib_deps",
   "plotter.vehicle": "{type} · {armed}",
   "plotter.armed": "armed",
   "plotter.disarmed": "disarmed",
@@ -134,6 +141,9 @@ export const ru: Record<MessageKey, string> = {
   "welcome.openInVsCode": "Открыть в VS Code",
   "welcome.generateVsCode": "Создать конфиг VS Code…",
   "welcome.quickStart": "Быстрый старт (60 с)",
+  "welcome.cleanPc": "Чистый ПК (~15 мин)",
+  "welcome.cleanPcHint":
+    "Установка → Doctor (PIO) → Import OfflineLibs → Примеры → Сборка+загрузка. См. docs/CLEAN_WINDOWS.md.",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
   "hub.tagline": "Выберите путь — Arduino, PlatformIO, БПЛА-Студия, VS Code или ИИ.",
@@ -352,13 +362,17 @@ export const ru: Record<MessageKey, string> = {
   "offline.import": "Импорт офлайн-кэша…",
   "offline.importing": "Импорт…",
   "offline.importHint":
-    "Импорт портативного Aether_OfflineCache_*.zip (platforms + packages + lib/ для ESP32/Mega/LoRa) в ~/.platformio без удаления других пакетов. См. docs/OFFLINE_INSTALLER.md.",
+    "Импорт Aether_OfflineCache_*.zip или Aether_OfflineLibs_*.zip (platforms + packages + lib/ для ESP32/Mega/LoRa) в ~/.platformio без удаления других пакетов. См. docs/OFFLINE_INSTALLER.md.",
   "offline.importNeedFile": "Выберите файл .zip офлайн-кэша.",
   "offline.needPio": "Сначала установите PlatformIO Core, затем готовьте офлайн-кэш.",
   "offline.reuseNote":
     "Совет: скопируйте папку ~/.platformio на другой ПК, чтобы переиспользовать скачанные платформы и тулчейны.",
+  "offline.sidecarFound": "Рядом с Aether найден офлайн-пакет: {file}",
+  "offline.importSidecar": "Импорт офлайн-пакета",
+  "offline.sidecarMissing":
+    "Не найден Aether_OfflineCache_* / OfflineLibs_*.zip рядом с приложением, на Рабочем столе или в Загрузках.",
   "doctor.offlineHint":
-    "По желанию: Параметры → Инструменты → Офлайн-кэш — предзагрузка платформ для ESP32 / Mega / Nano.",
+    "По желанию: Параметры → Инструменты → Офлайн-кэш или положите Aether_OfflineLibs_*.zip рядом с приложением / на Рабочий стол.",
   "settings.tools": "Инструменты",
   "explorer.title": "Проводник",
   "explorer.noFolder": "Папка не открыта",

@@ -198,6 +198,8 @@ export const en = {
   "inav.msp.sensors": "Sensors",
   "inav.msp.voltage": "Voltage",
   "inav.msp.voltageValue": "{v} V",
+  "inav.msp.rssi": "RSSI",
+  "inav.msp.rssiValue": "{v}",
   "inav.msp.mah": "mAh drawn",
   "inav.msp.gps": "GPS",
   "inav.msp.gpsValue": "{fix} · {sats} sats",

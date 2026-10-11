@@ -23,8 +23,10 @@ import {
   type AgentEdit,
   type EditPreview,
 } from "@/lib/patchEdit";
+import { joinPath } from "@/lib/paths";
 import { buildBoardHardwareContext } from "@/lib/projectBoardContext";
 import { isTauriRuntime } from "@/lib/tauri";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useProblemsStore } from "@/stores/problemsStore";
@@ -101,6 +103,8 @@ function buildSystemPrompt(): string {
     "// full file contents",
     "```",
     "The IDE can preview and apply these edits with one click.",
+    "For PlatformIO projects, prefer SEARCH/REPLACE on platformio.ini for board=, lib_deps, and LoRa build_flags (AETHER_LORA_* / region). Keep pin maps and region consistent with the selected env.",
+    "When board/radio context is attached, use those NSS/DIO/RST/OLED pins and lib_deps instead of guessing.",
   ];
   if (kind === "folder" && folders.length > 0) {
     const list = folders
@@ -116,7 +120,7 @@ function buildSystemPrompt(): string {
   return parts.join("\n");
 }
 
-function buildContextBlock(): string {
+async function buildContextBlock(): Promise<string> {
   const state = useAgentStore.getState();
   const chunks: string[] = [];
 
@@ -146,13 +150,22 @@ function buildContextBlock(): string {
 
   if (state.includeBoardHardware) {
     const pio = usePlatformIoStore.getState();
+    const ws = useWorkspaceStore.getState();
     const tabs = useEditorStore.getState().tabs;
     const iniTab = tabs.find((t) =>
       /platformio\.ini$/i.test(t.path.replace(/\\/g, "/")),
     );
+    let iniText = iniTab?.content ?? null;
+    if (!iniText && isTauriRuntime() && ws.rootPath && pio.isProject) {
+      try {
+        iniText = await readTextFile(joinPath(ws.rootPath, "platformio.ini"));
+      } catch {
+        iniText = null;
+      }
+    }
     const boardCtx = buildBoardHardwareContext({
       selectedEnv: pio.selectedEnv,
-      iniText: iniTab?.content ?? null,
+      iniText,
     });
     if (boardCtx) chunks.push(boardCtx);
   }
@@ -372,7 +385,7 @@ export const useAgentStore = create<AgentState>()(
           messages: [...s.messages, userMsg, assistantMsg].slice(-MAX_HISTORY),
         }));
 
-        const context = buildContextBlock();
+        const context = await buildContextBlock();
         const attachBlock = packAttachmentsBlock(attachments);
         const requestBody = text || "Please review the attached files.";
         const sections = [

@@ -38,7 +38,23 @@ The script:
 
 This can take a long time and produce a multi‑GB archive. If GitHub’s **2 GB** release asset limit is exceeded, keep the zip local / on external storage and do **not** attach it to the release — users build or copy the pack themselves.
 
-**Libs-only pack** (smaller, ~50–80 MB): `release/Aether_OfflineLibs_<ver>_windows-x64.zip` contains `lib/` + manifest (no toolchains). Import the same way in Settings → Tools. Use full `Aether_OfflineCache_*` when you also need platforms offline.
+**Libs-only pack** (smaller, ~50–80 MB):
+
+```powershell
+npm run build:offline-libs
+# → release/Aether_OfflineLibs_<ver>_windows-x64.zip
+```
+
+Contains `lib/` + manifest (no toolchains). Import the same way in Settings → Tools, or drop the zip next to Aether / on Desktop — Doctor offers **Import offline pack**. Use full `Aether_OfflineCache_*` when you also need platforms offline.
+
+**USB / clean-PC folder** (installer + OfflineLibs + README):
+
+```powershell
+npm run package:dist
+# → release/Aether_Dist_<ver>/
+```
+
+See [`CLEAN_WINDOWS.md`](./CLEAN_WINDOWS.md).
 
 Optional: `-SkipInstall` packs an existing staging dir without re-downloading.
 

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.34 — 2026-10-12
+
+- **Distribution** — Public Desktop shortcut on All Users install; auto-detect `Aether_OfflineCache_*` / `OfflineLibs_*` next to app / Desktop / Downloads with one-click import; `npm run build:offline-libs` + `package:dist` USB pack; Welcome clean-PC (~15 min) path + `docs/CLEAN_WINDOWS.md`
+- **Reliability** — `pio pkg install/uninstall` 90–120s timeouts (no offline hang); clearer offline-cache zip errors
+- **AI board context** — loads `platformio.ini` from disk (not only open tab); system prompt prefers ini SEARCH/REPLACE for board/lib_deps/LoRa flags
+- **Board strip** — env / region / NSS·DIO·RST under build toolbar
+- **Plotter radio** — RSSI/SNR channels sorted first + Radio badge
+- **БПЛА-Студия** — MSP RSSI on Status card
+- **CI** — GitHub Actions: unit + contracts + tsc + Playwright smoke
+
 ## 0.2.33 — 2026-10-12
 
 - **LoRaWAN OTAA** — Join + periodic uplink (RadioLib), not a stub; Serial step guide; wizard starter updated

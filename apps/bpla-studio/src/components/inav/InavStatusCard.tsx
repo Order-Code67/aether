@@ -170,6 +170,13 @@ export function InavStatusCard({ connected, sessionActive }: Props) {
               : "—"}
           </dd>
 
+          <dt className="text-aether-fg-dim">{t("inav.msp.rssi")}</dt>
+          <dd className="font-mono text-aether-fg" data-testid="inav-msp-rssi">
+            {snapshot.analog != null
+              ? t("inav.msp.rssiValue", { v: String(snapshot.analog.rssi) })
+              : "—"}
+          </dd>
+
           <dt className="text-aether-fg-dim">{t("inav.msp.mah")}</dt>
           <dd className="font-mono text-aether-fg">
             {snapshot.analog ? String(snapshot.analog.mAhDrawn) : "—"}

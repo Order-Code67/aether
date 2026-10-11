@@ -10,7 +10,11 @@ import {
   clampPlotterZoom,
   PLOTTER_ZOOM_MAX,
 } from "@/lib/plotterExport";
-import { parseSerialPlotLine } from "@/lib/serialPlotter";
+import {
+  orderPlotChannels,
+  parseSerialPlotLine,
+  sampleHasRadioChannels,
+} from "@/lib/serialPlotter";
 
 const MAX_POINTS = 400;
 
@@ -195,6 +199,7 @@ function appendSample(
   for (const key of Object.keys(sample)) {
     if (!channels.includes(key)) {
       channels.push(key);
+      // Prefer radio channels visible by default
       if (visibility[key] === undefined) visibility[key] = true;
     }
   }
@@ -203,9 +208,12 @@ function appendSample(
     values: sample,
   };
   const points = [...state.points, next];
+  const ordered = sampleHasRadioChannels(sample)
+    ? orderPlotChannels(channels)
+    : channels;
   return {
     seq: next.t,
-    channels,
+    channels: ordered,
     visibility,
     points:
       points.length > MAX_POINTS

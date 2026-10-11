@@ -25,6 +25,7 @@ import {
   VSCODE_NOTICE_MS,
 } from "@/lib/vscodeIntegration";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
@@ -43,6 +44,8 @@ export function WelcomeView() {
   const openDemoWorkspace = useWorkspaceStore((s) => s.openDemoWorkspace);
   const error = useWorkspaceStore((s) => s.error);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const openSettings = useSettingsStore((s) => s.openSettings);
+  const showDoctor = usePlatformIoStore((s) => s.showDoctor);
   const setActiveActivity = useLayoutStore((s) => s.setActiveActivity);
   const tauri = isTauriRuntime();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -207,6 +210,14 @@ export function WelcomeView() {
           {t("hub.tagline")}
         </p>
 
+        <p
+          className="mx-auto mt-3 max-w-xl text-[11px] leading-relaxed text-aether-fg-dim"
+          data-testid="welcome-clean-pc"
+          title={t("welcome.cleanPcHint")}
+        >
+          {t("welcome.cleanPcHint")}
+        </p>
+
         <div
           className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
           data-testid="welcome-hub"
@@ -260,6 +271,20 @@ export function WelcomeView() {
             <Rocket size={12} />
             {t("welcome.quickStart")}
           </button>
+          {tauri ? (
+            <button
+              type="button"
+              data-testid="welcome-clean-pc-btn"
+              title={t("welcome.cleanPcHint")}
+              onClick={() => {
+                showDoctor();
+                openSettings("tools");
+              }}
+              className="rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg"
+            >
+              {t("welcome.cleanPc")}
+            </button>
+          ) : null}
           <button
             type="button"
             data-testid="welcome-new-project"

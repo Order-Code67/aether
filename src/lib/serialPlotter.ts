@@ -68,3 +68,29 @@ export const PLOTTER_COLORS = [
 export function channelColor(index: number): string {
   return PLOTTER_COLORS[index % PLOTTER_COLORS.length]!;
 }
+
+const RADIO_CHANNEL_PRIORITY = ["RSSI", "SNR", "rssi", "snr", "Rssi", "Snr"];
+
+/** True when sample looks like LoRa / radio telemetry. */
+export function sampleHasRadioChannels(sample: PlotSample): boolean {
+  return Object.keys(sample).some((k) =>
+    /^(rssi|snr)$/i.test(k),
+  );
+}
+
+/** Prefer RSSI/SNR first so they stay visible in the plotter legend. */
+export function orderPlotChannels(channels: string[]): string[] {
+  const radio: string[] = [];
+  const rest: string[] = [];
+  for (const c of channels) {
+    if (/^(rssi|snr)$/i.test(c)) radio.push(c);
+    else rest.push(c);
+  }
+  radio.sort((a, b) => {
+    const ia = RADIO_CHANNEL_PRIORITY.findIndex((p) => p.toLowerCase() === a.toLowerCase());
+    const ib = RADIO_CHANNEL_PRIORITY.findIndex((p) => p.toLowerCase() === b.toLowerCase());
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  return [...radio, ...rest];
+}
+

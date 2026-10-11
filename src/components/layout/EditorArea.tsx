@@ -6,6 +6,7 @@ import {
   MergeConflictBanner,
   MergeConflictEditor,
 } from "@/components/merge/MergeConflictEditor";
+import { BoardHardwareStrip } from "@/components/platformio/BoardHardwareStrip";
 import { BuildToolbar } from "@/components/platformio/BuildToolbar";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { conflictCount, hasConflictMarkers } from "@/lib/mergeConflict";
@@ -45,6 +46,7 @@ export function EditorArea() {
     >
       <EditorTabs />
       <BuildToolbar />
+      <BoardHardwareStrip />
       {kind === "folder" && isProject && (ports.length === 0 || pioError) && (
         <ComDriversHelp
           compact

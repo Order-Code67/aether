@@ -42,6 +42,12 @@ export function ToolsDoctorBanner() {
   const runDoctor = usePlatformIoStore((s) => s.runDoctor);
   const installMissing = usePlatformIoStore((s) => s.installMissing);
   const dismissDoctor = usePlatformIoStore((s) => s.dismissDoctor);
+  const sidecarOfflineZips = usePlatformIoStore((s) => s.sidecarOfflineZips);
+  const offlineCache = usePlatformIoStore((s) => s.offlineCache);
+  const importSidecarOfflineZip = usePlatformIoStore(
+    (s) => s.importSidecarOfflineZip,
+  );
+  const running = usePlatformIoStore((s) => s.running);
   const openSettings = useSettingsStore((s) => s.openSettings);
   const locale = useSettingsStore((s) => s.locale);
 
@@ -57,9 +63,14 @@ export function ToolsDoctorBanner() {
   const radio = doctor.radio;
   const showRadio =
     Boolean(radio?.isRadioProject) && (radio?.tipsEn.length ?? 0) > 0;
+  const platformsMissing =
+    offlineCache != null &&
+    (!offlineCache.espressif32 || !offlineCache.atmelavr);
+  const sidecar = sidecarOfflineZips[0] ?? null;
+  const showSidecar = Boolean(sidecar) && (platformsMissing || !doctor.ok);
 
-  // Hide when PlatformIO is healthy and there are no radio tips.
-  if (doctor.ok && !doctor.installing && !showRadio) {
+  // Hide when PlatformIO is healthy and there are no radio / sidecar tips.
+  if (doctor.ok && !doctor.installing && !showRadio && !showSidecar) {
     return null;
   }
 
@@ -159,7 +170,29 @@ export function ToolsDoctorBanner() {
           </>
         )}
 
+        {showSidecar && sidecar && (
+          <p className="text-aether-fg-muted" data-testid="doctor-sidecar-hint">
+            {t("offline.sidecarFound", {
+              file: sidecar.path.split(/[/\\]/).pop() ?? sidecar.path,
+            })}
+          </p>
+        )}
+
         <div className="flex flex-wrap items-center gap-2 pt-1">
+          {showSidecar && (
+            <button
+              type="button"
+              disabled={busy || running}
+              data-testid="doctor-import-sidecar"
+              onClick={() => {
+                void importSidecarOfflineZip();
+              }}
+              className="inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2 py-0.5 text-[11px] text-white hover:opacity-90 disabled:opacity-40"
+            >
+              <Download size={11} />
+              {t("offline.importSidecar")}
+            </button>
+          )}
           {pioMissing && (
             <button
               type="button"

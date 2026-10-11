@@ -199,11 +199,23 @@ export interface OfflineCacheStatus {
   atmelavr: boolean;
 }
 
+export interface SidecarOfflineZip {
+  path: string;
+  /** `full` = OfflineCache, `libs` = OfflineLibs */
+  kind: string;
+}
+
 export async function probeOfflineCache(): Promise<OfflineCacheStatus> {
   if (!isTauriRuntime()) {
     return { home: null, espressif32: false, atmelavr: false };
   }
   return invoke<OfflineCacheStatus>("pio_cache_status");
+}
+
+/** Find Aether_OfflineCache_* / OfflineLibs_* next to the exe or in Desktop/Downloads. */
+export async function findSidecarOfflineZips(): Promise<SidecarOfflineZip[]> {
+  if (!isTauriRuntime()) return [];
+  return invoke<SidecarOfflineZip[]>("pio_find_sidecar_offline_zips");
 }
 
 /** Download espressif32 + atmelavr platforms/toolchains into ~/.platformio (streams to Output). */

@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.34": {
+    en: "Reliability + hardware core: offline zip auto-import, board strip, AI ini awareness, Plotter RSSI/SNR, MSP RSSI, CI smoke, clean-Windows dist pack.",
+    ru: "Надёжность и ядро: автоимпорт офлайн-zip, полоса платы, AI знает ini, Plotter RSSI/SNR, MSP RSSI, CI smoke, пакет для чистой Windows.",
+  },
   "0.2.33": {
     en: "LoRaWAN OTAA Join+uplink; offline cache includes RadioLib/ArduinoJson libs; updater signing key rotated.",
     ru: "LoRaWAN OTAA Join+uplink; офлайн-кэш с библиотеками RadioLib/ArduinoJson; ротация ключа подписи обновлений.",

@@ -53,6 +53,13 @@
   "plotter.mode": "Parse mode",
   "plotter.modeText": "Text",
   "plotter.modeMavlink": "MAVLink",
+  "plotter.radioBadge": "Radio RSSI/SNR",
+  "plotter.radioHint":
+    "LoRa / radio channels detected (RSSI, SNR). Keep the Serial Monitor open on the RX sketch.",
+  "boardStrip.label": "Board",
+  "boardStrip.hint":
+    "Selected env, LoRa region, and pin map (NSS/DIO/RST). From Examples or the project wizard.",
+  "boardStrip.radioLibs": "Radio libs in lib_deps",
   "plotter.vehicle": "{type} · {armed}",
   "plotter.armed": "armed",
   "plotter.disarmed": "disarmed",
@@ -149,6 +156,9 @@
   "welcome.openInVsCode": "Open in VS Code",
   "welcome.generateVsCode": "Generate VS Code config…",
   "welcome.quickStart": "Quick start (60s)",
+  "welcome.cleanPc": "Clean PC (~15 min)",
+  "welcome.cleanPcHint":
+    "Install → Doctor (PIO) → Import OfflineLibs → Examples → Build+Upload. See docs/CLEAN_WINDOWS.md.",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
   "hub.tagline": "Choose a path — Arduino, PlatformIO, БПЛА-Студия, VS Code, or AI.",
@@ -363,13 +373,17 @@
   "offline.import": "Import offline cache…",
   "offline.importing": "Importing…",
   "offline.importHint":
-    "Import a portable Aether_OfflineCache_*.zip (platforms + packages + lib/ for ESP32/Mega/LoRa) into ~/.platformio without wiping other packages. See docs/OFFLINE_INSTALLER.md.",
+    "Import a portable Aether_OfflineCache_*.zip or Aether_OfflineLibs_*.zip (platforms + packages + lib/ for ESP32/Mega/LoRa) into ~/.platformio without wiping other packages. See docs/OFFLINE_INSTALLER.md.",
   "offline.importNeedFile": "Choose an offline-cache .zip file.",
   "offline.needPio": "Install PlatformIO Core before preparing the offline cache.",
   "offline.reuseNote":
     "Tip: copy the ~/.platformio folder to another machine to reuse downloaded platforms and toolchains.",
+  "offline.sidecarFound": "Found offline pack next to Aether: {file}",
+  "offline.importSidecar": "Import offline pack",
+  "offline.sidecarMissing":
+    "No Aether_OfflineCache_* / OfflineLibs_*.zip found next to the app, Desktop, or Downloads.",
   "doctor.offlineHint":
-    "Optional: Settings → Tools → Offline cache to pre-download platforms for ESP32 / Mega / Nano.",
+    "Optional: Settings → Tools → Offline cache, or drop Aether_OfflineLibs_*.zip next to the app / on Desktop.",
   "settings.tools": "Tools",
   "explorer.title": "Explorer",
   "explorer.noFolder": "No folder open",

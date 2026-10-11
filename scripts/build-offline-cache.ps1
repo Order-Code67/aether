@@ -7,7 +7,9 @@
 #   .\scripts\build-offline-cache.ps1
 #   .\scripts\build-offline-cache.ps1 -Version 0.2.33 -SkipInstall
 #   .\scripts\build-offline-cache.ps1 -SkipLibs
+#   .\scripts\build-offline-cache.ps1 -LibsOnly    # ~50–80 MB lib/ pack for USB dist
 #   npm run build:offline-cache
+#   npm run build:offline-libs
 #
 # Requires: PlatformIO Core (`pio` on PATH or ~/.platformio/penv).
 # Import in Aether: Settings → Tools → Import offline cache…
@@ -17,6 +19,7 @@ param(
   [string]$OutDir = "",
   [switch]$SkipInstall,
   [switch]$SkipLibs,
+  [switch]$LibsOnly,
   [string]$StagingDir = ""
 )
 
@@ -81,19 +84,25 @@ Write-Host "PLATFORMIO_CORE_DIR=$StagingDir"
 Write-Host "Using pio: $pio"
 
 $platforms = @("espressif32", "atmelavr")
+if ($LibsOnly) { $SkipLibs = $false }
+
 if (-not $SkipInstall) {
-  foreach ($platform in $platforms) {
-    Write-Host "`n=== Installing platform: $platform ==="
-    $ok = $false
-    & $pio pkg install -g -p $platform
-    if ($LASTEXITCODE -eq 0) { $ok = $true }
-    if (-not $ok) {
-      & $pio platform install $platform
+  if (-not $LibsOnly) {
+    foreach ($platform in $platforms) {
+      Write-Host "`n=== Installing platform: $platform ==="
+      $ok = $false
+      & $pio pkg install -g -p $platform
       if ($LASTEXITCODE -eq 0) { $ok = $true }
+      if (-not $ok) {
+        & $pio platform install $platform
+        if ($LASTEXITCODE -eq 0) { $ok = $true }
+      }
+      if (-not $ok) {
+        throw "Failed to install platform: $platform"
+      }
     }
-    if (-not $ok) {
-      throw "Failed to install platform: $platform"
-    }
+  } else {
+    Write-Host "LibsOnly: skipping platform/toolchain install."
   }
 
   if (-not $SkipLibs) {
@@ -112,43 +121,59 @@ if (-not $SkipInstall) {
 $platformsDir = Join-Path $StagingDir "platforms"
 $packagesDir = Join-Path $StagingDir "packages"
 $libDir = Join-Path $StagingDir "lib"
-foreach ($p in $platforms) {
-  $dir = Join-Path $platformsDir $p
-  if (-not (Test-Path $dir)) {
-    throw "Missing platform after install: $dir"
+
+if (-not $LibsOnly) {
+  foreach ($p in $platforms) {
+    $dir = Join-Path $platformsDir $p
+    if (-not (Test-Path $dir)) {
+      throw "Missing platform after install: $dir"
+    }
   }
-}
-if (-not (Test-Path $packagesDir)) {
-  throw "Missing packages directory: $packagesDir"
+  if (-not (Test-Path $packagesDir)) {
+    throw "Missing packages directory: $packagesDir"
+  }
 }
 
 $libsInstalled = @()
 if (Test-Path $libDir) {
   $libsInstalled = @(Get-ChildItem $libDir -Directory | ForEach-Object { $_.Name })
 }
+if ($LibsOnly -and $libsInstalled.Count -eq 0) {
+  throw "LibsOnly pack has no lib/ folders. Remove -SkipInstall or pre-populate staging."
+}
 
 $manifest = [ordered]@{
   format      = "aether-offline-cache"
   version     = 2
   aether      = $Version
-  platforms   = $platforms
+  platforms   = $(if ($LibsOnly) { @() } else { $platforms })
   libraries   = $libraries
   lib_folders = $libsInstalled
   created_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-  note        = "Extract/merge into %USERPROFILE%\.platformio (platforms + packages + lib)."
+  note        = $(if ($LibsOnly) {
+      "Libs-only pack: merge lib/ into %USERPROFILE%\.platformio. Platforms/toolchains not included."
+    } else {
+      "Extract/merge into %USERPROFILE%\.platformio (platforms + packages + lib)."
+    })
 }
 $manifestPath = Join-Path $StagingDir "aether-offline-cache.json"
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding utf8
 
-$zipName = "Aether_OfflineCache_${Version}_windows-x64.zip"
+$zipName = if ($LibsOnly) {
+  "Aether_OfflineLibs_${Version}_windows-x64.zip"
+} else {
+  "Aether_OfflineCache_${Version}_windows-x64.zip"
+}
 $zipPath = Join-Path $OutDir $zipName
 if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
 
 $packRoot = Join-Path $env:TEMP "aether-pio-pack-$Version"
 if (Test-Path $packRoot) { Remove-Item -Recurse -Force $packRoot }
 New-Item -ItemType Directory -Force -Path $packRoot | Out-Null
-Copy-Item -Recurse (Join-Path $StagingDir "platforms") (Join-Path $packRoot "platforms")
-Copy-Item -Recurse (Join-Path $StagingDir "packages") (Join-Path $packRoot "packages")
+if (-not $LibsOnly) {
+  Copy-Item -Recurse (Join-Path $StagingDir "platforms") (Join-Path $packRoot "platforms")
+  Copy-Item -Recurse (Join-Path $StagingDir "packages") (Join-Path $packRoot "packages")
+}
 if (Test-Path $libDir) {
   Copy-Item -Recurse $libDir (Join-Path $packRoot "lib")
 }

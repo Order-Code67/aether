@@ -11,7 +11,7 @@ import {
 import { useI18n } from "@/hooks/useI18n";
 import { gpsFixLabel } from "@/lib/mavlinkMinimal";
 import { plotPointsToCsv, slicePlotWindow } from "@/lib/plotterExport";
-import { channelColor } from "@/lib/serialPlotter";
+import { channelColor, sampleHasRadioChannels } from "@/lib/serialPlotter";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePlotterStore } from "@/stores/plotterStore";
@@ -56,6 +56,12 @@ export function SerialPlotter() {
   const visiblePoints = useMemo(
     () => slicePlotWindow(points, zoomSamples, panFromEnd),
     [points, zoomSamples, panFromEnd],
+  );
+  const hasRadio = useMemo(
+    () =>
+      channels.some((c) => /^(rssi|snr)$/i.test(c)) ||
+      points.some((p) => sampleHasRadioChannels(p.values)),
+    [channels, points],
   );
 
   useEffect(() => {
@@ -233,6 +239,14 @@ export function SerialPlotter() {
             {t("plotter.modeMavlink")}
           </button>
         </div>
+        {hasRadio && parseMode === "text" && (
+          <span
+            className="rounded border border-aether-accent/40 bg-aether-accent/10 px-1.5 py-0.5 text-[10px] text-aether-fg"
+            title={t("plotter.radioHint")}
+          >
+            {t("plotter.radioBadge")}
+          </span>
+        )}
         <button
           type="button"
           title={paused ? t("plotter.resume") : t("plotter.pause")}

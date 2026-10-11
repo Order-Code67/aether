@@ -36,11 +36,12 @@ export function friendlyPioError(message: string, locale: Locale): string {
   }
   if (
     lower.includes("invalid offline cache zip") ||
-    lower.includes("expected platforms/espressif32")
+    lower.includes("expected platforms/") ||
+    lower.includes("no platforms or lib/")
   ) {
     return ru
-      ? "Неверный архив офлайн-кэша. Нужен zip с platforms/espressif32 и/или platforms/atmelavr (см. docs/OFFLINE_INSTALLER.md)."
-      : "Invalid offline cache zip. Need platforms/espressif32 and/or platforms/atmelavr (see docs/OFFLINE_INSTALLER.md).";
+      ? "Неверный архив офлайн-кэша. Нужен zip с platforms/… и/или lib/ (см. docs/OFFLINE_INSTALLER.md)."
+      : "Invalid offline cache zip. Need platforms/… and/or lib/ (see docs/OFFLINE_INSTALLER.md).";
   }
   if (
     lower.includes("offline cache zip not found") ||

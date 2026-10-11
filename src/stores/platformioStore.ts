@@ -13,9 +13,11 @@ import {
   detectPython,
   installPioCore,
   inspectPioProject,
+  findSidecarOfflineZips,
   importOfflineCache,
   prepareOfflineCache,
   probeOfflineCache,
+  type SidecarOfflineZip,
   runPioTask,
   type OfflineCacheStatus,
   type PioInfo,
@@ -90,6 +92,8 @@ interface PlatformIoState {
   doctorDismissed: boolean;
   offlineCache: OfflineCacheStatus | null;
   offlineCacheChecking: boolean;
+  /** Portable OfflineCache/OfflineLibs zip found next to the app or in Desktop/Downloads. */
+  sidecarOfflineZips: SidecarOfflineZip[];
   refreshCli: () => Promise<void>;
   refreshProject: () => Promise<void>;
   /** Refresh serial ports and auto-pick preferred COM for this project. */
@@ -109,6 +113,8 @@ interface PlatformIoState {
   refreshOfflineCache: () => Promise<void>;
   prepareOfflineCache: () => Promise<void>;
   importOfflineCacheZip: (zipPath: string) => Promise<void>;
+  /** Import preferred sidecar zip (full cache preferred over libs-only). */
+  importSidecarOfflineZip: () => Promise<void>;
   dismissDoctor: () => void;
   showDoctor: () => void;
 }
@@ -148,6 +154,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       doctorDismissed: false,
       offlineCache: null,
       offlineCacheChecking: false,
+      sidecarOfflineZips: [],
 
       refreshCli: async () => {
         if (!isTauriRuntime()) {
@@ -697,6 +704,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               radio,
             },
           });
+          void get().refreshOfflineCache();
           void import("@/stores/lspStore").then(({ useLspStore }) => {
             useLspStore.setState({ info: clangd, error: null });
           });
@@ -800,13 +808,25 @@ export const usePlatformIoStore = create<PlatformIoState>()(
 
       refreshOfflineCache: async () => {
         if (!isTauriRuntime()) {
-          set({ offlineCache: null, offlineCacheChecking: false });
+          set({
+            offlineCache: null,
+            offlineCacheChecking: false,
+            sidecarOfflineZips: [],
+          });
           return;
         }
         set({ offlineCacheChecking: true });
         try {
-          const status = await probeOfflineCache();
-          set({ offlineCache: status, offlineCacheChecking: false, error: null });
+          const [status, sidecars] = await Promise.all([
+            probeOfflineCache(),
+            findSidecarOfflineZips().catch(() => [] as SidecarOfflineZip[]),
+          ]);
+          set({
+            offlineCache: status,
+            offlineCacheChecking: false,
+            sidecarOfflineZips: sidecars,
+            error: null,
+          });
         } catch (error) {
           set({
             offlineCacheChecking: false,
@@ -906,6 +926,17 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             ),
           });
         }
+      },
+
+      importSidecarOfflineZip: async () => {
+        const zips = get().sidecarOfflineZips;
+        const preferred =
+          zips.find((z) => z.kind === "full") ?? zips[0] ?? null;
+        if (!preferred) {
+          set({ error: t("offline.sidecarMissing") });
+          return;
+        }
+        await get().importOfflineCacheZip(preferred.path);
       },
 
       dismissDoctor: () => set({ doctorDismissed: true }),

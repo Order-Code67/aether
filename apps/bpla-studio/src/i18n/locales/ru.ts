@@ -200,6 +200,8 @@ export const ru: Record<MessageKey, string> = {
   "inav.msp.sensors": "Датчики",
   "inav.msp.voltage": "Напряжение",
   "inav.msp.voltageValue": "{v} В",
+  "inav.msp.rssi": "RSSI",
+  "inav.msp.rssiValue": "{v}",
   "inav.msp.mah": "mAh",
   "inav.msp.gps": "GPS",
   "inav.msp.gpsValue": "{fix} · {sats} спутн.",

@@ -858,6 +858,13 @@ Section Uninstall
  !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
  Delete "$DESKTOP\${PRODUCTNAME}.lnk"
  ${EndIf}
+ ; All-users installs also place a Public Desktop shortcut
+ !insertmacro IsShortcutTarget "$PUBLIC\Desktop\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+ Pop $0
+ ${If} $0 = 1
+ !insertmacro UnpinShortcut "$PUBLIC\Desktop\${PRODUCTNAME}.lnk"
+ Delete "$PUBLIC\Desktop\${PRODUCTNAME}.lnk"
+ ${EndIf}
  ${EndIf}
 
  ; Remove registry information for add/remove programs
@@ -986,4 +993,16 @@ Function CreateOrUpdateDesktopShortcut
 
  CreateShortcut "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
  !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
+
+ ; Guarantee Public Desktop for all-users / per-machine (even if shell context drifted)
+ !if "${INSTALLMODE}" == "both"
+ ${If} $MultiUser.InstallMode == "AllUsers"
+  CreateShortcut "$PUBLIC\Desktop\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  !insertmacro SetLnkAppUserModelId "$PUBLIC\Desktop\${PRODUCTNAME}.lnk"
+ ${EndIf}
+ !endif
+ !if "${INSTALLMODE}" == "perMachine"
+ CreateShortcut "$PUBLIC\Desktop\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+ !insertmacro SetLnkAppUserModelId "$PUBLIC\Desktop\${PRODUCTNAME}.lnk"
+ !endif
 FunctionEnd

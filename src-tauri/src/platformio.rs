@@ -1961,9 +1961,10 @@ pub fn pio_lib_install(
     attempts.push(vec!["lib".into(), "install".into(), lib.to_string()]);
 
     let mut last_err = String::new();
+    let install_timeout = Duration::from_secs(120);
     for args in attempts {
         emit_line(&app, "system", format!("> {command} {}", args.join(" ")));
-        let output = run_pio(&command, &args, Some(&root))?;
+        let output = run_pio_with_timeout(&command, &args, Some(&root), install_timeout)?;
         if output.status.success() {
             let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -2040,8 +2041,10 @@ pub fn pio_lib_uninstall(
     attempts.push(vec!["lib".into(), "uninstall".into(), lib.to_string()]);
 
     let mut last_err = String::new();
+    let uninstall_timeout = Duration::from_secs(90);
     for args in attempts {
-        let output = run_pio(&command, &args, Some(&root))?;
+        let output =
+            run_pio_with_timeout(&command, &args, Some(&root), uninstall_timeout)?;
         if output.status.success() {
             return Ok(String::from_utf8_lossy(&output.stdout).trim().to_string());
         }
@@ -2146,6 +2149,98 @@ pub fn pio_cache_status() -> Result<OfflineCacheStatus, String> {
         espressif32: platform_installed(&home, "espressif32"),
         atmelavr: platform_installed(&home, "atmelavr"),
     })
+}
+
+/// Portable offline zip found next to the app / common drop folders (USB stick layout).
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SidecarOfflineZip {
+    pub path: String,
+    /// `full` = OfflineCache (platforms+packages+lib), `libs` = OfflineLibs (lib only)
+    pub kind: String,
+}
+
+fn is_aether_offline_zip_name(name: &str) -> Option<&'static str> {
+    let lower = name.to_ascii_lowercase();
+    if !lower.ends_with(".zip") {
+        return None;
+    }
+    if lower.starts_with("aether_offlinecache_") || lower.starts_with("aether_offlinecache.") {
+        return Some("full");
+    }
+    if lower.starts_with("aether_offlinelibs_") || lower.starts_with("aether_offlinelibs.") {
+        return Some("libs");
+    }
+    None
+}
+
+fn push_offline_zips_from_dir(dir: &Path, out: &mut Vec<SidecarOfflineZip>) {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        let Some(kind) = is_aether_offline_zip_name(name) else {
+            continue;
+        };
+        let path_str = path.to_string_lossy().to_string();
+        if out.iter().any(|z| z.path.eq_ignore_ascii_case(&path_str)) {
+            continue;
+        }
+        out.push(SidecarOfflineZip {
+            path: path_str,
+            kind: kind.into(),
+        });
+    }
+}
+
+/// Scan install dir, Desktop, Downloads, Documents\Aether for Aether_Offline*.zip (dist USB layout).
+#[tauri::command]
+pub fn pio_find_sidecar_offline_zips() -> Result<Vec<SidecarOfflineZip>, String> {
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            dirs.push(dir.to_path_buf());
+            if let Some(parent) = dir.parent() {
+                dirs.push(parent.to_path_buf());
+            }
+        }
+    }
+    for key in ["USERPROFILE", "HOME"] {
+        if let Ok(home) = std::env::var(key) {
+            let home = PathBuf::from(home);
+            dirs.push(home.join("Desktop"));
+            dirs.push(home.join("Downloads"));
+            dirs.push(home.join("Documents").join("Aether"));
+            dirs.push(home.join("Documents").join("Aether").join("offline"));
+            break;
+        }
+    }
+    // Public Desktop (all-users shortcut / shared drop)
+    if let Ok(public) = std::env::var("PUBLIC") {
+        dirs.push(PathBuf::from(public).join("Desktop"));
+    }
+
+    let mut found = Vec::new();
+    for dir in dirs {
+        if dir.is_dir() {
+            push_offline_zips_from_dir(&dir, &mut found);
+        }
+    }
+    // Prefer full cache over libs-only when both exist
+    found.sort_by(|a, b| {
+        let rank = |k: &str| if k == "full" { 0 } else { 1 };
+        rank(&a.kind)
+            .cmp(&rank(&b.kind))
+            .then_with(|| a.path.cmp(&b.path))
+    });
+    Ok(found)
 }
 
 /// Install espressif32 + atmelavr platforms (and their toolchains) into the global PIO cache.

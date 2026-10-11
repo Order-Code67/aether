@@ -63,6 +63,10 @@ export function SettingsDialog() {
   const refreshOfflineCache = usePlatformIoStore((s) => s.refreshOfflineCache);
   const prepareOfflineCache = usePlatformIoStore((s) => s.prepareOfflineCache);
   const importOfflineCacheZip = usePlatformIoStore((s) => s.importOfflineCacheZip);
+  const sidecarOfflineZips = usePlatformIoStore((s) => s.sidecarOfflineZips);
+  const importSidecarOfflineZip = usePlatformIoStore(
+    (s) => s.importSidecarOfflineZip,
+  );
 
   const baseUrl = useAgentStore((s) => s.baseUrl);
   const apiKey = useAgentStore((s) => s.apiKey);
@@ -366,6 +370,18 @@ export function SettingsDialog() {
                     </li>
                   </ul>
                 )}
+                {sidecarOfflineZips[0] && (
+                  <p
+                    className="text-[11px] text-aether-fg-muted"
+                    data-testid="settings-sidecar-hint"
+                  >
+                    {t("offline.sidecarFound", {
+                      file:
+                        sidecarOfflineZips[0].path.split(/[/\\]/).pop() ??
+                        sidecarOfflineZips[0].path,
+                    })}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -377,6 +393,21 @@ export function SettingsDialog() {
                   >
                     {running ? t("offline.preparing") : t("offline.prepare")}
                   </button>
+                  {sidecarOfflineZips.length > 0 && (
+                    <button
+                      type="button"
+                      disabled={running || !isTauriRuntime()}
+                      data-testid="settings-import-sidecar"
+                      onClick={() => {
+                        void importSidecarOfflineZip();
+                      }}
+                      className="rounded border border-aether-accent/60 bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                    >
+                      {running
+                        ? t("offline.importing")
+                        : t("offline.importSidecar")}
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={running || !isTauriRuntime()}
