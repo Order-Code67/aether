@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Placeholder stacks — drop brand fonts into public/fonts and wire @font-face later. */
+  --font-sans: "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-display: "Bahnschrift", "Segoe UI Variable", "Segoe UI", sans-serif;
+
+  --color-app: #0b1220;
+  --color-surface: #121a2b;
+  --color-surface-2: #1a2438;
+  --color-surface-3: #243149;
+  --color-border: #2c3a55;
+  --color-fg: #e8eef8;
+  --color-fg-muted: #93a0b8;
+  --color-accent: #2ec4b6;
+  --color-accent-fg: #042421;
+  --color-ok: #3dd68c;
+  --color-warn: #f0b429;
+  --color-danger: #f07178;
+}
+
+:root,
+:root[data-theme="light"] {
+  --color-app: #eef3f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3f6fa;
+  --color-surface-3: #e7edf5;
+  --color-border: #c9d4e3;
+  --color-fg: #142033;
+  --color-fg-muted: #5b6b82;
+  --color-accent: #0f8f86;
+  --color-accent-fg: #f4fffd;
+  --color-ok: #1f9d63;
+  --color-warn: #c48912;
+  --color-danger: #d64550;
+}
+
+:root.dark,
+:root[data-theme="dark"] {
+  --color-app: #0b1220;
+  --color-surface: #121a2b;
+  --color-surface-2: #1a2438;
+  --color-surface-3: #243149;
+  --color-border: #2c3a55;
+  --color-fg: #e8eef8;
+  --color-fg-muted: #93a0b8;
+  --color-accent: #2ec4b6;
+  --color-accent-fg: #042421;
+  --color-ok: #3dd68c;
+  --color-warn: #f0b429;
+  --color-danger: #f07178;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(46, 196, 182, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(240, 180, 41, 0.08), transparent 50%),
+    var(--color-app);
+  color: var(--color-fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+@utility bg-app {
+  background-color: var(--color-app);
+}
+@utility bg-surface {
+  background-color: var(--color-surface);
+}
+@utility bg-surface-2 {
+  background-color: var(--color-surface-2);
+}
+@utility bg-surface-3 {
+  background-color: var(--color-surface-3);
+}
+@utility border-border {
+  border-color: var(--color-border);
+}
+@utility text-fg {
+  color: var(--color-fg);
+}
+@utility text-fg-muted {
+  color: var(--color-fg-muted);
+}
+@utility bg-accent {
+  background-color: var(--color-accent);
+}
+@utility text-accent {
+  color: var(--color-accent);
+}
+@utility text-accent-fg {
+  color: var(--color-accent-fg);
+}
+@utility bg-ok {
+  background-color: var(--color-ok);
+}
+@utility text-ok {
+  color: var(--color-ok);
+}
+@utility bg-warn {
+  background-color: var(--color-warn);
+}
+@utility text-warn {
+  color: var(--color-warn);
+}
+@utility bg-danger {
+  background-color: var(--color-danger);
+}
+@utility text-danger {
+  color: var(--color-danger);
+}
+@utility font-display {
+  font-family: var(--font-display);
+}

@@ -505,7 +505,7 @@ export function Sidebar() {
             title={SIDEBAR_CONTENT[activeActivity]?.title ?? activityLabel}
             hint={
               SIDEBAR_CONTENT[activeActivity]?.hint ??
-              "This panel is reserved for a future feature."
+              "Coming soon / Скоро"
             }
           />
         )}

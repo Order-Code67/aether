@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.30 — 2026-10-11
+
+- **Finish incomplete WIP** — orphaned full iNav configurator UI removed from the IDE (Activity **БПЛА** remains the БПЛА-Студия bridge only); experimental Electron `apps/aether-configurator/` committed with honest docs (not an IDE launch target yet; primary FC path stays БПЛА-Студия); driver binary cache gitignored; incomplete Navigation upload / Blackbox charts labeled RU/EN «скоро» / Coming soon; no silent no-op driver install when cache is empty
+
 ## 0.2.29 — 2026-10-11
 
 - **AI voice (Whisper fallback)** — Web Speech remains an optional fast path when `webkitSpeechRecognition` exists; otherwise MediaRecorder mic capture posts to OpenAI-compatible `/v1/audio/transcriptions` using Agent Settings base URL + API key; transcript appends to the composer; offline / no-key / mic-denied / unsupported / timeout errors in RU/EN; recording pulse and no stuck listening state

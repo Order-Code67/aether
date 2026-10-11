@@ -34,10 +34,12 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 - **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
 - **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
 - **БПЛА-Студия bridge** — Activity **БПЛА**: launch the standalone FC configurator with optional COM handoff (see [`docs/BPLA_STUDIO.md`](docs/BPLA_STUDIO.md); app lives in `apps/bpla-studio/`)
+- **Aether Configurator** (experimental Electron companion) — MSP/MAVLink tooling in `apps/aether-configurator/` (`npm run configurator:dev`); **not** wired into the IDE bridge yet — primary FC path remains БПЛА-Студия ([`docs/AETHER_CONFIGURATOR.md`](docs/AETHER_CONFIGURATOR.md))
 
 ## Not yet
 
 - Signed remote extension store / cloud publisher accounts
+- IDE launch bridge for Aether Configurator (Electron); use `npm run configurator:dev` until then
 
 ## Prerequisites (Windows)
 
