@@ -168,6 +168,10 @@ export const ru: Record<MessageKey, string> = {
   "inav.profilesEmpty": "Пока нет сохранённых профилей.",
   "inav.delete": "Удалить",
   "inav.deleteProfileConfirm": "Удалить этот профиль iNav?",
+  "settings.showExternalInavConfigurator":
+    "Показывать кнопку внешнего iNav Configurator",
+  "settings.showExternalInavConfiguratorHint":
+    "По умолчанию выкл. Если включить — на вкладке Setup появится кнопка запуска официального Electron iNav Configurator.",
   "inav.openConfigurator": "Открыть iNav Configurator",
   "inav.configuratorHint": "Запускает внешний Electron Configurator. Aether сначала освобождает COM-порт.",
   "inav.configuratorMissing": "iNav Configurator не найден в типичных путях установки и PATH.\n\nОткрыть страницу релизов на GitHub для скачивания?",

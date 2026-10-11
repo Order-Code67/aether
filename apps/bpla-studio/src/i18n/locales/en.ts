@@ -166,6 +166,10 @@ export const en = {
   "inav.profilesEmpty": "No saved profiles yet.",
   "inav.delete": "Delete",
   "inav.deleteProfileConfirm": "Delete this iNav profile?",
+  "settings.showExternalInavConfigurator":
+    "Show external iNav Configurator button",
+  "settings.showExternalInavConfiguratorHint":
+    "Off by default. When enabled, Setup shows a button to launch the official Electron iNav Configurator.",
   "inav.openConfigurator": "Open external iNav Configurator (optional)",
   "inav.configuratorHint": "Optional: launches the official Electron app. Aether disconnects first. Prefer configuring here — Connect via Aether.",
   "inav.configuratorMissing": "iNav Configurator was not found in common install paths or PATH.\n\nOpen the GitHub releases page to download it?",

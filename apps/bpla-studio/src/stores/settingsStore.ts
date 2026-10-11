@@ -4,8 +4,14 @@ import type { Locale } from "@/i18n";
 
 interface SettingsState {
   locale: Locale;
+  /**
+   * Show the optional «Open external iNav Configurator» control.
+   * Off by default — prefer configuring in БПЛА-Студия.
+   */
+  showExternalInavConfigurator: boolean;
   notice: string | null;
   setLocale: (locale: Locale) => void;
+  setShowExternalInavConfigurator: (v: boolean) => void;
   flashNotice: (message: string, ms?: number) => void;
 }
 
@@ -15,8 +21,11 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       locale: "ru",
+      showExternalInavConfigurator: false,
       notice: null,
       setLocale: (locale) => set({ locale }),
+      setShowExternalInavConfigurator: (v) =>
+        set({ showExternalInavConfigurator: v }),
       flashNotice: (message, ms = 4000) => {
         set({ notice: message });
         if (noticeTimer != null) window.clearTimeout(noticeTimer);
@@ -28,7 +37,10 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "bpla-studio-settings",
-      partialize: (s) => ({ locale: s.locale }),
+      partialize: (s) => ({
+        locale: s.locale,
+        showExternalInavConfigurator: s.showExternalInavConfigurator,
+      }),
     },
   ),
 );

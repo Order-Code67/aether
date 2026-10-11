@@ -298,32 +298,44 @@ export function getCommands(): Command[] {
     },
     {
       id: "inav.openConfigurator",
-      title: "БПЛА-Студия: Open",
+      title: "iNav: Open external Configurator",
       category: "БПЛА-Студия",
-      keywords: "configurator bpla студия конфигуратор",
+      keywords: "configurator inav external внешний конфигуратор",
       run: async () => {
+        const { t } = await import("@/hooks/useI18n");
+        const settings = useSettingsStore.getState();
+        if (!settings.showExternalInavConfigurator) {
+          settings.flashNotice(t("settings.externalInavConfiguratorDisabled"));
+          return;
+        }
         view("inav");
         const { useInavStore } = await import("@/stores/inavStore");
-        const { useSerialStore } = await import("@/stores/serialStore");
-        const { openBplaStudio } = await import("@/lib/bplaStudio");
-        const { t } = await import("@/hooks/useI18n");
+        const {
+          detectInavConfigurator,
+          INAV_CONFIGURATOR_DOWNLOAD_URL,
+          openInavConfigurator,
+        } = await import("@/lib/inavConfigurator");
+        const { openExternalUrl } = await import("@/lib/comDrivers");
         await useInavStore.getState().releasePort();
-        const serial = useSerialStore.getState();
         try {
-          await openBplaStudio({
-            port: serial.selectedPath || undefined,
-            baud: serial.baudRate,
-          });
-          useSettingsStore.getState().flashNotice(t("studio.bridge.launched"));
+          const info = await detectInavConfigurator();
+          if (!info.installed) {
+            const go = window.confirm(t("inav.configuratorMissing"));
+            if (go) {
+              await openExternalUrl(INAV_CONFIGURATOR_DOWNLOAD_URL);
+            }
+            return;
+          }
+          await openInavConfigurator();
+          settings.flashNotice(t("inav.configuratorLaunched"));
         } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          useSettingsStore
-            .getState()
-            .flashNotice(
-              msg.includes("BPLA_STUDIO_MISSING")
-                ? t("studio.bridge.missing")
-                : msg,
-            );
+          const msg =
+            e instanceof Error && e.message === "INAV_DESKTOP_REQUIRED"
+              ? t("inav.desktopRequired")
+              : e instanceof Error
+                ? e.message
+                : t("inav.configuratorFailed");
+          settings.flashNotice(msg);
         }
       },
     },

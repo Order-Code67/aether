@@ -13,6 +13,12 @@ export default function App() {
   const notice = useSettingsStore((s) => s.notice);
   const locale = useSettingsStore((s) => s.locale);
   const setLocale = useSettingsStore((s) => s.setLocale);
+  const showExternalInavConfigurator = useSettingsStore(
+    (s) => s.showExternalInavConfigurator,
+  );
+  const setShowExternalInavConfigurator = useSettingsStore(
+    (s) => s.setShowExternalInavConfigurator,
+  );
   useSerialBridge();
 
   useEffect(() => {
@@ -46,6 +52,25 @@ export default function App() {
               <option value="en">EN</option>
             </select>
           </div>
+          <label className="flex items-start gap-2 border-b border-aether-border px-3 py-2 text-[10px] leading-snug text-aether-fg-muted">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={showExternalInavConfigurator}
+              onChange={(e) =>
+                setShowExternalInavConfigurator(e.target.checked)
+              }
+              data-testid="settings-show-external-inav"
+            />
+            <span>
+              <span className="block text-aether-fg">
+                {t("settings.showExternalInavConfigurator")}
+              </span>
+              <span className="block text-aether-fg-dim">
+                {t("settings.showExternalInavConfiguratorHint")}
+              </span>
+            </span>
+          </label>
           <BoardsPanel />
           <div className="min-h-0 flex-1">
             <InavSidebarNav />

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.28 — 2026-10-11
+
+- **External iNav Configurator opt-in** — button / checklist step / command palette `inav.openConfigurator` hidden by default; enable via Settings → Tools → «Show external iNav Configurator button» (persisted `showExternalInavConfigurator`); RU/EN
+
 ## 0.2.27 — 2026-10-11
 
 - **AI attachments** — paperclip multi-select + drag-drop onto the composer; text/code files packed into the next user message (≈150KB total budget, truncated); chips with remove; cleared after send; images skipped with a clear RU/EN notice (backend is string-only, no vision)

@@ -32,6 +32,11 @@ interface SettingsState {
   showAllFiles: boolean;
   /** True after Quick Start finished or user dismissed it. */
   onboardingDone: boolean;
+  /**
+   * Show the optional «Open external iNav Configurator» control in the FC
+   * workspace / checklist / command palette. Off by default — prefer in-app config.
+   */
+  showExternalInavConfigurator: boolean;
   /** Stable = latest.json; Beta = latest-beta.json. */
   updateChannel: UpdateChannel;
   fontSize: number;
@@ -53,6 +58,7 @@ interface SettingsState {
   setSketchMode: (v: boolean) => void;
   setShowAllFiles: (v: boolean) => void;
   setOnboardingDone: (v: boolean) => void;
+  setShowExternalInavConfigurator: (v: boolean) => void;
   setUpdateChannel: (channel: UpdateChannel) => void;
   setFontSize: (n: number) => void;
   setTabSize: (n: number) => void;
@@ -89,6 +95,7 @@ export const useSettingsStore = create<SettingsState>()(
       sketchMode: true,
       showAllFiles: false,
       onboardingDone: false,
+      showExternalInavConfigurator: false,
       updateChannel: "stable",
       ...EDITOR_DEFAULTS,
       notice: null,
@@ -121,6 +128,8 @@ export const useSettingsStore = create<SettingsState>()(
       setSketchMode: (v) => set({ sketchMode: v }),
       setShowAllFiles: (v) => set({ showAllFiles: v }),
       setOnboardingDone: (v) => set({ onboardingDone: v }),
+      setShowExternalInavConfigurator: (v) =>
+        set({ showExternalInavConfigurator: v }),
       setUpdateChannel: (channel) =>
         set({ updateChannel: channel === "beta" ? "beta" : "stable" }),
 
@@ -154,6 +163,7 @@ export const useSettingsStore = create<SettingsState>()(
         sketchMode: state.sketchMode,
         showAllFiles: state.showAllFiles,
         onboardingDone: state.onboardingDone,
+        showExternalInavConfigurator: state.showExternalInavConfigurator,
         updateChannel: state.updateChannel,
         fontSize: state.fontSize,
         tabSize: state.tabSize,

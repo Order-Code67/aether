@@ -189,6 +189,12 @@
   "settings.arduinoMode": "Arduino simplified UI",
   "settings.arduinoModeHint":
     "Hides advanced activity icons behind More, keeps Sketch mode on, emphasizes Serial and Output.",
+  "settings.showExternalInavConfigurator":
+    "Show external iNav Configurator button",
+  "settings.showExternalInavConfiguratorHint":
+    "Off by default. When enabled, Setup shows a button to launch the official Electron iNav Configurator (optional; prefer configuring in Aether / БПЛА-Студия).",
+  "settings.externalInavConfiguratorDisabled":
+    "External iNav Configurator is disabled — enable it in Settings → Tools.",
   "libraries.tab.platformio": "PlatformIO",
   "libraries.tab.arduino": "Arduino",
   "libraries.tab.github": "GitHub",

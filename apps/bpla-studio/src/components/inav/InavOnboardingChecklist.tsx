@@ -5,6 +5,7 @@ import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { useInavStore } from "@/stores/inavStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -62,6 +63,9 @@ export function InavOnboardingChecklist({
   const setDismissed = useInavChecklistStore((s) => s.setDismissed);
   const setCollapsed = useInavChecklistStore((s) => s.setCollapsed);
   const mark = useInavChecklistStore((s) => s.mark);
+  const showExternalInavConfigurator = useSettingsStore(
+    (s) => s.showExternalInavConfigurator,
+  );
 
   const selectedPath = useSerialStore((s) => s.selectedPath);
   const connected = useSerialStore((s) => s.connected);
@@ -69,6 +73,14 @@ export function InavOnboardingChecklist({
   const mspSnapshot = useInavStore((s) => s.mspSnapshot);
   const lastDiffPath = useInavStore((s) => s.lastDiffPath);
   const diffBuffer = useInavStore((s) => s.diffBuffer);
+
+  const steps = useMemo(
+    () =>
+      showExternalInavConfigurator
+        ? STEPS
+        : STEPS.filter((s) => s.id !== "configurator"),
+    [showExternalInavConfigurator],
+  );
 
   useEffect(() => {
     if (selectedPath) mark("port", true);
@@ -87,8 +99,8 @@ export function InavOnboardingChecklist({
   }, [lastDiffPath, diffBuffer, mark]);
 
   const doneCount = useMemo(
-    () => STEPS.filter((s) => completed[s.id]).length,
-    [completed],
+    () => steps.filter((s) => completed[s.id]).length,
+    [completed, steps],
   );
 
   if (dismissed) return null;
@@ -106,7 +118,7 @@ export function InavOnboardingChecklist({
         >
           {collapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
           <span className="truncate">
-            {t("inav.checklist.title")} ({doneCount}/{STEPS.length})
+            {t("inav.checklist.title")} ({doneCount}/{steps.length})
           </span>
         </button>
         <button
@@ -120,7 +132,7 @@ export function InavOnboardingChecklist({
       </div>
       {!collapsed && (
         <ol className="mt-2 space-y-1">
-          {STEPS.map((step, i) => {
+          {steps.map((step, i) => {
             const done = !!completed[step.id];
             return (
               <li key={step.id} className="flex items-start gap-2 text-[11px]">

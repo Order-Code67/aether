@@ -178,6 +178,12 @@ export const ru: Record<MessageKey, string> = {
   "settings.arduinoMode": "Упрощённый режим Arduino",
   "settings.arduinoModeHint":
     "Прячет расширенные иконки за «Ещё», включает режим скетча, выделяет Serial и Вывод.",
+  "settings.showExternalInavConfigurator":
+    "Показывать кнопку внешнего iNav Configurator",
+  "settings.showExternalInavConfiguratorHint":
+    "По умолчанию выкл. Если включить — на вкладке Setup появится кнопка запуска официального Electron iNav Configurator (необязательно; лучше настраивать в Aether / БПЛА-Студии).",
+  "settings.externalInavConfiguratorDisabled":
+    "Внешний iNav Configurator отключён — включите в Настройки → Инструменты.",
   "libraries.tab.platformio": "PlatformIO",
   "libraries.tab.arduino": "Arduino",
   "libraries.tab.github": "GitHub",

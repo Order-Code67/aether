@@ -65,6 +65,9 @@ export function InavPanel() {
   const deleteProfile = useInavStore((s) => s.deleteProfile);
 
   const flash = useSettingsStore((s) => s.flashNotice);
+  const showExternalInavConfigurator = useSettingsStore(
+    (s) => s.showExternalInavConfigurator,
+  );
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
   const setBottomPanelVisible = useLayoutStore((s) => s.setBottomPanelVisible);
 
@@ -247,20 +250,22 @@ export function InavPanel() {
               connected={connected}
               sessionActive={sessionActive}
             />
-            <section className="space-y-1.5">
-              <button
-                type="button"
-                data-testid="inav-open-configurator"
-                onClick={() => void onOpenConfigurator()}
-                className="flex w-full items-center justify-center gap-1.5 rounded border border-aether-border px-2 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
-              >
-                <ExternalLink size={12} />
-                {t("inav.openConfigurator")}
-              </button>
-              <p className="text-[10px] leading-relaxed text-aether-fg-dim">
-                {t("inav.configuratorHint")}
-              </p>
-            </section>
+            {showExternalInavConfigurator && (
+              <section className="space-y-1.5">
+                <button
+                  type="button"
+                  data-testid="inav-open-configurator"
+                  onClick={() => void onOpenConfigurator()}
+                  className="flex w-full items-center justify-center gap-1.5 rounded border border-aether-border px-2 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+                >
+                  <ExternalLink size={12} />
+                  {t("inav.openConfigurator")}
+                </button>
+                <p className="text-[10px] leading-relaxed text-aether-fg-dim">
+                  {t("inav.configuratorHint")}
+                </p>
+              </section>
+            )}
             <section className="space-y-1.5">
               <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">
                 {t("inav.profiles")}

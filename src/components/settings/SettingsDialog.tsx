@@ -31,6 +31,12 @@ export function SettingsDialog() {
   const setTheme = useSettingsStore((s) => s.setTheme);
   const arduinoMode = useSettingsStore((s) => s.arduinoMode);
   const setArduinoMode = useSettingsStore((s) => s.setArduinoMode);
+  const showExternalInavConfigurator = useSettingsStore(
+    (s) => s.showExternalInavConfigurator,
+  );
+  const setShowExternalInavConfigurator = useSettingsStore(
+    (s) => s.setShowExternalInavConfigurator,
+  );
   const sketchMode = useSettingsStore((s) => s.sketchMode);
   const showAllFiles = useSettingsStore((s) => s.showAllFiles);
   const setSketchMode = useSettingsStore((s) => s.setSketchMode);
@@ -263,6 +269,27 @@ export function SettingsDialog() {
             )}
             {tab === "tools" && (
               <div className="space-y-3">
+                <div className="space-y-2 border-b border-aether-border pb-3">
+                  <label className="flex items-start justify-between gap-3">
+                    <span className="space-y-0.5">
+                      <span className="block font-medium text-aether-fg">
+                        {t("settings.showExternalInavConfigurator")}
+                      </span>
+                      <span className="block text-[11px] leading-relaxed text-aether-fg-muted">
+                        {t("settings.showExternalInavConfiguratorHint")}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showExternalInavConfigurator}
+                      onChange={(e) =>
+                        setShowExternalInavConfigurator(e.target.checked)
+                      }
+                      className="mt-0.5"
+                      data-testid="settings-show-external-inav"
+                    />
+                  </label>
+                </div>
                 <div className="space-y-2 border-b border-aether-border pb-3">
                   <div>
                     <p className="font-medium text-aether-fg">
