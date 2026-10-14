@@ -8,6 +8,8 @@ import {
   PackagePlus,
   Rocket,
 } from "lucide-react";
+import { CoachSteps } from "@/components/hints/CoachSteps";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { CircuitBackground } from "@/components/welcome/CircuitBackground";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
@@ -220,6 +222,12 @@ export function WelcomeView() {
         <p className="mt-2 text-sm leading-relaxed text-aether-fg-muted">
           {t("hub.tagline")}
         </p>
+
+        <CoachSteps className="mx-auto mt-4 max-w-md" />
+        <PanelHint
+          messageKey="hints.panel.welcome"
+          className="mx-auto mt-3 max-w-md text-left"
+        />
 
         <p
           className="mx-auto mt-3 max-w-xl text-[11px] leading-relaxed text-aether-fg-dim"

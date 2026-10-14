@@ -6,10 +6,12 @@ import {
   CloudOff,
   Folder,
   GitBranch,
+  Lightbulb,
   Radio,
   Wifi,
 } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { cn } from "@/lib/cn";
 import { languageLabel, tabNameFromPath } from "@/types/editor";
 import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
@@ -28,6 +30,8 @@ export function StatusBar() {
   const cursor = useEditorStore((s) => s.cursor);
   const saveStatus = useEditorStore((s) => s.saveStatus);
   const notice = useSettingsStore((s) => s.notice);
+  const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
+  const setHintsEnabled = useSettingsStore((s) => s.setHintsEnabled);
   const activeTab = useEditorStore((s) => {
     const id = s.activeTabId;
     return s.tabs.find((tab) => tab.id === id) ?? null;
@@ -280,6 +284,23 @@ export function StatusBar() {
             {t("status.offline")}
           </span>
         )}
+        <button
+          type="button"
+          data-testid="status-hints-toggle"
+          title={t("hints.toggleTitle")}
+          aria-label={
+            hintsEnabled ? t("hints.toggleOn") : t("hints.toggleOff")
+          }
+          aria-pressed={hintsEnabled}
+          onClick={() => setHintsEnabled(!hintsEnabled)}
+          className={cn(
+            "flex items-center gap-1 hover:opacity-100",
+            hintsEnabled ? "opacity-100" : "opacity-70",
+          )}
+        >
+          <Lightbulb size={12} />
+          {t("hints.toggle")}
+        </button>
         <button
           type="button"
           title={t("status.openSerialTitle")}

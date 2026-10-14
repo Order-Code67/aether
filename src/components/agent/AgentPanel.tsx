@@ -11,6 +11,7 @@ import {
   Square,
   X,
 } from "lucide-react";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
 import {
@@ -41,6 +42,7 @@ import {
 } from "@/lib/whisperTranscribe";
 import { shouldHardBlockNetwork } from "@/lib/offline";
 import { useAgentStore } from "@/stores/agentStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 type VoicePhase = "idle" | "listening" | "transcribing";
 
@@ -201,6 +203,7 @@ function formatAttachSkipMessage(
 
 export function AgentPanel() {
   const { t, locale } = useI18n();
+  const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
   const messages = useAgentStore((s) => s.messages);
   const draft = useAgentStore((s) => s.draft);
   const pendingAttachments = useAgentStore((s) => s.pendingAttachments);
@@ -628,9 +631,13 @@ export function AgentPanel() {
         className="aether-scroll min-h-0 flex-1 space-y-3 overflow-auto px-3 py-2"
       >
         {messages.length === 0 ? (
-          <p className="text-xs leading-relaxed text-aether-fg-dim">
-            {t("agent.emptyHint")}
-          </p>
+          hintsEnabled ? (
+            <PanelHint messageKey="hints.panel.agent" always />
+          ) : (
+            <p className="text-xs leading-relaxed text-aether-fg-dim">
+              {t("agent.emptyHint")}
+            </p>
+          )
         ) : (
           messages.map((msg) =>
             msg.role === "user" ? (

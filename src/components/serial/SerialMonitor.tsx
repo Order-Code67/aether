@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChartLine, Eraser, Plug, PlugZap, RefreshCw, Send } from "lucide-react";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { useI18n } from "@/hooks/useI18n";
 import { BAUD_RATES } from "@/lib/serial";
@@ -62,6 +63,7 @@ export function SerialMonitor() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <PanelHint messageKey="hints.panel.serial" className="mx-2 mt-1.5" />
       <div className="flex flex-wrap items-center gap-1.5 border-b border-aether-border px-2 py-1.5">
         <select
           value={selectedPath}

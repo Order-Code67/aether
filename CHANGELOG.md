@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.38 — 2026-10-14
+
+- **Visible hints** — status-bar lightbulb «Подсказки» (default ON), Welcome coach steps, PanelHint strips, Settings → General toggle; shared Tooltip helper (RU/EN)
+
 ## 0.2.37 — 2026-10-14
 
 - **Tooltips max** — discoverability titles across Settings, Welcome, Build/Upload, LoRa path, Agent, SCM, Libraries, Extensions, BPLA/Configurator, Serial, Status, and Command Palette (RU/EN)

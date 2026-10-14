@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -67,30 +68,30 @@ export function ActivityBar() {
     const label = t(item.labelKey);
 
     return (
-      <button
-        key={item.id}
-        type="button"
-        title={t(item.titleKey)}
-        aria-label={label}
-        aria-pressed={isActive}
-        onClick={() => {
-          toggleActivity(item.id);
-          setMoreOpen(false);
-        }}
-        className={cn(
-          "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors",
-          "hover:text-aether-fg",
-          isActive && "text-aether-fg",
-        )}
-      >
-        <span
+      <Tooltip key={item.id} content={t(item.titleKey)} side="right">
+        <button
+          type="button"
+          aria-label={label}
+          aria-pressed={isActive}
+          onClick={() => {
+            toggleActivity(item.id);
+            setMoreOpen(false);
+          }}
           className={cn(
-            "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
-            isActive ? "opacity-100" : "opacity-0",
+            "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors",
+            "hover:text-aether-fg",
+            isActive && "text-aether-fg",
           )}
-        />
-        <Icon size={22} strokeWidth={1.5} />
-      </button>
+        >
+          <span
+            className={cn(
+              "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
+              isActive ? "opacity-100" : "opacity-0",
+            )}
+          />
+          <Icon size={22} strokeWidth={1.5} />
+        </button>
+      </Tooltip>
     );
   };
 
@@ -104,25 +105,26 @@ export function ActivityBar() {
 
         {arduinoMode && advanced.length > 0 && (
           <div className="relative">
-            <button
-              type="button"
-              title={t("activity.moreTitle")}
-              aria-label={t("activity.more")}
-              aria-expanded={moreOpen}
-              onClick={() => setMoreOpen((v) => !v)}
-              className={cn(
-                "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg",
-                (moreOpen || advancedActive) && "text-aether-fg",
-              )}
-            >
-              <span
+            <Tooltip content={t("activity.moreTitle")} side="right">
+              <button
+                type="button"
+                aria-label={t("activity.more")}
+                aria-expanded={moreOpen}
+                onClick={() => setMoreOpen((v) => !v)}
                 className={cn(
-                  "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
-                  moreOpen || advancedActive ? "opacity-100" : "opacity-0",
+                  "relative flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg",
+                  (moreOpen || advancedActive) && "text-aether-fg",
                 )}
-              />
-              <Ellipsis size={22} strokeWidth={1.5} />
-            </button>
+              >
+                <span
+                  className={cn(
+                    "absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r bg-aether-fg transition-opacity",
+                    moreOpen || advancedActive ? "opacity-100" : "opacity-0",
+                  )}
+                />
+                <Ellipsis size={22} strokeWidth={1.5} />
+              </button>
+            </Tooltip>
             {moreOpen && (
               <div
                 className="absolute left-full top-0 z-40 ml-1 flex flex-col gap-0.5 rounded border border-aether-border bg-aether-surface p-1 shadow-lg"
@@ -158,16 +160,17 @@ export function ActivityBar() {
         )}
       </nav>
 
-      <button
-        type="button"
-        data-testid="activity-settings"
-        title={t("settings.openTitle")}
-        aria-label={t("settings.title")}
-        onClick={() => useSettingsStore.getState().openSettings()}
-        className="flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg"
-      >
-        <Settings size={22} strokeWidth={1.5} />
-      </button>
+      <Tooltip content={t("hints.tip.settings")} side="right">
+        <button
+          type="button"
+          data-testid="activity-settings"
+          aria-label={t("settings.title")}
+          onClick={() => useSettingsStore.getState().openSettings()}
+          className="flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg"
+        >
+          <Settings size={22} strokeWidth={1.5} />
+        </button>
+      </Tooltip>
     </aside>
   );
 }

@@ -253,6 +253,38 @@
   "settings.arduinoMode": "Arduino simplified UI",
   "settings.arduinoModeHint":
     "Hides advanced activity icons behind More, keeps Sketch mode on, emphasizes Serial and Output.",
+  "hints.toggle": "Hints",
+  "hints.toggleOn": "Hints on",
+  "hints.toggleOff": "Hints off",
+  "hints.toggleTitle":
+    "Toggle instructional hints — short how-to lines in key panels",
+  "hints.settings": "Show hints",
+  "hints.settingsHint":
+    "When on, short how-to lines appear in Welcome, Where to load, Build, BPLA, Serial, and Agent. Icon buttons show a fast tooltip on hover.",
+  "hints.coach.title": "Getting started",
+  "hints.coach.dismiss": "Got it",
+  "hints.coach.step1": "1. Open a folder (or create a project)",
+  "hints.coach.step2": "2. Pick board / COM port",
+  "hints.coach.step3": "3. Build — compile firmware",
+  "hints.coach.step4": "4. Upload — flash the board over COM",
+  "hints.panel.welcome":
+    "Start here: open a folder, pick a board and COM, then Build and Upload from the toolbar.",
+  "hints.panel.sources":
+    "Open a project folder, add a path, or copy an example — then pick COM and Build.",
+  "hints.panel.build":
+    "Choose env + COM, then Build (compile) and Upload (flash). Output tab shows progress.",
+  "hints.panel.bpla":
+    "Connect COM for MSP/CLI here, or launch Aether Configurator for full FC setup.",
+  "hints.panel.serial":
+    "Pick COM + baud, Connect to read Serial.print. Disconnect before Upload if the port is busy.",
+  "hints.panel.agent":
+    "Ask about firmware or builds. Attach files with the paperclip; Preview patches before Apply.",
+  "hints.tip.build": "Build — compiles firmware",
+  "hints.tip.upload": "Upload — flashes the board over COM",
+  "hints.tip.clean": "Clean — removes build artifacts",
+  "hints.tip.compiledb": "IntelliSense DB — regenerate compile_commands.json",
+  "hints.tip.portRefresh": "Refresh COM ports",
+  "hints.tip.settings": "Settings — language, theme, hints",
   "settings.showExternalInavConfigurator":
     "Show external iNav Configurator button",
   "settings.showExternalInavConfiguratorHint":

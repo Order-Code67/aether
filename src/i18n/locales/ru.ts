@@ -257,6 +257,38 @@ export const ru: Record<MessageKey, string> = {
   "settings.arduinoMode": "Упрощённый режим Arduino",
   "settings.arduinoModeHint":
     "Прячет расширенные иконки за «Ещё», включает режим скетча, выделяет Serial и Вывод.",
+  "hints.toggle": "Подсказки",
+  "hints.toggleOn": "Подсказки вкл.",
+  "hints.toggleOff": "Подсказки выкл.",
+  "hints.toggleTitle":
+    "Включить или выключить подсказки — короткие инструкции в ключевых панелях",
+  "hints.settings": "Показывать подсказки",
+  "hints.settingsHint":
+    "Когда включено, в Welcome, «Откуда загружать», сборке, БПЛА, Serial и агенте появляются короткие инструкции. У иконок — быстрый тултип при наведении.",
+  "hints.coach.title": "С чего начать",
+  "hints.coach.dismiss": "Понятно",
+  "hints.coach.step1": "1. Откройте папку (или создайте проект)",
+  "hints.coach.step2": "2. Выберите плату / COM-порт",
+  "hints.coach.step3": "3. Сборка — компилирует прошивку",
+  "hints.coach.step4": "4. Загрузка — прошивает плату по COM",
+  "hints.panel.welcome":
+    "Начните здесь: откройте папку, выберите плату и COM, затем Сборка и Загрузка на панели инструментов.",
+  "hints.panel.sources":
+    "Откройте папку проекта, добавьте путь или скопируйте пример — затем выберите COM и соберите.",
+  "hints.panel.build":
+    "Выберите env и COM, затем Сборка (компиляция) и Загрузка (прошивка). Прогресс — во вкладке Вывод.",
+  "hints.panel.bpla":
+    "Подключите COM для MSP/CLI здесь или запустите Aether Configurator для полной настройки FC.",
+  "hints.panel.serial":
+    "Выберите COM и скорость, Connect — читать Serial.print. Перед Загрузкой отключите порт, если он занят.",
+  "hints.panel.agent":
+    "Спросите про прошивку или сборку. Прикрепите файлы скрепкой; Preview патчей перед Apply.",
+  "hints.tip.build": "Сборка — компилирует прошивку",
+  "hints.tip.upload": "Загрузка — прошивает плату по COM",
+  "hints.tip.clean": "Очистка — удаляет артефакты сборки",
+  "hints.tip.compiledb": "IntelliSense DB — пересоздать compile_commands.json",
+  "hints.tip.portRefresh": "Обновить список COM-портов",
+  "hints.tip.settings": "Параметры — язык, тема, подсказки",
   "settings.showExternalInavConfigurator":
     "Показывать кнопку внешнего iNav Configurator",
   "settings.showExternalInavConfiguratorHint":

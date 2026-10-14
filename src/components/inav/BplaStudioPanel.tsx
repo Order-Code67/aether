@@ -9,6 +9,7 @@ import {
   Send,
   Terminal,
 } from "lucide-react";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { IdeFlashCard } from "@/components/inav/IdeFlashCard";
 import { useI18n } from "@/hooks/useI18n";
 import {
@@ -35,6 +36,7 @@ export function BplaStudioPanel() {
   const { t } = useI18n();
   const tauri = isTauriRuntime();
   const flash = useSettingsStore((s) => s.flashNotice);
+  const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
   const [cfgInfo, setCfgInfo] = useState<AetherConfiguratorInfo | null>(null);
   const [busy, setBusy] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
@@ -179,9 +181,12 @@ export function BplaStudioPanel() {
       </header>
 
       <div className="aether-scroll flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-3 pb-4 text-xs">
-        <p className="text-[11px] leading-relaxed text-aether-fg-dim">
-          {t("bplaPath.hint")}
-        </p>
+        <PanelHint messageKey="hints.panel.bpla" />
+        {!hintsEnabled && (
+          <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+            {t("bplaPath.hint")}
+          </p>
+        )}
 
         {/* Aether Configurator */}
         <section

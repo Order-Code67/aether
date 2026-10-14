@@ -9,6 +9,8 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import { PanelHint } from "@/components/hints/PanelHint";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
@@ -77,11 +79,18 @@ export function BuildToolbar() {
   const stageKey = STAGE_KEYS[progress.stage];
   const stageText = stageKey ? t(stageKey) : "";
 
+  const uploadTip = !selectedPort
+    ? t("pio.uploadNeedPort")
+    : serialConnected
+      ? t("pio.uploadWillDisconnect")
+      : t("hints.tip.upload");
+
   return (
-    <div
-      data-aether-chrome
-      className="flex h-8 shrink-0 items-center gap-1 border-b border-aether-border bg-aether-activity px-2"
-    >
+    <div className="flex shrink-0 flex-col border-b border-aether-border bg-aether-activity">
+      <div
+        data-aether-chrome
+        className="flex h-8 items-center gap-1 px-2"
+      >
       <span className="mr-1 text-[11px] font-medium uppercase tracking-wide text-aether-fg-dim">
         PlatformIO
       </span>
@@ -126,97 +135,96 @@ export function BuildToolbar() {
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          title={t("pio.portRefreshTitle")}
-          aria-label={t("pio.portRefresh")}
-          disabled={running}
-          onClick={() => {
-            void syncUploadPort();
-          }}
-          className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
-        >
-          <RefreshCw size={12} />
-        </button>
+        <Tooltip content={t("hints.tip.portRefresh")} side="bottom">
+          <button
+            type="button"
+            aria-label={t("pio.portRefresh")}
+            disabled={running}
+            onClick={() => {
+              void syncUploadPort();
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
+          >
+            <RefreshCw size={12} />
+          </button>
+        </Tooltip>
       </div>
 
-      <button
-        type="button"
-        title={t("pio.buildTitle")}
-        aria-label={t("pio.build")}
-        disabled={disabled}
-        onClick={() => {
-          void runTask("build");
-        }}
-        className={cn(
-          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg",
-          "hover:bg-aether-surface-raised disabled:opacity-40",
-        )}
-      >
-        <Hammer size={13} />
-        {t("pio.build")}
-      </button>
+      <Tooltip content={t("hints.tip.build")} side="bottom">
+        <button
+          type="button"
+          aria-label={t("pio.build")}
+          disabled={disabled}
+          onClick={() => {
+            void runTask("build");
+          }}
+          className={cn(
+            "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg",
+            "hover:bg-aether-surface-raised disabled:opacity-40",
+          )}
+        >
+          <Hammer size={13} />
+          {t("pio.build")}
+        </button>
+      </Tooltip>
 
-      <button
-        type="button"
-        title={
-          !selectedPort
-            ? t("pio.uploadNeedPort")
-            : serialConnected
-              ? t("pio.uploadWillDisconnect")
-              : t("pio.uploadTitle")
-        }
-        aria-label={t("pio.upload")}
-        disabled={uploadDisabled}
-        onClick={() => {
-          void runTask("upload");
-        }}
-        className={cn(
-          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg",
-          "hover:bg-aether-surface-raised disabled:opacity-40",
-        )}
-      >
-        {running && progress.stage === "uploading" ? (
-          <Loader2 size={13} className="animate-spin" />
-        ) : (
-          <Upload size={13} />
-        )}
-        {t("pio.upload")}
-      </button>
+      <Tooltip content={uploadTip} side="bottom">
+        <button
+          type="button"
+          aria-label={t("pio.upload")}
+          disabled={uploadDisabled}
+          onClick={() => {
+            void runTask("upload");
+          }}
+          className={cn(
+            "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg",
+            "hover:bg-aether-surface-raised disabled:opacity-40",
+          )}
+        >
+          {running && progress.stage === "uploading" ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : (
+            <Upload size={13} />
+          )}
+          {t("pio.upload")}
+        </button>
+      </Tooltip>
 
-      <button
-        type="button"
-        title={t("pio.cleanTitle")}
-        aria-label={t("pio.clean")}
-        disabled={disabled}
-        onClick={() => {
-          void runTask("clean");
-        }}
-        className={cn(
-          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
-          "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
-        )}
-      >
-        <Trash2 size={13} />
-        {t("pio.clean")}
-      </button>
+      <Tooltip content={t("hints.tip.clean")} side="bottom">
+        <button
+          type="button"
+          aria-label={t("pio.clean")}
+          disabled={disabled}
+          onClick={() => {
+            void runTask("clean");
+          }}
+          className={cn(
+            "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
+            "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+          )}
+        >
+          <Trash2 size={13} />
+          {t("pio.clean")}
+        </button>
+      </Tooltip>
 
-      <button
-        type="button"
-        title={t("pio.compiledbTitle")}
-        aria-label={t("pio.compiledb")}
-        disabled={disabled}
-        onClick={() => {
-          void runTask("compiledb");
-        }}
-        className={cn(
-          "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
-          "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
-        )}
-      >
-        <FileCode2 size={13} />
-        {t("pio.compiledb")}
-      </button>
+      <Tooltip content={t("hints.tip.compiledb")} side="bottom">
+        <button
+          type="button"
+          aria-label={t("pio.compiledb")}
+          disabled={disabled}
+          onClick={() => {
+            void runTask("compiledb");
+          }}
+          className={cn(
+            "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
+            "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+          )}
+        >
+          <FileCode2 size={13} />
+          {t("pio.compiledb")}
+        </button>
+      </Tooltip>
 
       <button
         type="button"
@@ -308,6 +316,8 @@ export function BuildToolbar() {
           {t("pio.missing")}
         </span>
       )}
+      </div>
+      <PanelHint messageKey="hints.panel.build" className="mx-2 mb-1.5 mt-0.5" />
     </div>
   );
 }

@@ -6,11 +6,14 @@ import {
   PackagePlus,
   Sparkles,
 } from "lucide-react";
+import { CoachSteps } from "@/components/hints/CoachSteps";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { useI18n } from "@/hooks/useI18n";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePlatformIoStore } from "@/stores/platformioStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function LoadSourcesPanel() {
@@ -29,6 +32,7 @@ export function LoadSourcesPanel() {
     (s) => s.importSidecarOfflineZip,
   );
   const refreshOfflineCache = usePlatformIoStore((s) => s.refreshOfflineCache);
+  const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [examplesOpen, setExamplesOpen] = useState(false);
 
@@ -55,7 +59,11 @@ export function LoadSourcesPanel() {
       </header>
 
       <div className="aether-scroll flex-1 space-y-4 overflow-auto px-3 pb-4 text-xs">
-        <p className="leading-relaxed text-aether-fg-dim">{t("sources.hint")}</p>
+        <CoachSteps />
+        <PanelHint messageKey="hints.panel.sources" />
+        {!hintsEnabled && (
+          <p className="leading-relaxed text-aether-fg-dim">{t("sources.hint")}</p>
+        )}
 
         <section className="space-y-1.5">
           <p className="text-[11px] uppercase tracking-wide text-aether-fg-dim">

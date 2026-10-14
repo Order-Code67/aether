@@ -31,6 +31,11 @@ export function SettingsDialog() {
   const setTheme = useSettingsStore((s) => s.setTheme);
   const arduinoMode = useSettingsStore((s) => s.arduinoMode);
   const setArduinoMode = useSettingsStore((s) => s.setArduinoMode);
+  const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
+  const setHintsEnabled = useSettingsStore((s) => s.setHintsEnabled);
+  const setHintsCoachDismissed = useSettingsStore(
+    (s) => s.setHintsCoachDismissed,
+  );
   const showExternalInavConfigurator = useSettingsStore(
     (s) => s.showExternalInavConfigurator,
   );
@@ -242,6 +247,27 @@ export function SettingsDialog() {
                       type="checkbox"
                       checked={arduinoMode}
                       onChange={(e) => setArduinoMode(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                  </label>
+                  <label className="flex items-start justify-between gap-3">
+                    <span className="space-y-0.5">
+                      <span className="block text-aether-fg">
+                        {t("hints.settings")}
+                      </span>
+                      <span className="block text-[11px] text-aether-fg-muted">
+                        {t("hints.settingsHint")}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      data-testid="settings-hints-toggle"
+                      checked={hintsEnabled}
+                      onChange={(e) => {
+                        const on = e.target.checked;
+                        setHintsEnabled(on);
+                        if (on) setHintsCoachDismissed(false);
+                      }}
                       className="mt-0.5"
                     />
                   </label>
