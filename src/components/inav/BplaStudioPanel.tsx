@@ -220,6 +220,7 @@ export function BplaStudioPanel() {
               onChange={(e) => setSelectedPath(e.target.value)}
               className="h-7 min-w-[100px] flex-1 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg"
               aria-label={t("inav.port")}
+              title={t("inav.portTitle")}
               data-testid="bpla-studio-port"
             >
               {ports.length === 0 ? (
@@ -237,6 +238,7 @@ export function BplaStudioPanel() {
               onChange={(e) => setBaudRate(Number(e.target.value))}
               className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg"
               aria-label={t("inav.baud")}
+              title={t("inav.baudTitle")}
             >
               {BAUD_RATES.map((r) => (
                 <option key={r} value={r}>
@@ -246,7 +248,8 @@ export function BplaStudioPanel() {
             </select>
             <button
               type="button"
-              title={t("common.refresh")}
+              title={t("bplaPath.refreshPortsTitle")}
+              aria-label={t("common.refresh")}
               onClick={() => {
                 void refreshPorts();
                 void refreshDetect();
@@ -259,6 +262,8 @@ export function BplaStudioPanel() {
           <button
             type="button"
             data-testid="bpla-configurator-open"
+            title={t("bplaPath.configuratorOpenTitle")}
+            aria-label={t("bplaPath.configuratorOpen")}
             disabled={busy}
             onClick={() => void onLaunchConfigurator()}
             className="flex h-9 w-full items-center justify-center gap-1.5 rounded border border-aether-accent bg-aether-accent-muted text-[12px] font-medium text-aether-fg disabled:opacity-40"
@@ -287,6 +292,8 @@ export function BplaStudioPanel() {
               <button
                 type="button"
                 data-testid="bpla-path-connect"
+                title={t("inav.connectTitle")}
+                aria-label={t("inav.connect")}
                 onClick={() => void onConnect()}
                 className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded border border-aether-border text-[12px] text-aether-fg hover:bg-aether-surface-raised"
               >
@@ -297,6 +304,8 @@ export function BplaStudioPanel() {
               <button
                 type="button"
                 data-testid="bpla-path-disconnect"
+                title={t("inav.disconnectTitle")}
+                aria-label={t("inav.disconnect")}
                 onClick={() => void disconnectSession()}
                 className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded border border-aether-border text-[12px] text-aether-fg hover:bg-aether-surface-raised"
               >
@@ -330,6 +339,8 @@ export function BplaStudioPanel() {
             <button
               type="button"
               data-testid="bpla-path-msp-refresh"
+              title={t("inav.msp.refreshTitle")}
+              aria-label={t("inav.msp.refresh")}
               disabled={!live || mspPolling}
               onClick={() => void refreshMspStatus()}
               className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
@@ -383,17 +394,23 @@ export function BplaStudioPanel() {
             <button
               type="button"
               data-testid="bpla-path-plotter"
+              title={t("bplaPath.openPlotterTitle")}
+              aria-label={t("bplaPath.openPlotter")}
               onClick={openPlotter}
               className="inline-flex items-center gap-1 rounded border border-aether-accent/60 px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
             >
               <Activity size={11} />
               {t("bplaPath.openPlotter")}
             </button>
-            <label className="inline-flex items-center gap-1 text-[11px] text-aether-fg-muted">
+            <label
+              className="inline-flex items-center gap-1 text-[11px] text-aether-fg-muted"
+              title={t("bplaPath.liveTelemetryTitle")}
+            >
               <input
                 type="checkbox"
                 checked={liveTelemetry}
                 onChange={(e) => setLiveTelemetry(e.target.checked)}
+                aria-label={t("bplaPath.liveTelemetry")}
               />
               {t("bplaPath.liveTelemetry")}
             </label>
@@ -412,6 +429,8 @@ export function BplaStudioPanel() {
             </p>
             <button
               type="button"
+              title={t("inav.clearTitle")}
+              aria-label={t("inav.clear")}
               onClick={() => clearCli()}
               className="text-[10px] text-aether-fg-dim hover:text-aether-fg"
             >
@@ -440,11 +459,15 @@ export function BplaStudioPanel() {
               }}
               disabled={!live}
               placeholder={t("inav.cliPlaceholder")}
+              title={t("inav.cliInputTitle")}
+              aria-label={t("inav.cliPlaceholder")}
               className="h-7 min-w-0 flex-1 rounded border border-aether-border bg-aether-bg px-2 text-[11px] text-aether-fg disabled:opacity-40"
               data-testid="bpla-path-cli-input"
             />
             <button
               type="button"
+              title={t("inav.cliSendTitle")}
+              aria-label={t("inav.cliSendTitle")}
               disabled={!live || !cliDraft.trim()}
               onClick={() => void onSendCli()}
               className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"

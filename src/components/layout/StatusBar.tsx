@@ -141,7 +141,7 @@ export function StatusBar() {
         </span>
         <button
           type="button"
-          title={t("status.openProblems")}
+          title={t("status.openProblemsTitle")}
           aria-label={t("status.openProblems")}
           onClick={() => setBottomPanelTab("problems")}
           className="flex items-center gap-1 opacity-90 hover:opacity-100"
@@ -151,7 +151,7 @@ export function StatusBar() {
         </button>
         <button
           type="button"
-          title={t("status.openProblems")}
+          title={t("status.openProblemsTitle")}
           aria-label={t("status.openProblems")}
           onClick={() => setBottomPanelTab("problems")}
           className="flex items-center gap-1 opacity-90 hover:opacity-100"
@@ -175,7 +175,7 @@ export function StatusBar() {
         {gitIsRepo && gitBranch && (
           <button
             type="button"
-            title={t("status.openScm")}
+            title={t("status.openScmTitle")}
             aria-label={t("status.openScm")}
             onClick={() => setActiveActivity("source-control")}
             className="flex max-w-[140px] items-center gap-1 truncate opacity-90 hover:opacity-100"
@@ -191,7 +191,7 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title={t("status.openOutput")}
+          title={t("status.openOutputTitle")}
           aria-label={t("status.openOutput")}
           onClick={() => setBottomPanelTab("output")}
           className="truncate opacity-90 hover:opacity-100"
@@ -201,7 +201,7 @@ export function StatusBar() {
         {isProject && envs.length > 0 && (
           <label
             className="flex max-w-[180px] items-center gap-1 opacity-95"
-            title={t("pio.envSwitch")}
+            title={t("pio.envSwitchTitle")}
           >
             <span className="shrink-0">{t("pio.env")}</span>
             <select
@@ -211,6 +211,7 @@ export function StatusBar() {
               onClick={(event) => event.stopPropagation()}
               className="h-5 max-w-[130px] truncate rounded border border-white/25 bg-transparent px-0.5 text-[11px] text-white outline-none disabled:opacity-50"
               aria-label={t("pio.envSwitch")}
+              title={t("pio.envSwitchTitle")}
             >
               {envs.map((env) => (
                 <option key={env} value={env} className="bg-aether-bg text-aether-fg">
@@ -240,7 +241,7 @@ export function StatusBar() {
         {debugActive && (
           <button
             type="button"
-            title={t("status.openDebug")}
+            title={t("status.openDebugTitle")}
             aria-label={t("status.openDebug")}
             onClick={() => setActiveActivity("debug")}
             className="flex items-center gap-1 opacity-90 hover:opacity-100"
@@ -281,7 +282,7 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title={t("status.openSerial")}
+          title={t("status.openSerialTitle")}
           aria-label={t("status.openSerial")}
           onClick={() => setBottomPanelTab("serial")}
           className="flex items-center gap-1 hover:opacity-100"

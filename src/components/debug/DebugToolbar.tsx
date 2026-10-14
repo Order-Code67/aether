@@ -43,7 +43,8 @@ export function DebugToolbar() {
       </span>
       {!sessionActive ? (
         <Btn
-          title={t("debug.start")}
+          title={t("debug.startTitle")}
+          ariaLabel={t("debug.start")}
           onClick={() => void start()}
         >
           <Play size={13} />
@@ -51,41 +52,51 @@ export function DebugToolbar() {
       ) : (
         <>
           <Btn
-            title={t("debug.continue")}
+            title={t("debug.continueTitle")}
+            ariaLabel={t("debug.continue")}
             disabled={!stopped}
             onClick={() => void continueExec()}
           >
             <Play size={13} />
           </Btn>
           <Btn
-            title={t("debug.pause")}
+            title={t("debug.pauseTitle")}
+            ariaLabel={t("debug.pause")}
             disabled={!running || stopped}
             onClick={() => void pause()}
           >
             <Pause size={13} />
           </Btn>
           <Btn
-            title={t("debug.stepOver")}
+            title={t("debug.stepOverTitle")}
+            ariaLabel={t("debug.stepOver")}
             disabled={!stopped}
             onClick={() => void stepOver()}
           >
             <StepForward size={13} />
           </Btn>
           <Btn
-            title={t("debug.stepInto")}
+            title={t("debug.stepIntoTitle")}
+            ariaLabel={t("debug.stepInto")}
             disabled={!stopped}
             onClick={() => void stepInto()}
           >
             <ArrowDownToLine size={13} />
           </Btn>
           <Btn
-            title={t("debug.stepOut")}
+            title={t("debug.stepOutTitle")}
+            ariaLabel={t("debug.stepOut")}
             disabled={!stopped}
             onClick={() => void stepOut()}
           >
             <ArrowUpFromLine size={13} />
           </Btn>
-          <Btn title={t("debug.stop")} danger onClick={() => void stop()}>
+          <Btn
+            title={t("debug.stopTitle")}
+            ariaLabel={t("debug.stop")}
+            danger
+            onClick={() => void stop()}
+          >
             <Square size={13} />
           </Btn>
         </>
@@ -97,12 +108,14 @@ export function DebugToolbar() {
 function Btn({
   children,
   title,
+  ariaLabel,
   onClick,
   disabled,
   danger,
 }: {
   children: ReactNode;
   title: string;
+  ariaLabel: string;
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
@@ -111,6 +124,7 @@ function Btn({
     <button
       type="button"
       title={title}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
       className={cn(

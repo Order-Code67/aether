@@ -13,6 +13,7 @@ import {
   RefreshCw,
   RotateCcw,
 } from "lucide-react";
+import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { basename } from "@/lib/paths";
 import type { GitFileEntry } from "@/lib/git";
@@ -28,6 +29,7 @@ function FileRow({
   staged: boolean;
   conflict?: boolean;
 }) {
+  const { t } = useI18n();
   const busy = useScmStore((s) => s.busy);
   const stage = useScmStore((s) => s.stage);
   const unstage = useScmStore((s) => s.unstage);
@@ -39,7 +41,12 @@ function FileRow({
     <div className="group flex items-center gap-0.5 px-2 py-0.5 text-xs hover:bg-aether-surface-raised">
       <button
         type="button"
-        title={conflict ? `Resolve ${entry.path}` : entry.path}
+        title={
+          conflict
+            ? t("scm.resolveTitle")
+            : `${t("scm.openFileTitle")} — ${entry.path}`
+        }
+        aria-label={basename(entry.path)}
         onClick={() => {
           void openFile(entry.path);
         }}
@@ -62,7 +69,8 @@ function FileRow({
       {conflict ? (
         <button
           type="button"
-          title="Open merge conflict editor"
+          title={t("scm.resolveTitle")}
+          aria-label={t("scm.resolveTitle")}
           disabled={busy}
           onClick={() => {
             void openFile(entry.path);
@@ -76,7 +84,8 @@ function FileRow({
         <>
           <button
             type="button"
-            title="View diff"
+            title={t("scm.diffTitle")}
+            aria-label={t("scm.diffTitle")}
             disabled={busy}
             onClick={() => {
               void showDiff(entry, staged);
@@ -88,7 +97,8 @@ function FileRow({
           {!staged && entry.group !== "untracked" && (
             <button
               type="button"
-              title="Discard changes"
+              title={t("scm.discardTitle")}
+              aria-label={t("scm.discardTitle")}
               disabled={busy}
               onClick={() => {
                 void discard([entry.path]);
@@ -100,7 +110,8 @@ function FileRow({
           )}
           <button
             type="button"
-            title={staged ? "Unstage" : "Stage"}
+            title={staged ? t("scm.unstageTitle") : t("scm.stageTitle")}
+            aria-label={staged ? t("scm.unstageTitle") : t("scm.stageTitle")}
             disabled={busy}
             onClick={() => {
               void (staged ? unstage([entry.path]) : stage([entry.path]));
@@ -139,6 +150,7 @@ function Section({
         {actionLabel && onAction && (
           <button
             type="button"
+            title={actionLabel}
             onClick={onAction}
             className="text-[11px] text-aether-fg-muted hover:text-aether-fg"
           >
@@ -152,6 +164,7 @@ function Section({
 }
 
 function BranchPanel() {
+  const { t } = useI18n();
   const branches = useScmStore((s) => s.branches);
   const busy = useScmStore((s) => s.busy);
   const checkout = useScmStore((s) => s.checkout);
@@ -180,6 +193,8 @@ function BranchPanel() {
         />
         <button
           type="button"
+          title={t("scm.createBranchTitle")}
+          aria-label={t("scm.createBranchTitle")}
           disabled={busy || !newName.trim()}
           onClick={() => {
             void createBranch(newName);
@@ -191,6 +206,8 @@ function BranchPanel() {
         </button>
         <button
           type="button"
+          title={t("scm.closeBranchesTitle")}
+          aria-label={t("scm.closeBranchesTitle")}
           onClick={() => setShowBranches(false)}
           className="text-[11px] text-aether-fg-muted hover:text-aether-fg"
         >
@@ -248,6 +265,7 @@ function BranchPanel() {
 }
 
 export function SourceControlPanel() {
+  const { t } = useI18n();
   const info = useScmStore((s) => s.info);
   const status = useScmStore((s) => s.status);
   const message = useScmStore((s) => s.message);
@@ -286,7 +304,8 @@ export function SourceControlPanel() {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            title="Fetch"
+            title={t("scm.fetchTitle")}
+            aria-label={t("scm.fetchTitle")}
             disabled={busy || !status?.isRepo}
             onClick={() => {
               void fetchRemote();
@@ -297,7 +316,8 @@ export function SourceControlPanel() {
           </button>
           <button
             type="button"
-            title="Pull"
+            title={t("scm.pullTitle")}
+            aria-label={t("scm.pullTitle")}
             disabled={busy || !status?.isRepo}
             onClick={() => {
               void pull();
@@ -308,7 +328,8 @@ export function SourceControlPanel() {
           </button>
           <button
             type="button"
-            title="Push"
+            title={t("scm.pushTitle")}
+            aria-label={t("scm.pushTitle")}
             disabled={busy || !status?.isRepo}
             onClick={() => {
               void push();
@@ -319,7 +340,8 @@ export function SourceControlPanel() {
           </button>
           <button
             type="button"
-            title="Refresh"
+            title={t("scm.refreshTitle")}
+            aria-label={t("scm.refreshTitle")}
             disabled={busy}
             onClick={() => {
               void refresh();
@@ -350,6 +372,8 @@ export function SourceControlPanel() {
           <div className="border-b border-aether-border px-2 py-1.5">
             <button
               type="button"
+              title={t("scm.branchTitle")}
+              aria-label={t("scm.branchTitle")}
               disabled={busy}
               onClick={() => setShowBranches(!showBranches)}
               className="flex w-full items-center gap-1.5 rounded px-1 py-1 text-left text-xs text-aether-fg hover:bg-aether-surface-raised"
@@ -387,6 +411,8 @@ export function SourceControlPanel() {
             />
             <button
               type="button"
+              title={t("scm.commitTitle")}
+              aria-label={t("scm.commitTitle")}
               disabled={
                 busy || !message.trim() || (status?.staged.length ?? 0) === 0
               }
@@ -417,7 +443,7 @@ export function SourceControlPanel() {
             <Section
               title="Staged"
               count={status?.staged.length ?? 0}
-              actionLabel="Unstage All"
+              actionLabel={t("scm.unstageAllTitle")}
               onAction={() => {
                 void unstageAll();
               }}
@@ -429,7 +455,7 @@ export function SourceControlPanel() {
             <Section
               title="Changes"
               count={status?.unstaged.length ?? 0}
-              actionLabel="Stage All"
+              actionLabel={t("scm.stageAllTitle")}
               onAction={() => {
                 void stageAll();
               }}
@@ -441,7 +467,7 @@ export function SourceControlPanel() {
             <Section
               title="Untracked"
               count={status?.untracked.length ?? 0}
-              actionLabel="Stage All"
+              actionLabel={t("scm.stageAllTitle")}
               onAction={() => {
                 void stageAll();
               }}
@@ -469,6 +495,8 @@ export function SourceControlPanel() {
                 </span>
                 <button
                   type="button"
+                  title={t("scm.closeDiffTitle")}
+                  aria-label={t("scm.closeDiffTitle")}
                   onClick={clearDiff}
                   className="text-[11px] text-aether-fg-muted hover:text-aether-fg"
                 >

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.37 — 2026-10-14
+
+- **Tooltips max** — discoverability titles across Settings, Welcome, Build/Upload, LoRa path, Agent, SCM, Libraries, Extensions, BPLA/Configurator, Serial, Status, and Command Palette (RU/EN)
+
 ## 0.2.36 — 2026-10-14
 
 - **UI chrome** — native menu bar hidden (accelerators via shortcuts + Command Palette); tooltips on layout chrome, serial, and status controls

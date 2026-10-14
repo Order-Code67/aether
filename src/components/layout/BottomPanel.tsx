@@ -74,7 +74,7 @@ export function BottomPanel() {
           </div>
           <button
             type="button"
-            title={t("panel.show")}
+            title={t("panel.showTitle")}
             aria-label={t("panel.show")}
             onClick={toggleBottomPanel}
             className="ml-auto flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
@@ -129,7 +129,7 @@ export function BottomPanel() {
           <div className="ml-auto flex items-center gap-0.5">
             <button
               type="button"
-              title={t("panel.hide")}
+              title={t("panel.hideTitle")}
               aria-label={t("panel.hide")}
               onClick={() => setBottomPanelVisible(false)}
               className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
@@ -138,7 +138,7 @@ export function BottomPanel() {
             </button>
             <button
               type="button"
-              title={t("panel.close")}
+              title={t("panel.hideTitle")}
               aria-label={t("panel.close")}
               onClick={() => setBottomPanelVisible(false)}
               className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"

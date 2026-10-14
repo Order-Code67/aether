@@ -94,7 +94,7 @@ export function BuildToolbar() {
           onChange={(event) => setSelectedEnv(event.target.value)}
           className="h-6 max-w-[160px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
           aria-label={t("pio.envSwitch")}
-          title={t("pio.envSwitch")}
+          title={t("pio.envSwitchTitle")}
         >
           {envs.map((env) => (
             <option key={env} value={env}>
@@ -116,7 +116,7 @@ export function BuildToolbar() {
           onChange={(event) => setUploadPort(event.target.value)}
           className="h-6 max-w-[130px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
           aria-label={t("pio.port")}
-          title={t("pio.port")}
+          title={t("pio.portTitle")}
         >
           <option value="">{t("pio.portNone")}</option>
           {ports.map((port) => (
@@ -128,7 +128,7 @@ export function BuildToolbar() {
         </select>
         <button
           type="button"
-          title={t("pio.portRefresh")}
+          title={t("pio.portRefreshTitle")}
           aria-label={t("pio.portRefresh")}
           disabled={running}
           onClick={() => {
@@ -142,7 +142,8 @@ export function BuildToolbar() {
 
       <button
         type="button"
-        title="Build (Ctrl+Shift+B)"
+        title={t("pio.buildTitle")}
+        aria-label={t("pio.build")}
         disabled={disabled}
         onClick={() => {
           void runTask("build");
@@ -163,8 +164,9 @@ export function BuildToolbar() {
             ? t("pio.uploadNeedPort")
             : serialConnected
               ? t("pio.uploadWillDisconnect")
-              : t("pio.upload")
+              : t("pio.uploadTitle")
         }
+        aria-label={t("pio.upload")}
         disabled={uploadDisabled}
         onClick={() => {
           void runTask("upload");
@@ -184,7 +186,8 @@ export function BuildToolbar() {
 
       <button
         type="button"
-        title={t("pio.clean")}
+        title={t("pio.cleanTitle")}
+        aria-label={t("pio.clean")}
         disabled={disabled}
         onClick={() => {
           void runTask("clean");
@@ -200,7 +203,8 @@ export function BuildToolbar() {
 
       <button
         type="button"
-        title="Generate compile_commands.json for IntelliSense (pio run -t compiledb)"
+        title={t("pio.compiledbTitle")}
+        aria-label={t("pio.compiledb")}
         disabled={disabled}
         onClick={() => {
           void runTask("compiledb");
@@ -216,7 +220,7 @@ export function BuildToolbar() {
 
       <button
         type="button"
-        title={t("profiles.saveCurrent")}
+        title={t("profiles.saveCurrentTitle")}
         aria-label={t("profiles.saveCurrent")}
         disabled={running}
         onClick={() => {
@@ -252,7 +256,7 @@ export function BuildToolbar() {
           }}
           className="h-6 max-w-[140px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] text-aether-fg outline-none focus:border-aether-accent disabled:opacity-40"
           aria-label={t("profiles.apply")}
-          title={t("profiles.apply")}
+          title={t("profiles.applyTitle")}
         >
           <option value="">{t("profiles.applySelect")}</option>
           {profiles.map((p) => (
@@ -265,7 +269,7 @@ export function BuildToolbar() {
 
       <button
         type="button"
-        title={t("doctor.title")}
+        title={t("doctor.openTitle")}
         aria-label={t("doctor.title")}
         disabled={running}
         onClick={() => {

@@ -76,6 +76,7 @@ export function LoRaPathGuide() {
       id: "pins",
       icon: MapPin,
       label: t("loraPath.step.pins"),
+      titleKey: "loraPath.step.pinsTitle" as const,
       action: () => {
         /* BoardHardwareStrip is always above — nudge Doctor for pin map tip */
         showDoctor();
@@ -85,6 +86,7 @@ export function LoRaPathGuide() {
       id: "upload",
       icon: Upload,
       label: t("loraPath.step.upload"),
+      titleKey: "loraPath.step.uploadTitle" as const,
       action: () => {
         if (!rootPath || running) return;
         void runTask("upload");
@@ -96,6 +98,7 @@ export function LoRaPathGuide() {
       id: "plotter",
       icon: Activity,
       label: t("loraPath.step.plotter"),
+      titleKey: "loraPath.step.plotterTitle" as const,
       action: () => {
         setBottomPanelVisible(true);
         setBottomPanelTab("plotter");
@@ -105,6 +108,7 @@ export function LoRaPathGuide() {
       id: "doctor",
       icon: Stethoscope,
       label: t("loraPath.step.doctor"),
+      titleKey: "loraPath.step.doctorTitle" as const,
       action: () => showDoctor(),
     },
   ] as const;
@@ -125,6 +129,8 @@ export function LoRaPathGuide() {
       </span>
       <button
         type="button"
+        title={t("loraPath.wizardTitle")}
+        aria-label={t("loraPath.wizard")}
         onClick={() => setWizardOpen(true)}
         className="rounded border border-aether-border/80 px-1.5 py-0.5 text-aether-fg-muted hover:text-aether-fg"
       >
@@ -132,6 +138,8 @@ export function LoRaPathGuide() {
       </button>
       <button
         type="button"
+        title={t("loraPath.examplesTitle")}
+        aria-label={t("loraPath.examples")}
         onClick={() => setExamplesOpen(true)}
         className="rounded border border-aether-border/80 px-1.5 py-0.5 text-aether-fg-muted hover:text-aether-fg"
       >
@@ -140,6 +148,8 @@ export function LoRaPathGuide() {
       <button
         type="button"
         data-testid="lora-path-pair"
+        title={t("loraPath.pairTitle")}
+        aria-label={t("loraPath.pair")}
         disabled={pairBusy || !isTauriRuntime()}
         onClick={() => {
           setPairBusy(true);
@@ -165,6 +175,8 @@ export function LoRaPathGuide() {
             key={step.id}
             type="button"
             data-testid={`lora-path-${step.id}`}
+            title={t(step.titleKey)}
+            aria-label={step.label}
             onClick={step.action}
             className={cn(
               "inline-flex items-center gap-1 rounded border border-aether-border/80 px-1.5 py-0.5",

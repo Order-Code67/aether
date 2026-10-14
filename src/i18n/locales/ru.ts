@@ -1068,4 +1068,223 @@ export const ru: Record<MessageKey, string> = {
   "inav.flash.failed": "dfu-util сообщил об ошибке — см. Output.",
   "inav.flash.needDfuUtil":
     "Нужен dfu-util в PATH (STM32CubeProgrammer CLI здесь не подключён).",
+
+  // Подсказки discoverability — куда / что / зачем
+  "settings.openTitle":
+    "Настройки — язык, тема, упрощённый Arduino, инструменты, Агент, обновления",
+  "settings.dialogAria": "Настройки",
+  "settings.tab.generalTitle": "Общие — язык, тема, упрощённый интерфейс Arduino",
+  "settings.tab.editorTitle": "Редактор — шрифт, пробелы, сброс параметров",
+  "settings.tab.toolsTitle":
+    "Инструменты — VS Code, офлайн-кэш PIO, профили прошивок",
+  "settings.tab.agentTitle": "Агент — API-ключ и модель ИИ-помощника",
+  "settings.tab.aboutTitle": "О программе — версия, обновления, отчёт поддержки",
+  "settings.languageTitle": "Язык интерфейса (английский / русский)",
+  "settings.themeTitle": "Тема оформления — тёмная или светлая",
+  "settings.resetEditorTitle":
+    "Сбросить размер шрифта, табы и пробелы редактора к значениям по умолчанию",
+  "pio.buildTitle":
+    "Собрать прошивку для выбранного env (Ctrl+Shift+B). Ошибки — во вкладке Output.",
+  "pio.uploadTitle":
+    "Загрузить последнюю сборку на выбранный COM-порт. Сначала отключит Serial Monitor, если он открыт.",
+  "pio.cleanTitle":
+    "Очистить артефакты сборки для env — перед полной пересборкой.",
+  "pio.compiledbTitle":
+    "Сгенерировать compile_commands.json для IntelliSense (pio run -t compiledb).",
+  "pio.envSwitchTitle":
+    "Активное окружение PlatformIO (плата/таргет). Сборка и загрузка идут в этот env.",
+  "pio.portTitle":
+    "COM/UART-порт для Upload. Выберите порт платы после подключения USB.",
+  "pio.portRefreshTitle":
+    "Обновить список USB-портов — после подключения или отключения платы.",
+  "profiles.saveCurrentTitle":
+    "Сохранить текущий env и порт загрузки как именованный профиль прошивки.",
+  "profiles.applyTitle":
+    "Применить сохранённый профиль — переключит env и порт Upload.",
+  "doctor.openTitle":
+    "Доктор toolchain — проверка PlatformIO, портов, драйверов и подсказок по радио.",
+  "loraPath.wizardTitle":
+    "Мастер нового проекта — создать PlatformIO-проект под LoRa.",
+  "loraPath.examplesTitle":
+    "Открыть примеры TX/RX LoRa из каталога.",
+  "loraPath.pairTitle":
+    "Открыть пару TX+RX (TX активный, RX — вторая папка workspace).",
+  "loraPath.step.pinsTitle":
+    "Подсказки по пинам (NSS/DIO/RST) через Доктор — сверьте с разводкой платы.",
+  "loraPath.step.uploadTitle":
+    "Залить текущий LoRa-скетч — прогресс во вкладке Output.",
+  "loraPath.step.plotterTitle":
+    "Открыть Serial Plotter для RSSI/SNR после подключения RX-скетча.",
+  "loraPath.step.doctorTitle":
+    "Открыть Доктор: проверки радио-проекта и подсказки по COM/драйверам.",
+  "hub.arduinoTitle":
+    "Путь Arduino — быстрый старт (плата → COM → Blink → загрузка).",
+  "hub.platformioTitle":
+    "Путь PlatformIO — открыть папку и выбрать платы / окружения.",
+  "hub.inavTitle":
+    "Aether Configurator — COM, MSP/CLI/прошивка для настройки FC.",
+  "hub.vscodeTitle":
+    "Открыть текущую папку workspace в VS Code (нужен десктоп).",
+  "hub.aiTitle":
+    "ИИ-агент — вопросы по прошивке, платам и этому проекту.",
+  "welcome.quickStartTitle":
+    "Мастер быстрого старта (~60 с): плата, COM, Blink, загрузка.",
+  "welcome.newProjectTitle":
+    "Создать новый PlatformIO / Arduino-проект мастером.",
+  "welcome.openFolderTitle":
+    "Открыть существующую папку проекта или скетча как workspace.",
+  "welcome.openExampleTitle":
+    "Каталог примеров — скопировать пример в рабочую папку.",
+  "welcome.openDemoTitle":
+    "Открыть встроенный демо-workspace (без выбора папки).",
+  "welcome.generateVsCodeTitle":
+    "Записать .vscode tasks/settings, чтобы VS Code собирал через PIO.",
+  "onboarding.skipTitle":
+    "Закрыть мастер без завершения — можно снова открыть с экрана Welcome.",
+  "onboarding.finishTitle": "Завершить быстрый старт и вернуться в редактор.",
+  "onboarding.portTitle": "Выберите COM-порт платы для загрузки прошивки.",
+  "onboarding.portRefreshTitle": "Обновить список портов после подключения платы.",
+  "onboarding.createBlinkTitle":
+    "Создать и открыть стартер Blink для выбранной платы.",
+  "onboarding.openExampleTitle": "Открыть подходящий пример вместо создания Blink.",
+  "onboarding.buildUploadTitle":
+    "Собрать и загрузить стартер — смотрите Output и Serial.",
+  "onboarding.boardTitle": "Выбрать эту плату/таргет для проекта быстрого старта.",
+  "vscode.openActionTitle": "Запустить VS Code на открытой папке (десктоп).",
+  "vscode.generateActionTitle":
+    "Сгенерировать .vscode, чтобы VS Code мог собирать/заливать этот проект.",
+  "offline.prepareTitle":
+    "Подготовить офлайн-пакет кэша PlatformIO для ПК без сети.",
+  "offline.importTitle": "Импортировать zip офлайн-кэша PlatformIO на этот ПК.",
+  "offline.importSidecarTitle":
+    "Импортировать офлайн-кэш из sidecar-папки рядом с приложением.",
+  "offline.recheckTitle": "Проверить снова, доступен ли офлайн-кэш PlatformIO.",
+  "updater.channelTitle": "Канал обновлений — стабильные или пре-релизные сборки.",
+  "updater.checkTitle": "Проверить обновление Aether прямо сейчас.",
+  "updater.installTitle": "Скачать и установить доступное обновление.",
+  "support.copyReportTitle":
+    "Скопировать отчёт поддержки (версия, ОС, пути) в буфер обмена.",
+  "support.saveReportTitle": "Сохранить отчёт поддержки в текстовый файл.",
+  "palette.commandsAria": "Палитра команд — выполнить команду IDE по имени",
+  "palette.filesAria": "Перейти к файлу — открыть файл workspace по имени",
+  "palette.inputAria": "Введите текст для фильтра команд или файлов",
+  "inav.portTitle":
+    "COM-порт FC — выберите перед Connect или открытием Configurator.",
+  "inav.baudTitle":
+    "Скорость serial для MSP/CLI (часто 115200). Должна совпадать с FC.",
+  "inav.connectTitle":
+    "Подключить COM-сессию Aether для MSP и CLI (порт остаётся в IDE).",
+  "inav.disconnectTitle":
+    "Отключить сессию FC в IDE и освободить COM-порт.",
+  "inav.msp.refreshTitle":
+    "Обновить MSP-снимок (вариант, напряжение, RSSI, armed) по открытой сессии.",
+  "inav.clearTitle": "Очистить лог CLI в этой панели.",
+  "inav.cliSendTitle": "Отправить строку CLI на FC (Enter тоже отправляет).",
+  "inav.cliInputTitle":
+    "Введите команду CLI в стиле iNav/Betaflight, затем Send.",
+  "bplaPath.refreshPortsTitle":
+    "Обновить список COM и заново найти установку Aether Configurator.",
+  "bplaPath.configuratorOpenTitle":
+    "Запустить Aether Configurator с выбранным COM/baud (сначала освободит порт).",
+  "bplaPath.openPlotterTitle":
+    "Открыть Plotter внизу и стримить MSP, если включена живая телеметрия.",
+  "bplaPath.liveTelemetryTitle":
+    "Если включено — опрашивать MSP и слать напряжение/RSSI/attitude в Plotter.",
+  "inav.flash.detectTitle":
+    "Найти dfu-util и список DFU — сначала boot + переподключение USB.",
+  "inav.flash.pickHexTitle": "Выбрать файл прошивки FC .hex/.bin.",
+  "inav.flash.flashTitle":
+    "Прошить выбранный hex через DFU — отключит serial; неверный образ может «кирпичнуть».",
+  "boards.refreshTitle":
+    "Обновить обнаружение PlatformIO CLI и окружения проекта.",
+  "boards.activeFolderTitle":
+    "Сделать эту папку активным корнем PlatformIO-проекта.",
+  "boards.envSelectTitle":
+    "Выбрать этот env как цель сборки/загрузки.",
+  "boards.buildTitle":
+    "Собрать прошивку для выбранного env — то же, что Build на панели сверху.",
+  "boards.uploadTitle":
+    "Загрузить на порт из панели Build — затем откройте Serial для проверки.",
+  "serial.portTitle":
+    "Порт Serial Monitor — выберите плату после подключения USB.",
+  "serial.baudTitle":
+    "Скорость Serial Monitor (должна совпадать с Serial.begin).",
+  "serial.refreshTitle": "Обновить список COM для Serial Monitor.",
+  "serial.connectTitle":
+    "Подключить Serial Monitor к порту — после заливки смотрите логи платы.",
+  "serial.disconnectTitle":
+    "Отключить Serial Monitor и освободить порт для Upload.",
+  "serial.clearTitle": "Очистить буфер Serial Monitor.",
+  "serial.autoscrollTitle": "Держать вид прокрученным к последней строке.",
+  "serial.plotterTitle":
+    "Открыть Serial Plotter — живые графики из этого serial-потока.",
+  "status.openProblemsTitle": "Открыть Problems — ошибки компиляции и линта.",
+  "status.openOutputTitle": "Открыть PlatformIO Output — лог сборки/загрузки.",
+  "status.openSerialTitle": "Открыть Serial Monitor в нижней панели.",
+  "status.openScmTitle": "Открыть Source Control (Git) в боковой панели.",
+  "status.openDebugTitle": "Открыть Run and Debug в боковой панели.",
+  "panel.hideTitle": "Скрыть нижнюю панель (Problems, Output, Serial…).",
+  "panel.showTitle": "Показать нижнюю панель.",
+  "editor.closeTabTitle":
+    "Закрыть эту вкладку (при несохранённых изменениях будет запрос).",
+  "editor.activateTabTitle": "Сделать этот файл активным в редакторе.",
+  "scm.fetchTitle": "Fetch — обновить remote-ссылки без слияния.",
+  "scm.pullTitle": "Pull — скачать и слить текущую ветку с remote.",
+  "scm.pushTitle": "Push — отправить локальные коммиты ветки на remote.",
+  "scm.refreshTitle": "Обновить статус Git для активной папки.",
+  "scm.branchTitle": "Ветки — переключить или создать ветку.",
+  "scm.commitTitle": "Закоммитить staged-файлы с сообщением выше.",
+  "scm.stageAllTitle": "Добавить в stage все изменения и untracked-файлы.",
+  "scm.unstageAllTitle": "Убрать из stage всё, что сейчас staged.",
+  "scm.createBranchTitle": "Создать и переключиться на новую локальную ветку.",
+  "scm.closeBranchesTitle": "Закрыть список веток.",
+  "scm.stageTitle": "Добавить файл в stage для следующего коммита.",
+  "scm.unstageTitle": "Убрать файл из stage (изменения в рабочей копии останутся).",
+  "scm.discardTitle":
+    "Отбросить изменения в рабочей копии для этого файла (необратимо).",
+  "scm.diffTitle": "Показать текстовый diff этого файла.",
+  "scm.resolveTitle": "Открыть редактор конфликтов слияния для этого файла.",
+  "scm.openFileTitle": "Открыть этот файл в редакторе.",
+  "scm.closeDiffTitle": "Закрыть просмотр diff.",
+  "debug.startTitle": "Запустить отладку PlatformIO (F5).",
+  "debug.continueTitle": "Продолжить выполнение до следующей точки останова (F5).",
+  "debug.pauseTitle": "Приостановить выполняющуюся отладочную сессию.",
+  "debug.stepOverTitle": "Шаг через текущую строку (F10).",
+  "debug.stepIntoTitle": "Шаг внутрь вызова функции (F11).",
+  "debug.stepOutTitle": "Шаг наружу из текущей функции (Shift+F11).",
+  "debug.stopTitle": "Остановить отладочную сессию (Shift+F5).",
+  "agent.sendTitle": "Отправить сообщение ИИ-агенту.",
+  "agent.stopTitle": "Остановить текущий ответ агента.",
+  "agent.applyTitle": "Применить предложенное изменение к целевому файлу.",
+  "agent.clearChatTitle": "Очистить историю чата в этой панели.",
+  "agent.settingsTitle": "Открыть настройки Агента (API-ключ / модель).",
+  "agent.attachTitle": "Прикрепить файл проекта к следующему сообщению.",
+  "libraries.tab.platformioTitle":
+    "Реестр PlatformIO — поиск и установка в lib_deps.",
+  "libraries.tab.arduinoTitle":
+    "Arduino Library Manager — arduino-cli или PIO framework=arduino.",
+  "libraries.tab.githubTitle":
+    "Установить библиотеку с GitHub (owner/repo) в проект.",
+  "libraries.searchBtnTitle": "Искать библиотеки по текущему запросу.",
+  "libraries.installTitle": "Установить эту библиотеку в открытый проект.",
+  "libraries.uninstallTitle": "Удалить эту библиотеку из проекта.",
+  "libraries.githubInstallTitle":
+    "Установить репозиторий GitHub в lib_deps через PIO.",
+  "libraries.arduinoCliInstallTitle":
+    "Установить arduino-cli для официального поиска библиотек.",
+  "libraries.refreshTitle": "Обновить список установленных библиотек проекта.",
+  "extensions.loadFolderTitle":
+    "Загрузить локальную папку расширения в Aether (dev / sideload).",
+  "extensions.refreshCatalogTitle": "Обновить каталог расширений.",
+  "extensions.tab.installedTitle": "Уже установленные расширения Aether.",
+  "extensions.tab.marketplaceTitle": "Каталог / marketplace расширений.",
+  "extensions.tab.publishTitle": "Публикация или управление своим пакетом расширения.",
+  "extensions.installUrlTitle": "Установить расширение по URL или ссылке на пакет.",
+  "extensions.installTitle": "Установить это расширение из каталога.",
+  "extensions.enableTitle": "Включить расширение, чтобы оно работало в Aether.",
+  "extensions.disableTitle": "Отключить расширение без удаления.",
+  "extensions.uninstallTitle": "Удалить это локальное расширение.",
+  "extensions.filter.allTitle": "Показать все установленные расширения.",
+  "extensions.filter.enabledTitle": "Показать только включённые.",
+  "extensions.filter.disabledTitle": "Показать только отключённые.",
 };

@@ -60,7 +60,8 @@ export function EditorTabs() {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                title={tab.path}
+                title={`${t("editor.activateTabTitle")} — ${tab.path}`}
+                aria-label={tab.name}
                 onClick={() => setActiveTab(tab.id)}
                 className="flex min-w-0 flex-1 items-center gap-1 py-1 text-left text-xs"
               >
@@ -76,7 +77,7 @@ export function EditorTabs() {
               </button>
               <button
                 type="button"
-                title={t("editor.closeTab", { name: tab.name })}
+                title={`${t("editor.closeTabTitle")} (${tab.name})`}
                 aria-label={t("editor.closeTab", { name: tab.name })}
                 onClick={(event) => {
                   event.stopPropagation();

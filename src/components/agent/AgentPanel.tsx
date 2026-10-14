@@ -143,7 +143,8 @@ function AssistantMessage({
               </button>
               <button
                 type="button"
-                title={edit.pathLabel ?? t("agent.applyActive")}
+                title={t("agent.applyTitle")}
+                aria-label={edit.pathLabel ?? t("agent.applyActive")}
                 onClick={() => {
                   void applyEdit(edit);
                 }}
@@ -532,7 +533,7 @@ export function AgentPanel() {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            title={t("agent.clearChat")}
+            title={t("agent.clearChatTitle")}
             aria-label={t("agent.clearChat")}
             onClick={clearChat}
             className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -541,7 +542,7 @@ export function AgentPanel() {
           </button>
           <button
             type="button"
-            title={t("agent.settings")}
+            title={t("agent.settingsTitle")}
             aria-label={t("agent.settings")}
             aria-pressed={showSettings}
             onClick={() => setShowSettings(!showSettings)}
@@ -734,7 +735,7 @@ export function AgentPanel() {
         <div className="flex items-end gap-1">
           <button
             type="button"
-            title={t("agent.attach")}
+            title={t("agent.attachTitle")}
             aria-label={t("agent.attach")}
             disabled={busy}
             onClick={() => {
@@ -794,7 +795,8 @@ export function AgentPanel() {
           {busy ? (
             <button
               type="button"
-              title={t("agent.stop")}
+              title={t("agent.stopTitle")}
+              aria-label={t("agent.stop")}
               onClick={() => {
                 void cancel();
               }}
@@ -805,7 +807,8 @@ export function AgentPanel() {
           ) : (
             <button
               type="button"
-              title={t("agent.send")}
+              title={t("agent.sendTitle")}
+              aria-label={t("agent.send")}
               disabled={!canSend}
               onClick={() => {
                 if (listening) stopVoice();

@@ -69,7 +69,7 @@ export function SerialMonitor() {
           onChange={(event) => setSelectedPath(event.target.value)}
           className="h-7 min-w-[140px] max-w-[220px] rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
           aria-label={t("serial.port")}
-          title={t("serial.port")}
+          title={t("serial.portTitle")}
         >
           {ports.length === 0 ? (
             <option value="">{t("serial.noPorts")}</option>
@@ -89,7 +89,7 @@ export function SerialMonitor() {
           onChange={(event) => setBaudRate(Number(event.target.value))}
           className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
           aria-label={t("serial.baud")}
-          title={t("serial.baud")}
+          title={t("serial.baudTitle")}
         >
           {BAUD_RATES.map((rate) => (
             <option key={rate} value={rate}>
@@ -100,7 +100,7 @@ export function SerialMonitor() {
 
         <button
           type="button"
-          title={t("serial.refresh")}
+          title={t("serial.refreshTitle")}
           aria-label={t("serial.refresh")}
           onClick={() => {
             void refreshPorts();
@@ -113,7 +113,7 @@ export function SerialMonitor() {
         {connected ? (
           <button
             type="button"
-            title={t("serial.disconnect")}
+            title={t("serial.disconnectTitle")}
             aria-label={t("serial.disconnect")}
             onClick={() => {
               void disconnect();
@@ -126,7 +126,7 @@ export function SerialMonitor() {
         ) : (
           <button
             type="button"
-            title={t("serial.connect")}
+            title={t("serial.connectTitle")}
             aria-label={t("serial.connect")}
             disabled={!selectedPath || connecting}
             onClick={() => {
@@ -141,7 +141,7 @@ export function SerialMonitor() {
 
         <button
           type="button"
-          title={t("serial.clear")}
+          title={t("serial.clearTitle")}
           aria-label={t("serial.clear")}
           onClick={clearLines}
           className="flex h-7 w-7 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -151,7 +151,7 @@ export function SerialMonitor() {
 
         <button
           type="button"
-          title={t("panel.plotterTitle")}
+          title={t("serial.plotterTitle")}
           aria-label={t("panel.plotter")}
           onClick={() => setBottomPanelTab("plotter")}
           className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -162,7 +162,7 @@ export function SerialMonitor() {
 
         <label
           className="ml-auto flex items-center gap-1 text-[11px] text-aether-fg-muted"
-          title={t("serial.autoscroll")}
+          title={t("serial.autoscrollTitle")}
         >
           <input
             type="checkbox"

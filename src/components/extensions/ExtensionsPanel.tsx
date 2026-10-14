@@ -108,7 +108,8 @@ export function ExtensionsPanel() {
           {tab === "installed" && (
             <button
               type="button"
-              title="Load extension from folder"
+              title={t("extensions.loadFolderTitle")}
+              aria-label={t("extensions.loadFolderTitle")}
               disabled={!isTauriRuntime()}
               onClick={() => {
                 void installFromFolder().then((ok) => {
@@ -129,7 +130,8 @@ export function ExtensionsPanel() {
           {tab === "marketplace" && (
             <button
               type="button"
-              title="Refresh catalog"
+              title={t("extensions.refreshCatalogTitle")}
+              aria-label={t("extensions.refreshCatalogTitle")}
               disabled={catalogLoading}
               onClick={() => void refreshCatalog()}
               className="flex h-6 items-center gap-1 rounded px-1.5 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
@@ -148,10 +150,19 @@ export function ExtensionsPanel() {
             ["marketplace", "extensions.marketplace"],
             ["publish", "extensions.publish"],
           ] as const
-        ).map(([id, labelKey]) => (
+        ).map(([id, labelKey]) => {
+          const tipKey =
+            id === "installed"
+              ? "extensions.tab.installedTitle"
+              : id === "marketplace"
+                ? "extensions.tab.marketplaceTitle"
+                : "extensions.tab.publishTitle";
+          return (
           <button
             key={id}
             type="button"
+            title={t(tipKey)}
+            aria-label={t(labelKey)}
             onClick={() => setTab(id)}
             className={cn(
               "rounded px-2 py-0.5 text-[11px]",
@@ -162,7 +173,8 @@ export function ExtensionsPanel() {
           >
             {t(labelKey)}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {tab === "publish" ? (
@@ -190,6 +202,14 @@ export function ExtensionsPanel() {
               <button
                 key={id}
                 type="button"
+                title={t(
+                  id === "all"
+                    ? "extensions.filter.allTitle"
+                    : id === "enabled"
+                      ? "extensions.filter.enabledTitle"
+                      : "extensions.filter.disabledTitle",
+                )}
+                aria-label={label}
                 onClick={() => setFilter(id)}
                 className={cn(
                   "rounded px-2 py-0.5 text-[11px]",
@@ -250,7 +270,8 @@ export function ExtensionsPanel() {
               />
               <button
                 type="submit"
-                title="Install from URL"
+                title={t("extensions.installUrlTitle")}
+                aria-label={t("extensions.installUrlTitle")}
                 className="flex h-7 w-7 items-center justify-center rounded border border-aether-border text-aether-fg-muted hover:text-aether-fg"
               >
                 <Link2 size={13} />
@@ -289,6 +310,8 @@ export function ExtensionsPanel() {
                 </div>
                 <button
                   type="button"
+                  title={t("extensions.installTitle")}
+                  aria-label={t("extensions.installTitle")}
                   disabled={busyId === entry.id}
                   onClick={() => {
                     setBusyId(entry.id);
@@ -371,6 +394,7 @@ function ExtensionRow({
   onSelect: () => void;
   onToggle: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className={cn(
@@ -404,7 +428,10 @@ function ExtensionRow({
         type="button"
         role="switch"
         aria-checked={enabled}
-        title={enabled ? "Disable" : "Enable"}
+        title={enabled ? t("extensions.disableTitle") : t("extensions.enableTitle")}
+        aria-label={
+          enabled ? t("extensions.disableTitle") : t("extensions.enableTitle")
+        }
         onClick={onToggle}
         className={cn(
           "mt-1 h-5 w-9 shrink-0 rounded-full border transition-colors",
@@ -435,6 +462,7 @@ function ExtensionDetails({
   onToggle: () => void;
   onUninstall?: () => void;
 }) {
+  const { t } = useI18n();
   const snippetCount = ext.contributes?.snippets?.length ?? 0;
   const boardCount = ext.contributes?.boards?.length ?? 0;
 
@@ -451,6 +479,12 @@ function ExtensionDetails({
         </div>
         <button
           type="button"
+          title={
+            enabled ? t("extensions.disableTitle") : t("extensions.enableTitle")
+          }
+          aria-label={
+            enabled ? t("extensions.disableTitle") : t("extensions.enableTitle")
+          }
           onClick={onToggle}
           className={cn(
             "shrink-0 rounded border px-2 py-1 text-[11px]",
@@ -474,6 +508,8 @@ function ExtensionDetails({
       {onUninstall && (
         <button
           type="button"
+          title={t("extensions.uninstallTitle")}
+          aria-label={t("extensions.uninstallTitle")}
           onClick={onUninstall}
           className="mt-2 flex items-center gap-1 text-[11px] text-aether-danger hover:opacity-90"
         >

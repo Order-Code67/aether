@@ -161,7 +161,7 @@ export function ActivityBar() {
       <button
         type="button"
         data-testid="activity-settings"
-        title={t("settings.title")}
+        title={t("settings.openTitle")}
         aria-label={t("settings.title")}
         onClick={() => useSettingsStore.getState().openSettings()}
         className="flex h-12 w-12 items-center justify-center text-aether-fg-muted transition-colors hover:text-aether-fg"

@@ -350,6 +350,8 @@ function BoardsSidebar() {
         </h2>
         <button
           type="button"
+          title={t("boards.refreshTitle")}
+          aria-label={t("common.refresh")}
           className="text-[11px] text-aether-fg-muted hover:text-aether-fg"
           onClick={() => {
             void refreshCli();
@@ -381,6 +383,8 @@ function BoardsSidebar() {
                 <button
                   key={folder.path}
                   type="button"
+                  title={t("boards.activeFolderTitle")}
+                  aria-label={folder.name}
                   onClick={() => setActiveFolder(folder.path)}
                   className={cn(
                     "flex w-full rounded px-2 py-1 text-left hover:bg-aether-surface-raised",
@@ -414,6 +418,8 @@ function BoardsSidebar() {
                     <button
                       key={env}
                       type="button"
+                      title={t("boards.envSelectTitle")}
+                      aria-label={env}
                       onClick={() => setSelectedEnv(env)}
                       className={cn(
                         "flex w-full rounded px-2 py-1 text-left hover:bg-aether-surface-raised",
@@ -431,6 +437,8 @@ function BoardsSidebar() {
             <div className="flex flex-col gap-1">
               <button
                 type="button"
+                title={t("boards.buildTitle")}
+                aria-label={t("boards.build")}
                 disabled={running || !info?.installed}
                 onClick={() => {
                   void runTask("build");
@@ -441,6 +449,8 @@ function BoardsSidebar() {
               </button>
               <button
                 type="button"
+                title={t("boards.uploadTitle")}
+                aria-label={t("boards.upload")}
                 disabled={running || !info?.installed}
                 onClick={() => {
                   void runTask("upload");

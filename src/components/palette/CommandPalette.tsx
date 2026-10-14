@@ -6,6 +6,7 @@ import {
   indexLoadedFiles,
   type FileIndexEntry,
 } from "@/lib/fileIndex";
+import { useI18n } from "@/hooks/useI18n";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { cn } from "@/lib/cn";
 import { usePaletteStore } from "@/stores/paletteStore";
@@ -14,6 +15,7 @@ import { useWorkspaceStore } from "@/stores/workspaceStore";
 const MAX_RESULTS = 80;
 
 export function CommandPalette() {
+  const { t } = useI18n();
   const isOpen = usePaletteStore((s) => s.isOpen);
   const mode = usePaletteStore((s) => s.mode);
   const query = usePaletteStore((s) => s.query);
@@ -146,7 +148,9 @@ export function CommandPalette() {
         data-testid="command-palette"
         role="dialog"
         aria-modal="true"
-        aria-label={mode === "commands" ? "Command Palette" : "Go to File"}
+        aria-label={
+          mode === "commands" ? t("palette.commandsAria") : t("palette.filesAria")
+        }
         className="flex w-full max-w-xl flex-col overflow-hidden rounded border border-aether-border bg-aether-surface shadow-2xl"
       >
         <div className="flex items-center gap-2 border-b border-aether-border px-3 py-2">
@@ -159,6 +163,8 @@ export function CommandPalette() {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label={t("palette.inputAria")}
+            title={t("palette.inputAria")}
             placeholder={
               mode === "commands"
                 ? "Type a command…"

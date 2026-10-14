@@ -121,6 +121,8 @@ export function IdeFlashCard() {
       <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
+          title={t("inav.flash.detectTitle")}
+          aria-label={t("inav.flash.detect")}
           onClick={() => void onDetect()}
           disabled={flashing}
           className="flex items-center gap-1 rounded border border-aether-border px-2 py-1 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
@@ -130,6 +132,8 @@ export function IdeFlashCard() {
         </button>
         <button
           type="button"
+          title={t("inav.flash.pickHexTitle")}
+          aria-label={t("inav.flash.pickHex")}
           onClick={() => void onPick()}
           disabled={flashing}
           data-testid="ide-flash-pick"
@@ -140,6 +144,8 @@ export function IdeFlashCard() {
         </button>
         <button
           type="button"
+          title={t("inav.flash.flashTitle")}
+          aria-label={t("inav.flash.flash")}
           onClick={() => void onFlash()}
           disabled={flashing || !hexPath}
           data-testid="ide-flash-run"

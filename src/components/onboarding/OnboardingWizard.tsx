@@ -295,7 +295,7 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
           </div>
           <button
             type="button"
-            title={t("onboarding.skip")}
+            title={t("onboarding.skipTitle")}
             aria-label={t("onboarding.skip")}
             disabled={busy}
             onClick={() => dismiss(false)}
@@ -336,6 +336,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                 <button
                   key={b.id}
                   type="button"
+                  title={t("onboarding.boardTitle")}
+                  aria-label={t(b.labelKey)}
                   disabled={busy}
                   onClick={() => {
                     setBoardId(b.id);
@@ -384,6 +386,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
               </p>
               <button
                 type="button"
+                title={t("onboarding.portRefreshTitle")}
+                aria-label={t("pio.portRefresh")}
                 disabled={busy || !isTauriRuntime()}
                 onClick={() => {
                   void refreshPorts().then(() => void syncUploadPort());
@@ -403,6 +407,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
                 value={port}
                 disabled={busy}
                 onChange={(e) => selectPort(e.target.value)}
+                title={t("onboarding.portTitle")}
+                aria-label={t("onboarding.portTitle")}
                 className="h-8 w-full rounded border border-aether-border bg-aether-bg px-2 text-xs text-aether-fg outline-none focus:border-aether-accent"
               >
                 <option value="">{t("pio.portNone")}</option>
@@ -430,6 +436,12 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
+                title={t("onboarding.createBlinkTitle")}
+                aria-label={
+                  effectiveStarter === "servo"
+                    ? t("onboarding.createServo")
+                    : t("onboarding.createBlink")
+                }
                 disabled={busy}
                 onClick={() => void createStarterProject()}
                 className="inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white disabled:opacity-40"
@@ -445,6 +457,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
               </button>
               <button
                 type="button"
+                title={t("onboarding.openExampleTitle")}
+                aria-label={t("onboarding.openExample")}
                 disabled={busy}
                 onClick={() => void openStarterExample()}
                 className="inline-flex items-center gap-1 rounded border border-aether-border px-2.5 py-1.5 text-[11px] text-aether-fg hover:border-aether-accent disabled:opacity-40"
@@ -463,6 +477,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
             </p>
             <button
               type="button"
+              title={t("onboarding.buildUploadTitle")}
+              aria-label={t("onboarding.buildUpload")}
               disabled={busy || running || !projectDone || !port}
               onClick={() => void runBuildUpload()}
               className="inline-flex items-center gap-1 rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white disabled:opacity-40"
@@ -489,6 +505,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
         <footer className="flex items-center justify-between border-t border-aether-border px-3 py-2">
           <button
             type="button"
+            title={t("onboarding.skipTitle")}
+            aria-label={t("onboarding.skip")}
             disabled={busy}
             onClick={() => dismiss(false)}
             className="rounded px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg disabled:opacity-40"
@@ -498,6 +516,8 @@ export function OnboardingWizard({ open, onClose }: OnboardingWizardProps) {
           {uploadStepDone ? (
             <button
               type="button"
+              title={t("onboarding.finishTitle")}
+              aria-label={t("onboarding.finish")}
               onClick={() => dismiss(true)}
               className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1 text-[11px] text-white"
             >

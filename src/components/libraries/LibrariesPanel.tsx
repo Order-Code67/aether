@@ -557,7 +557,8 @@ export function LibrariesPanel() {
         </h2>
         <button
           type="button"
-          title={t("libraries.refresh")}
+          title={t("libraries.refreshTitle")}
+          aria-label={t("libraries.refresh")}
           disabled={!isProject}
           onClick={() => void refreshInstalled()}
           className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40"
@@ -569,14 +570,16 @@ export function LibrariesPanel() {
       <div className="mx-3 mb-2 flex rounded border border-aether-border p-0.5">
         {(
           [
-            ["platformio", "libraries.tab.platformio"],
-            ["arduino", "libraries.tab.arduino"],
-            ["github", "libraries.tab.github"],
+            ["platformio", "libraries.tab.platformio", "libraries.tab.platformioTitle"],
+            ["arduino", "libraries.tab.arduino", "libraries.tab.arduinoTitle"],
+            ["github", "libraries.tab.github", "libraries.tab.githubTitle"],
           ] as const
-        ).map(([id, labelKey]) => (
+        ).map(([id, labelKey, tipKey]) => (
           <button
             key={id}
             type="button"
+            title={t(tipKey)}
+            aria-label={t(labelKey)}
             onClick={() => {
               setManagerTab(id);
               setError(null);
@@ -637,6 +640,8 @@ export function LibrariesPanel() {
               </p>
               <button
                 type="button"
+                title={t("libraries.arduinoCliInstallTitle")}
+                aria-label={t("libraries.arduinoCliInstall")}
                 onClick={() => {
                   void (async () => {
                     try {
@@ -722,6 +727,8 @@ export function LibrariesPanel() {
               </div>
               <button
                 type="submit"
+                title={t("libraries.searchBtnTitle")}
+                aria-label={t("libraries.searchBtn")}
                 disabled={
                   loading ||
                   (!query.trim() &&
@@ -758,6 +765,8 @@ export function LibrariesPanel() {
                 </div>
                 <button
                   type="submit"
+                  title={t("libraries.githubInstallTitle")}
+                  aria-label={t("libraries.githubInstallTitle")}
                   disabled={
                     busyId?.startsWith("github:") || !githubInput.trim()
                   }
@@ -997,7 +1006,8 @@ export function LibrariesPanel() {
                         </button>
                         <button
                           type="button"
-                          title={t("libraries.uninstall")}
+                          title={t("libraries.uninstallTitle")}
+                          aria-label={t("libraries.uninstall")}
                           disabled={busy}
                           onClick={() => void uninstall(dep)}
                           className="flex h-6 shrink-0 items-center gap-1 rounded border border-aether-border px-1.5 text-aether-fg-muted hover:border-aether-danger hover:text-aether-danger disabled:opacity-40"

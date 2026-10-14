@@ -146,7 +146,7 @@ export function SettingsDialog() {
         data-testid="settings-dialog"
         role="dialog"
         aria-modal="true"
-        aria-label="Settings"
+        aria-label={t("settings.dialogAria")}
         className="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded border border-aether-border bg-aether-surface shadow-2xl"
       >
         <header className="flex h-10 shrink-0 items-center justify-between border-b border-aether-border px-3">
@@ -168,16 +168,18 @@ export function SettingsDialog() {
           <nav className="flex w-36 shrink-0 flex-col gap-0.5 border-r border-aether-border p-2">
             {(
               [
-                ["general", "settings.general"],
-                ["editor", "settings.editor"],
-                ["tools", "settings.tools"],
-                ["agent", "settings.agent"],
-                ["about", "settings.about"],
+                ["general", "settings.general", "settings.tab.generalTitle"],
+                ["editor", "settings.editor", "settings.tab.editorTitle"],
+                ["tools", "settings.tools", "settings.tab.toolsTitle"],
+                ["agent", "settings.agent", "settings.tab.agentTitle"],
+                ["about", "settings.about", "settings.tab.aboutTitle"],
               ] as const
-            ).map(([id, labelKey]) => (
+            ).map(([id, labelKey, tipKey]) => (
               <button
                 key={id}
                 type="button"
+                title={t(tipKey)}
+                aria-label={t(labelKey)}
                 onClick={() => setTab(id)}
                 className={cn(
                   "rounded px-2 py-1.5 text-left text-xs",
@@ -199,6 +201,8 @@ export function SettingsDialog() {
                   <select
                     value={locale}
                     onChange={(e) => setLocale(e.target.value as Locale)}
+                    title={t("settings.languageTitle")}
+                    aria-label={t("settings.language")}
                     className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
                   >
                     <option value="ru">{t("settings.language.ru")}</option>
@@ -217,6 +221,8 @@ export function SettingsDialog() {
                       onChange={(e) =>
                         setTheme(e.target.value === "light" ? "light" : "dark")
                       }
+                      title={t("settings.themeTitle")}
+                      aria-label={t("settings.theme")}
                       className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
                     >
                       <option value="dark">{t("settings.theme.dark")}</option>
@@ -313,6 +319,8 @@ export function SettingsDialog() {
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
+                      title={t("vscode.openActionTitle")}
+                      aria-label={t("vscode.openAction")}
                       disabled={!isTauriRuntime()}
                       onClick={() => {
                         void import("@/lib/commands").then(({ runCommandById }) => {
@@ -325,6 +333,8 @@ export function SettingsDialog() {
                     </button>
                     <button
                       type="button"
+                      title={t("vscode.generateActionTitle")}
+                      aria-label={t("vscode.generateAction")}
                       disabled={!isTauriRuntime()}
                       onClick={() => {
                         void import("@/lib/commands").then(({ runCommandById }) => {
@@ -385,6 +395,8 @@ export function SettingsDialog() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
+                    title={t("offline.prepareTitle")}
+                    aria-label={t("offline.prepare")}
                     disabled={running || !isTauriRuntime()}
                     onClick={() => {
                       void prepareOfflineCache();
@@ -396,6 +408,8 @@ export function SettingsDialog() {
                   {sidecarOfflineZips.length > 0 && (
                     <button
                       type="button"
+                      title={t("offline.importSidecarTitle")}
+                      aria-label={t("offline.importSidecar")}
                       disabled={running || !isTauriRuntime()}
                       data-testid="settings-import-sidecar"
                       onClick={() => {
@@ -410,6 +424,8 @@ export function SettingsDialog() {
                   )}
                   <button
                     type="button"
+                    title={t("offline.importTitle")}
+                    aria-label={t("offline.import")}
                     disabled={running || !isTauriRuntime()}
                     onClick={() => {
                       void (async () => {
@@ -432,6 +448,8 @@ export function SettingsDialog() {
                   </button>
                   <button
                     type="button"
+                    title={t("offline.recheckTitle")}
+                    aria-label={t("offline.recheckTitle")}
                     disabled={offlineCacheChecking}
                     onClick={() => {
                       void refreshOfflineCache();
@@ -539,6 +557,8 @@ export function SettingsDialog() {
                 </label>
                 <button
                   type="button"
+                  title={t("settings.resetEditorTitle")}
+                  aria-label={t("settings.resetEditor")}
                   onClick={resetEditorDefaults}
                   className="rounded border border-aether-border px-2 py-1.5 text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
                 >
@@ -702,6 +722,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
           <div className="inline-flex rounded border border-aether-border overflow-hidden">
             <button
               type="button"
+              title={t("updater.channelTitle")}
+              aria-label={t("updater.channel.stable")}
               disabled={busy}
               onClick={() => setUpdateChannel("stable")}
               className={cn(
@@ -715,6 +737,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
             </button>
             <button
               type="button"
+              title={t("updater.channelTitle")}
+              aria-label={t("updater.channel.beta")}
               disabled={busy}
               onClick={() => setUpdateChannel("beta")}
               className={cn(
@@ -751,6 +775,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            title={t("updater.checkTitle")}
+            aria-label={t("updater.check")}
             disabled={busy || !isTauriRuntime()}
             onClick={() => {
               void check({ openDialog: true }).then(() => {
@@ -766,6 +792,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
           {phase === "available" && (
             <button
               type="button"
+              title={t("updater.installTitle")}
+              aria-label={t("updater.install")}
               disabled={busy}
               onClick={() => void installAndRelaunch()}
               className="rounded bg-aether-accent px-2.5 py-1.5 text-[11px] font-medium text-white hover:opacity-90 disabled:opacity-40"
@@ -782,6 +810,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
+          title={t("support.copyReportTitle")}
+          aria-label={t("support.copyReport")}
           disabled={copying}
           onClick={() => {
             setCopying(true);
@@ -801,6 +831,8 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
         </button>
         <button
           type="button"
+          title={t("support.saveReportTitle")}
+          aria-label={t("support.saveReport")}
           disabled={saving}
           onClick={() => {
             setSaving(true);

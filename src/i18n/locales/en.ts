@@ -1058,6 +1058,211 @@
   "inav.flash.hexInvalid": "Select a .hex or .bin firmware file.",
   "inav.flash.failed": "dfu-util reported failure — see Output.",
   "inav.flash.needDfuUtil": "Use dfu-util on PATH (STM32CubeProgrammer CLI is not wired here).",
+
+  // Discoverability tooltips — WHAT + WHY (title / aria-label)
+  "settings.openTitle":
+    "Settings — language, theme, Arduino mode, tools, Agent, updates",
+  "settings.dialogAria": "Settings",
+  "settings.tab.generalTitle": "General — language, theme, Arduino simplified UI",
+  "settings.tab.editorTitle": "Editor — font, whitespace, editor defaults",
+  "settings.tab.toolsTitle": "Tools — VS Code, offline PIO cache, firmware profiles",
+  "settings.tab.agentTitle": "Agent — API key and model for the AI assistant",
+  "settings.tab.aboutTitle": "About — version, updates, support report",
+  "settings.languageTitle": "UI language (English / Russian)",
+  "settings.themeTitle": "Color theme — dark or light workspace chrome",
+  "settings.resetEditorTitle":
+    "Reset editor font size, tab size, and whitespace to defaults",
+  "pio.buildTitle":
+    "Build firmware for the selected env (Ctrl+Shift+B). Opens Output on errors.",
+  "pio.uploadTitle":
+    "Upload the last build to the selected COM port. Disconnects Serial Monitor first if connected.",
+  "pio.cleanTitle":
+    "Clean build artifacts for the selected env — use before a full rebuild.",
+  "pio.compiledbTitle":
+    "Generate compile_commands.json for IntelliSense (pio run -t compiledb).",
+  "pio.envSwitchTitle":
+    "Active PlatformIO environment (board/target). Build and upload use this env.",
+  "pio.portTitle":
+    "COM/serial port for Upload. Pick the board’s USB/UART port after plugging in.",
+  "pio.portRefreshTitle":
+    "Rescan USB serial ports — use after plugging or unplugging a board.",
+  "profiles.saveCurrentTitle":
+    "Save current env + upload port as a named firmware profile for quick restore.",
+  "profiles.applyTitle":
+    "Apply a saved profile — switches env and upload port to that snapshot.",
+  "doctor.openTitle":
+    "Toolchain Doctor — check PlatformIO, ports, drivers, and radio tips.",
+  "loraPath.wizardTitle":
+    "New Project wizard — create a LoRa-ready PlatformIO project.",
+  "loraPath.examplesTitle":
+    "Open bundled TX/RX LoRa examples from the catalog.",
+  "loraPath.pairTitle":
+    "Open TX and RX example folders together (TX active, RX as second root).",
+  "loraPath.step.pinsTitle":
+    "Show pin-map tips (NSS/DIO/RST) via Doctor — match your board wiring.",
+  "loraPath.step.uploadTitle":
+    "Upload the current LoRa sketch, then watch Output for flash progress.",
+  "loraPath.step.plotterTitle":
+    "Open Serial Plotter for live RSSI/SNR after the RX sketch is connected.",
+  "loraPath.step.doctorTitle":
+    "Open Doctor for radio project checks and COM/driver hints.",
+  "hub.arduinoTitle":
+    "Arduino path — open Quick Start (board → COM → Blink → Upload).",
+  "hub.platformioTitle":
+    "PlatformIO path — open a folder and pick boards / environments.",
+  "hub.inavTitle":
+    "Aether Configurator — COM handoff, MSP/CLI/flash for FC setup.",
+  "hub.vscodeTitle":
+    "Open the current workspace folder in VS Code (desktop app).",
+  "hub.aiTitle":
+    "AI Agent — ask about firmware, boards, and this project.",
+  "welcome.quickStartTitle":
+    "Quick start wizard (~60s): board, COM port, Blink, upload.",
+  "welcome.newProjectTitle":
+    "Create a new PlatformIO / Arduino-style project with the wizard.",
+  "welcome.openFolderTitle":
+    "Open an existing project or sketch folder as the workspace.",
+  "welcome.openExampleTitle":
+    "Browse bundled examples and copy one into a writable folder.",
+  "welcome.openDemoTitle":
+    "Open the built-in demo workspace (no folder picker).",
+  "welcome.generateVsCodeTitle":
+    "Write .vscode tasks/settings for this folder so VS Code can build with PIO.",
+  "onboarding.skipTitle": "Close the wizard without finishing — you can reopen from Welcome.",
+  "onboarding.finishTitle": "Finish Quick Start and return to the editor.",
+  "onboarding.portTitle": "Select the board’s COM/serial port for upload.",
+  "onboarding.portRefreshTitle": "Rescan ports after plugging the board in.",
+  "onboarding.createBlinkTitle": "Create and open the Blink starter for the selected board.",
+  "onboarding.openExampleTitle": "Open a matching example instead of creating Blink.",
+  "onboarding.buildUploadTitle": "Build and upload the starter — watch Output and Serial.",
+  "onboarding.boardTitle": "Select this board/target for the Quick Start project.",
+  "vscode.openActionTitle": "Launch VS Code on the open folder (desktop).",
+  "vscode.generateActionTitle":
+    "Generate .vscode config so VS Code can build/upload this project.",
+  "offline.prepareTitle": "Prepare an offline PlatformIO cache pack for air-gapped PCs.",
+  "offline.importTitle": "Import a PlatformIO offline cache zip into this machine.",
+  "offline.importSidecarTitle":
+    "Import offline cache from a sidecar folder next to the app.",
+  "offline.recheckTitle": "Re-check whether PlatformIO offline cache is available.",
+  "updater.channelTitle": "Update channel — stable or pre-release builds.",
+  "updater.checkTitle": "Check for an Aether update now.",
+  "updater.installTitle": "Download and install the available update.",
+  "support.copyReportTitle": "Copy a support report (version, OS, paths) to the clipboard.",
+  "support.saveReportTitle": "Save the support report as a text file.",
+  "palette.commandsAria": "Command Palette — run an IDE command by name",
+  "palette.filesAria": "Go to File — open a workspace file by name",
+  "palette.inputAria": "Type to filter commands or files",
+  "inav.portTitle":
+    "FC COM port — select before Connect or opening Configurator.",
+  "inav.baudTitle":
+    "Serial baud for MSP/CLI (usually 115200). Must match the FC.",
+  "inav.connectTitle":
+    "Connect Aether’s COM session for MSP status and CLI (keeps port in-IDE).",
+  "inav.disconnectTitle":
+    "Disconnect the in-IDE FC session and release the COM port.",
+  "inav.msp.refreshTitle":
+    "Refresh MSP snapshot (variant, voltage, RSSI, armed) over the open session.",
+  "inav.clearTitle": "Clear the CLI log in this panel.",
+  "inav.cliSendTitle": "Send the CLI line to the FC (Enter also sends).",
+  "inav.cliInputTitle": "Type an iNav/Betaflight-style CLI command, then Send.",
+  "bplaPath.refreshPortsTitle":
+    "Refresh COM list and re-detect Aether Configurator install.",
+  "bplaPath.configuratorOpenTitle":
+    "Launch Aether Configurator with the selected COM/baud (releases port first).",
+  "bplaPath.openPlotterTitle":
+    "Open bottom Plotter and stream live MSP samples when telemetry is on.",
+  "bplaPath.liveTelemetryTitle":
+    "When on, poll MSP and push voltage/RSSI/attitude into Serial Plotter.",
+  "inav.flash.detectTitle":
+    "Detect dfu-util and list DFU devices — hold boot and reconnect USB first.",
+  "inav.flash.pickHexTitle": "Choose a .hex/.bin FC firmware file to flash.",
+  "inav.flash.flashTitle":
+    "Flash the selected hex via DFU — disconnects serial; wrong image can brick.",
+  "boards.refreshTitle":
+    "Refresh PlatformIO CLI detection and project environments.",
+  "boards.activeFolderTitle":
+    "Set this folder as the active PlatformIO project root.",
+  "boards.envSelectTitle":
+    "Select this env as the active build/upload target.",
+  "boards.buildTitle":
+    "Build firmware for the selected env — same as the toolbar Build.",
+  "boards.uploadTitle":
+    "Upload to the toolbar’s selected port — open Serial afterward to verify.",
+  "serial.portTitle": "Serial Monitor port — pick the board after plugging USB.",
+  "serial.baudTitle": "Baud rate for Serial Monitor (must match Serial.begin).",
+  "serial.refreshTitle": "Rescan COM ports for Serial Monitor.",
+  "serial.connectTitle":
+    "Connect Serial Monitor to the selected port — use after upload to see logs.",
+  "serial.disconnectTitle": "Disconnect Serial Monitor and free the port for upload.",
+  "serial.clearTitle": "Clear the Serial Monitor buffer.",
+  "serial.autoscrollTitle": "Keep the view scrolled to the latest serial line.",
+  "serial.plotterTitle": "Open Serial Plotter for live charts from this serial stream.",
+  "status.openProblemsTitle": "Open Problems — jump to compile/lint errors.",
+  "status.openOutputTitle": "Open PlatformIO Output — build/upload log.",
+  "status.openSerialTitle": "Open Serial Monitor in the bottom panel.",
+  "status.openScmTitle": "Open Source Control sidebar (Git).",
+  "status.openDebugTitle": "Open Run and Debug sidebar.",
+  "panel.hideTitle": "Hide the bottom panel (Problems, Output, Serial…).",
+  "panel.showTitle": "Show the bottom panel.",
+  "editor.closeTabTitle": "Close this editor tab (unsaved changes will prompt).",
+  "editor.activateTabTitle": "Activate this open file in the editor.",
+  "scm.fetchTitle": "Fetch remotes — update remote refs without merging.",
+  "scm.pullTitle": "Pull — fetch and merge the current branch from remote.",
+  "scm.pushTitle": "Push local commits on this branch to the remote.",
+  "scm.refreshTitle": "Refresh Git status for the active folder.",
+  "scm.branchTitle": "Show branches — checkout or create a branch.",
+  "scm.commitTitle": "Commit staged files with the message above.",
+  "scm.stageAllTitle": "Stage all changes and untracked files.",
+  "scm.unstageAllTitle": "Unstage everything currently staged.",
+  "scm.createBranchTitle": "Create and check out a new local branch.",
+  "scm.closeBranchesTitle": "Close the branch list.",
+  "scm.stageTitle": "Stage this file for the next commit.",
+  "scm.unstageTitle": "Unstage this file (keep working-tree changes).",
+  "scm.discardTitle": "Discard working-tree changes for this file (destructive).",
+  "scm.diffTitle": "Show a text diff for this file.",
+  "scm.resolveTitle": "Open the merge conflict editor for this file.",
+  "scm.openFileTitle": "Open this file in the editor.",
+  "scm.closeDiffTitle": "Close the diff preview.",
+  "debug.startTitle": "Start PlatformIO debug session (F5).",
+  "debug.continueTitle": "Continue execution until the next breakpoint (F5).",
+  "debug.pauseTitle": "Pause a running debug session.",
+  "debug.stepOverTitle": "Step over the current line (F10).",
+  "debug.stepIntoTitle": "Step into a function call (F11).",
+  "debug.stepOutTitle": "Step out of the current function (Shift+F11).",
+  "debug.stopTitle": "Stop the debug session (Shift+F5).",
+  "agent.sendTitle": "Send your message to the AI agent.",
+  "agent.stopTitle": "Stop the current agent reply.",
+  "agent.applyTitle": "Apply this suggested edit to the target file.",
+  "agent.clearChatTitle": "Clear the chat history in this panel.",
+  "agent.settingsTitle": "Open Agent settings (API key / model).",
+  "agent.attachTitle": "Attach a project file to the next message.",
+  "libraries.tab.platformioTitle":
+    "PlatformIO registry — search and install into lib_deps.",
+  "libraries.tab.arduinoTitle":
+    "Arduino Library Manager — arduino-cli or PIO arduino framework.",
+  "libraries.tab.githubTitle":
+    "Install a library from GitHub (owner/repo) into the project.",
+  "libraries.searchBtnTitle": "Search libraries with the current query.",
+  "libraries.installTitle": "Install this library into the open project.",
+  "libraries.uninstallTitle": "Remove this library from the project.",
+  "libraries.githubInstallTitle": "Install the GitHub repo into lib_deps via PIO.",
+  "libraries.arduinoCliInstallTitle":
+    "Install arduino-cli so official Library Manager search works.",
+  "libraries.refreshTitle": "Refresh installed libraries for this project.",
+  "extensions.loadFolderTitle":
+    "Load a local extension folder into Aether (dev / sideload).",
+  "extensions.refreshCatalogTitle": "Refresh the extensions catalog list.",
+  "extensions.tab.installedTitle": "Extensions already installed in Aether.",
+  "extensions.tab.marketplaceTitle": "Browse marketplace / catalog extensions.",
+  "extensions.tab.publishTitle": "Publish or manage your own extension package.",
+  "extensions.installUrlTitle": "Install an extension from a URL or package link.",
+  "extensions.installTitle": "Install this extension from the catalog.",
+  "extensions.enableTitle": "Enable this extension so it runs in Aether.",
+  "extensions.disableTitle": "Disable this extension without uninstalling.",
+  "extensions.uninstallTitle": "Remove this local extension.",
+  "extensions.filter.allTitle": "Show all installed extensions.",
+  "extensions.filter.enabledTitle": "Show only enabled extensions.",
+  "extensions.filter.disabledTitle": "Show only disabled extensions.",
 } as const;
 
 export type MessageKey = keyof typeof en;

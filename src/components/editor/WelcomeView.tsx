@@ -130,6 +130,12 @@ export function WelcomeView() {
       | "hub.inavDesc"
       | "hub.vscodeDesc"
       | "hub.aiDesc";
+    tipKey:
+      | "hub.arduinoTitle"
+      | "hub.platformioTitle"
+      | "hub.inavTitle"
+      | "hub.vscodeTitle"
+      | "hub.aiTitle";
     testId: string;
   }[] = [
     {
@@ -137,6 +143,7 @@ export function WelcomeView() {
       icon: Rocket,
       titleKey: "hub.arduino",
       descKey: "hub.arduinoDesc",
+      tipKey: "hub.arduinoTitle",
       testId: "hub-arduino",
     },
     {
@@ -144,6 +151,7 @@ export function WelcomeView() {
       icon: Cpu,
       titleKey: "hub.platformio",
       descKey: "hub.platformioDesc",
+      tipKey: "hub.platformioTitle",
       testId: "hub-platformio",
     },
     {
@@ -151,6 +159,7 @@ export function WelcomeView() {
       icon: Navigation,
       titleKey: "hub.inav",
       descKey: "hub.inavDesc",
+      tipKey: "hub.inavTitle",
       testId: "hub-inav",
     },
     {
@@ -158,6 +167,7 @@ export function WelcomeView() {
       icon: Code2,
       titleKey: "hub.vscode",
       descKey: "hub.vscodeDesc",
+      tipKey: "hub.vscodeTitle",
       testId: "hub-vscode",
     },
     {
@@ -165,6 +175,7 @@ export function WelcomeView() {
       icon: Bot,
       titleKey: "hub.ai",
       descKey: "hub.aiDesc",
+      tipKey: "hub.aiTitle",
       testId: "hub-ai",
     },
   ];
@@ -230,6 +241,8 @@ export function WelcomeView() {
                 key={mod.id}
                 type="button"
                 data-testid={mod.testId}
+                title={t(mod.tipKey)}
+                aria-label={t(mod.titleKey)}
                 disabled={mod.id === "vscode" && vscodeBusy}
                 onClick={() => onHub(mod.id)}
                 className={cn(
@@ -265,6 +278,8 @@ export function WelcomeView() {
           <button
             type="button"
             data-testid="welcome-quick-start"
+            title={t("welcome.quickStartTitle")}
+            aria-label={t("welcome.quickStart")}
             onClick={() => setOnboardingOpen(true)}
             className="flex items-center gap-1.5 rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg"
           >
@@ -276,6 +291,7 @@ export function WelcomeView() {
               type="button"
               data-testid="welcome-clean-pc-btn"
               title={t("welcome.cleanPcHint")}
+              aria-label={t("welcome.cleanPc")}
               onClick={() => {
                 showDoctor();
                 openSettings("tools");
@@ -288,6 +304,8 @@ export function WelcomeView() {
           <button
             type="button"
             data-testid="welcome-new-project"
+            title={t("welcome.newProjectTitle")}
+            aria-label={t("welcome.newProject")}
             onClick={() => setNewProjectOpen(true)}
             className="flex items-center gap-1.5 rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg"
           >
@@ -297,6 +315,8 @@ export function WelcomeView() {
           <button
             type="button"
             data-testid="welcome-open-folder"
+            title={t("welcome.openFolderTitle")}
+            aria-label={t("welcome.openFolder")}
             onClick={() => {
               void openFolder();
             }}
@@ -307,6 +327,8 @@ export function WelcomeView() {
           </button>
           <button
             type="button"
+            title={t("welcome.openExampleTitle")}
+            aria-label={t("welcome.openExample")}
             onClick={() => setExamplesOpen(true)}
             className="rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg"
           >
@@ -314,6 +336,8 @@ export function WelcomeView() {
           </button>
           <button
             type="button"
+            title={t("welcome.openDemoTitle")}
+            aria-label={t("welcome.openDemo")}
             onClick={openDemoWorkspace}
             className="rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-dim hover:text-aether-fg-muted"
           >
@@ -322,6 +346,8 @@ export function WelcomeView() {
           {tauri ? (
             <button
               type="button"
+              title={t("welcome.generateVsCodeTitle")}
+              aria-label={t("welcome.generateVsCode")}
               disabled={vscodeBusy}
               onClick={() => void runGenerateVsCode()}
               className="rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-dim hover:text-aether-fg-muted disabled:opacity-40"
