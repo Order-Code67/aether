@@ -10,6 +10,7 @@ import { BoardHardwareStrip } from "@/components/platformio/BoardHardwareStrip";
 import { BuildToolbar } from "@/components/platformio/BuildToolbar";
 import { LoRaPathGuide } from "@/components/platformio/LoRaPathGuide";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
+import { useI18n } from "@/hooks/useI18n";
 import { conflictCount, hasConflictMarkers } from "@/lib/mergeConflict";
 import { useEditorStore } from "@/stores/editorStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
@@ -17,6 +18,7 @@ import { useSerialStore } from "@/stores/serialStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 
 export function EditorArea() {
+  const { t } = useI18n();
   const hasTabs = useEditorStore((s) => s.tabs.length > 0);
   const activeTab = useEditorStore((s) => {
     const id = s.activeTabId;
@@ -43,7 +45,7 @@ export function EditorArea() {
   return (
     <section
       className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-aether-bg"
-      aria-label="Editor"
+      aria-label={t("editor.area")}
     >
       <EditorTabs />
       <BuildToolbar />

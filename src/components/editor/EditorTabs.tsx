@@ -27,7 +27,7 @@ export function EditorTabs() {
   if (tabs.length === 0) {
     return (
       <div className="flex h-9 shrink-0 items-center border-b border-aether-border bg-aether-surface px-3">
-        <span className="text-xs text-aether-fg-muted">Editor</span>
+        <span className="text-xs text-aether-fg-muted">{t("editor.empty")}</span>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function EditorTabs() {
       <div
         className="flex min-w-0 flex-1 items-stretch overflow-x-auto"
         role="tablist"
-        aria-label="Open editors"
+        aria-label={t("editor.openEditors")}
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
@@ -76,8 +76,8 @@ export function EditorTabs() {
               </button>
               <button
                 type="button"
-                title={`Close ${tab.name}`}
-                aria-label={`Close ${tab.name}`}
+                title={t("editor.closeTab", { name: tab.name })}
+                aria-label={t("editor.closeTab", { name: tab.name })}
                 onClick={(event) => {
                   event.stopPropagation();
                   closeTab(tab.id);
@@ -98,8 +98,8 @@ export function EditorTabs() {
       <div className="flex shrink-0 items-center gap-0.5 border-l border-aether-border px-1.5">
         <button
           type="button"
-          title="Save (Ctrl+S)"
-          aria-label="Save"
+          title={t("editor.saveTitle")}
+          aria-label={t("editor.save")}
           disabled={!activeTab?.dirty || saving}
           onClick={() => {
             void saveTab();
@@ -114,8 +114,8 @@ export function EditorTabs() {
         </button>
         <button
           type="button"
-          title="Save All (Ctrl+Shift+S)"
-          aria-label="Save All"
+          title={t("editor.saveAllTitle")}
+          aria-label={t("editor.saveAll")}
           disabled={dirtyCount === 0 || saving}
           onClick={() => {
             void saveAllTabs();

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.2.36 — 2026-10-14
+
+- **UI chrome** — native menu bar hidden (accelerators via shortcuts + Command Palette); tooltips on layout chrome, serial, and status controls
+- **Where to Load** — new Activity / sidebar tab (`Load Sources`) for offline cache, examples, and folder guidance
+- **Configurator detect** — finds portable `Aether Configurator*.exe`, `D:\CFG\Aether`, and side-by-side install paths; clearer launch errors
+
 ## 0.2.35 — 2026-10-12
 
 - **Arduino-first** — Quick Start Blink/Servo by board; LoRa TX+RX pair (TX active + RX second folder); LoRa guide + Doctor/Plotter glue

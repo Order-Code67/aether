@@ -133,13 +133,16 @@ export function StatusBar() {
   return (
     <footer
       className="flex h-statusbar shrink-0 items-center justify-between bg-aether-status px-2 text-[11px] text-white"
-      aria-label="Status Bar"
+      aria-label={t("status.bar")}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className="font-medium tracking-wide">{t("app.name")}</span>
+        <span className="font-medium tracking-wide" title={t("app.tagline")}>
+          {t("app.name")}
+        </span>
         <button
           type="button"
-          title="Open Problems"
+          title={t("status.openProblems")}
+          aria-label={t("status.openProblems")}
           onClick={() => setBottomPanelTab("problems")}
           className="flex items-center gap-1 opacity-90 hover:opacity-100"
         >
@@ -148,7 +151,8 @@ export function StatusBar() {
         </button>
         <button
           type="button"
-          title="Open Problems"
+          title={t("status.openProblems")}
+          aria-label={t("status.openProblems")}
           onClick={() => setBottomPanelTab("problems")}
           className="flex items-center gap-1 opacity-90 hover:opacity-100"
         >
@@ -171,7 +175,8 @@ export function StatusBar() {
         {gitIsRepo && gitBranch && (
           <button
             type="button"
-            title="Open Source Control"
+            title={t("status.openScm")}
+            aria-label={t("status.openScm")}
             onClick={() => setActiveActivity("source-control")}
             className="flex max-w-[140px] items-center gap-1 truncate opacity-90 hover:opacity-100"
           >
@@ -186,7 +191,8 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title="Open PlatformIO Output"
+          title={t("status.openOutput")}
+          aria-label={t("status.openOutput")}
           onClick={() => setBottomPanelTab("output")}
           className="truncate opacity-90 hover:opacity-100"
         >
@@ -234,7 +240,8 @@ export function StatusBar() {
         {debugActive && (
           <button
             type="button"
-            title="Open Run and Debug"
+            title={t("status.openDebug")}
+            aria-label={t("status.openDebug")}
             onClick={() => setActiveActivity("debug")}
             className="flex items-center gap-1 opacity-90 hover:opacity-100"
           >
@@ -274,14 +281,15 @@ export function StatusBar() {
         )}
         <button
           type="button"
-          title="Open Serial Monitor"
+          title={t("status.openSerial")}
+          aria-label={t("status.openSerial")}
           onClick={() => setBottomPanelTab("serial")}
           className="flex items-center gap-1 hover:opacity-100"
         >
           <Radio size={12} />
           {serialConnected
-            ? `${serialPath || "Serial"} @ ${serialBaud}`
-            : uploadPort || (isProject ? t("pio.portNone") : "No board")}
+            ? `${serialPath || t("panel.serial")} @ ${serialBaud}`
+            : uploadPort || (isProject ? t("pio.portNone") : t("status.noBoard"))}
         </button>
         <span
           className="flex items-center gap-1"

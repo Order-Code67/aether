@@ -70,6 +70,13 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
             &MenuItem::with_id(app, "file.quickOpen", "Go to File…", true, Some("CmdOrCtrl+P"))?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, "view.explorer", "Explorer", true, None::<&str>)?,
+            &MenuItem::with_id(
+                app,
+                "view.sources",
+                "Where to Load",
+                true,
+                None::<&str>,
+            )?,
             &MenuItem::with_id(app, "view.search", "Search", true, Some("CmdOrCtrl+Shift+F"))?,
             &MenuItem::with_id(
                 app,
@@ -154,8 +161,11 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
 }
 
 pub fn attach_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
-    let menu = build_menu(app)?;
-    app.set_menu(menu)?;
+    // Keep menu definitions (and commandsMenuParity) in sync with the command registry,
+    // but do not show native File / Edit / View / Run / Help labels on the title bar.
+    // Accelerators are handled in the webview (useEditorShortcuts + Command Palette).
+    let _menu = build_menu(app)?;
+    let _ = app.remove_menu();
     Ok(())
 }
 

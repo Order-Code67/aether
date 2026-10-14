@@ -13,6 +13,7 @@ import { AgentPanel } from "@/components/agent/AgentPanel";
 import { DebugPanel } from "@/components/debug/DebugPanel";
 import { ExtensionsPanel } from "@/components/extensions/ExtensionsPanel";
 import { FileTree } from "@/components/explorer/FileTree";
+import { LoadSourcesPanel } from "@/components/explorer/LoadSourcesPanel";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { BplaStudioPanel } from "@/components/inav/BplaStudioPanel";
 import { LibrariesPanel } from "@/components/libraries/LibrariesPanel";
@@ -125,10 +126,10 @@ function ExplorerSidebar() {
             <>
               <button
                 type="button"
-                title="New File"
-                aria-label="New File"
+                title={t("explorer.newFile")}
+                aria-label={t("explorer.newFile")}
                 onClick={() => {
-                  const name = promptName("New file name", "untitled.cpp");
+                  const name = promptName(t("explorer.newFilePrompt"), "untitled.cpp");
                   if (name) void createFile(activeFolderPath, name);
                 }}
                 className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -137,10 +138,10 @@ function ExplorerSidebar() {
               </button>
               <button
                 type="button"
-                title="New Folder"
-                aria-label="New Folder"
+                title={t("explorer.newFolder")}
+                aria-label={t("explorer.newFolder")}
                 onClick={() => {
-                  const name = promptName("New folder name", "src");
+                  const name = promptName(t("explorer.newFolderPrompt"), "src");
                   if (name) void createFolder(activeFolderPath, name);
                 }}
                 className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -149,8 +150,8 @@ function ExplorerSidebar() {
               </button>
               <button
                 type="button"
-                title="Add Folder to Workspace"
-                aria-label="Add Folder to Workspace"
+                title={t("explorer.addFolderTitle")}
+                aria-label={t("explorer.addFolderTitle")}
                 onClick={() => {
                   void addFolder();
                 }}
@@ -171,8 +172,8 @@ function ExplorerSidebar() {
           </button>
           <button
             type="button"
-            title="Open Folder"
-            aria-label="Open Folder"
+            title={t("explorer.openFolder")}
+            aria-label={t("explorer.openFolder")}
             onClick={() => {
               void openFolder();
             }}
@@ -183,8 +184,8 @@ function ExplorerSidebar() {
           {kind !== "none" && (
             <button
               type="button"
-              title="Close Workspace"
-              aria-label="Close Workspace"
+              title={t("explorer.closeWorkspace")}
+              aria-label={t("explorer.closeWorkspace")}
               onClick={closeWorkspace}
               className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
             >
@@ -197,11 +198,11 @@ function ExplorerSidebar() {
       {kind === "none" ? (
         <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
           <p className="text-xs leading-relaxed text-aether-fg-dim">
-            Open a project folder to browse files on disk. You can add more
-            roots later for a multi-root workspace.
+            {t("explorer.noFolderHint")}
           </p>
           <button
             type="button"
+            title={t("explorer.newProject")}
             onClick={() => setNewProjectOpen(true)}
             className="rounded border border-aether-border bg-aether-bg px-3 py-2 text-left text-xs text-aether-fg transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised"
           >
@@ -209,12 +210,13 @@ function ExplorerSidebar() {
           </button>
           <button
             type="button"
+            title={t("explorer.openFolder")}
             onClick={() => {
               void openFolder();
             }}
             className="rounded border border-aether-border bg-aether-bg px-3 py-2 text-left text-xs text-aether-fg transition-colors hover:border-aether-border-subtle hover:bg-aether-surface-raised"
           >
-            Open Folder…
+            {t("explorer.openFolder")}
           </button>
           <button
             type="button"
@@ -298,8 +300,8 @@ function ExplorerSidebar() {
                     </button>
                     <button
                       type="button"
-                      title="Remove folder from workspace"
-                      aria-label={`Remove ${folder.name}`}
+                      title={t("explorer.removeFolder")}
+                      aria-label={`${t("explorer.removeFolder")}: ${folder.name}`}
                       onClick={() => removeFolder(folder.path)}
                       className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-aether-fg-dim opacity-0 hover:bg-aether-surface-raised hover:text-aether-fg group-hover:opacity-100"
                     >
@@ -484,6 +486,8 @@ export function Sidebar() {
       >
         {activeActivity === "explorer" ? (
           <ExplorerSidebar />
+        ) : activeActivity === "sources" ? (
+          <LoadSourcesPanel />
         ) : activeActivity === "search" ? (
           <SearchPanel />
         ) : activeActivity === "source-control" ? (

@@ -23,6 +23,43 @@ fn push_exe_variants(out: &mut Vec<PathBuf>, dir: PathBuf) {
     out.push(dir.join("aether-configurator.exe"));
 }
 
+/// electron-builder portable: `Aether Configurator 0.2.1.exe` (version in name).
+fn push_portable_exes(out: &mut Vec<PathBuf>, dir: &Path) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
+        let lower = name.to_ascii_lowercase();
+        if lower.ends_with(".exe")
+            && (lower.starts_with("aether configurator")
+                || lower.starts_with("aetherconfigurator")
+                || lower == "aether-configurator.exe")
+        {
+            out.push(path);
+        }
+    }
+}
+
+fn first_existing(candidates: &[PathBuf]) -> Option<PathBuf> {
+    for c in candidates {
+        if let Ok(canon) = c.canonicalize() {
+            if path_ok(&canon) {
+                return Some(canon);
+            }
+        } else if path_ok(c) {
+            return Some(c.clone());
+        }
+    }
+    None
+}
+
 fn resolve_aether_configurator() -> Option<PathBuf> {
     if let Ok(override_path) = std::env::var("AETHER_CONFIGURATOR") {
         let p = PathBuf::from(override_path.trim());
@@ -37,29 +74,28 @@ fn resolve_aether_configurator() -> Option<PathBuf> {
 
         if let Ok(exe) = std::env::current_exe() {
             if let Some(dir) = exe.parent() {
+                // Same folder as Aether.exe, or subfolder next to it
                 push_exe_variants(&mut candidates, dir.to_path_buf());
+                push_portable_exes(&mut candidates, dir);
+                push_exe_variants(&mut candidates, dir.join("Aether Configurator"));
+                push_exe_variants(
+                    &mut candidates,
+                    dir.join("AetherConfigurator"),
+                );
                 push_exe_variants(
                     &mut candidates,
                     dir.join("..").join("Aether Configurator"),
                 );
-                // Monorepo electron-builder output
-                push_exe_variants(
-                    &mut candidates,
-                    dir.join("..")
-                        .join("..")
-                        .join("apps")
-                        .join("aether-configurator")
-                        .join("release")
-                        .join("win-unpacked"),
-                );
-                push_exe_variants(
-                    &mut candidates,
-                    dir.join("..")
-                        .join("..")
-                        .join("apps")
-                        .join("aether-configurator")
-                        .join("release"),
-                );
+                // Monorepo electron-builder output (dev / side-by-side)
+                let mono_release = dir
+                    .join("..")
+                    .join("..")
+                    .join("apps")
+                    .join("aether-configurator")
+                    .join("release");
+                push_exe_variants(&mut candidates, mono_release.join("win-unpacked"));
+                push_exe_variants(&mut candidates, mono_release.clone());
+                push_portable_exes(&mut candidates, &mono_release);
             }
         }
 
@@ -78,7 +114,12 @@ fn resolve_aether_configurator() -> Option<PathBuf> {
         if let Ok(pf) = std::env::var("ProgramFiles") {
             let pf = PathBuf::from(pf);
             push_exe_variants(&mut candidates, pf.join("Aether Configurator"));
+            push_exe_variants(&mut candidates, pf.join("aether-configurator"));
         }
+
+        // Common custom install dir (electron-builder NSIS on this machine)
+        push_exe_variants(&mut candidates, PathBuf::from(r"D:\CFG\Aether"));
+        push_portable_exes(&mut candidates, Path::new(r"D:\CFG\Aether"));
 
         if let Ok(path) = std::env::var("PATH") {
             for entry in path.split(';') {
@@ -90,16 +131,7 @@ fn resolve_aether_configurator() -> Option<PathBuf> {
             }
         }
 
-        for c in candidates {
-            if let Ok(canon) = c.canonicalize() {
-                if path_ok(&canon) {
-                    return Some(canon);
-                }
-            } else if path_ok(&c) {
-                return Some(c);
-            }
-        }
-        return None;
+        return first_existing(&candidates);
     }
 
     #[cfg(not(windows))]

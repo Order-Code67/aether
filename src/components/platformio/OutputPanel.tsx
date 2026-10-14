@@ -49,20 +49,21 @@ export function OutputPanel() {
           {running && (
             <button
               type="button"
-              title="Cancel"
+              title={t("pio.cancel")}
+              aria-label={t("pio.cancel")}
               onClick={() => {
                 void cancel();
               }}
               className="flex h-6 items-center gap-1 rounded px-1.5 text-[11px] text-aether-danger hover:bg-aether-surface-raised"
             >
               <Square size={11} />
-              Cancel
+              {t("pio.cancel")}
             </button>
           )}
           <button
             type="button"
-            title="Clear"
-            aria-label="Clear output"
+            title={t("pio.clearOutput")}
+            aria-label={t("pio.clearOutput")}
             onClick={clearOutput}
             className="flex h-6 w-6 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
           >

@@ -13,6 +13,7 @@ import { IdeFlashCard } from "@/components/inav/IdeFlashCard";
 import { useI18n } from "@/hooks/useI18n";
 import {
   AETHER_CONFIGURATOR_HINT,
+  configuratorErrorMessage,
   detectAetherConfigurator,
   openAetherConfigurator,
   type AetherConfiguratorInfo,
@@ -36,6 +37,7 @@ export function BplaStudioPanel() {
   const flash = useSettingsStore((s) => s.flashNotice);
   const [cfgInfo, setCfgInfo] = useState<AetherConfiguratorInfo | null>(null);
   const [busy, setBusy] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const [cliDraft, setCliDraft] = useState("");
   const [liveTelemetry, setLiveTelemetry] = useState(true);
   const cliEndRef = useRef<HTMLDivElement>(null);
@@ -122,10 +124,13 @@ export function BplaStudioPanel() {
 
   const onLaunchConfigurator = async () => {
     if (!tauri) {
-      flash(t("bplaPath.configuratorDesktop"));
+      const msg = t("bplaPath.configuratorDesktop");
+      setLaunchError(msg);
+      flash(msg, 6000);
       return;
     }
     setBusy(true);
+    setLaunchError(null);
     try {
       await releasePort();
       await openAetherConfigurator({
@@ -134,12 +139,12 @@ export function BplaStudioPanel() {
       });
       flash(t("bplaPath.configuratorLaunched"));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("AETHER_CONFIGURATOR_MISSING")) {
-        flash(t("bplaPath.configuratorMissing"));
-      } else {
-        flash(msg);
-      }
+      const raw = configuratorErrorMessage(e);
+      const msg = raw.includes("AETHER_CONFIGURATOR_MISSING")
+        ? t("bplaPath.configuratorMissing")
+        : raw;
+      setLaunchError(msg);
+      flash(msg, 8000);
     } finally {
       setBusy(false);
       void refreshDetect();
@@ -199,6 +204,14 @@ export function BplaStudioPanel() {
           {!cfgInfo?.installed && (
             <p className="text-[10px] text-aether-fg-dim">
               {AETHER_CONFIGURATOR_HINT}
+            </p>
+          )}
+          {launchError && (
+            <p
+              className="text-[11px] text-aether-danger"
+              data-testid="bpla-configurator-error"
+            >
+              {launchError}
             </p>
           )}
           <div className="flex flex-wrap gap-1.5">

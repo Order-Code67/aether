@@ -215,6 +215,13 @@ export function getCommands(): Command[] {
       run: () => view("explorer"),
     },
     {
+      id: "view.sources",
+      title: "Show Where to Load",
+      category: "View",
+      keywords: "load sources offline examples folder откуда загружать",
+      run: () => view("sources"),
+    },
+    {
       id: "view.search",
       title: "Show Search",
       category: "View",
@@ -279,13 +286,17 @@ export function getCommands(): Command[] {
             .getState()
             .flashNotice(t("bplaPath.configuratorLaunched"));
         } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
+          const { configuratorErrorMessage } = await import(
+            "@/lib/aetherConfigurator"
+          );
+          const msg = configuratorErrorMessage(e);
           useSettingsStore
             .getState()
             .flashNotice(
               msg.includes("AETHER_CONFIGURATOR_MISSING")
                 ? t("bplaPath.configuratorMissing")
                 : msg,
+              8000,
             );
         }
       },

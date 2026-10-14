@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/hooks/useI18n";
+import type { MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 type Orientation = "vertical" | "horizontal";
@@ -12,7 +14,7 @@ interface ResizeHandleProps {
    */
   onDrag: (delta: number) => void;
   onDoubleClick?: () => void;
-  label: string;
+  labelKey: MessageKey;
 }
 
 function clearResizeChrome() {
@@ -25,8 +27,10 @@ export function ResizeHandle({
   orientation,
   onDrag,
   onDoubleClick,
-  label,
+  labelKey,
 }: ResizeHandleProps) {
+  const { t } = useI18n();
+  const label = t(labelKey);
   const lastPos = useRef<number | null>(null);
   const [active, setActive] = useState(false);
   const isVertical = orientation === "vertical";
@@ -54,7 +58,7 @@ export function ResizeHandle({
       role="separator"
       aria-orientation={isVertical ? "vertical" : "horizontal"}
       aria-label={label}
-      title={`${label} (double-click to reset)`}
+      title={t("layout.resizeHint", { label })}
       onDoubleClick={onDoubleClick}
       onPointerDown={(event) => {
         event.preventDefault();

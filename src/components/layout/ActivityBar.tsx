@@ -5,6 +5,7 @@ import {
   Cpu,
   Ellipsis,
   Files,
+  FolderInput,
   GitBranch,
   Library,
   Plane,
@@ -21,6 +22,7 @@ import { ACTIVITY_ITEMS, type ActivityId } from "@/types/layout";
 
 const ACTIVITY_ICONS: Record<ActivityId, LucideIcon> = {
   explorer: Files,
+  sources: FolderInput,
   search: Search,
   "source-control": GitBranch,
   boards: Cpu,

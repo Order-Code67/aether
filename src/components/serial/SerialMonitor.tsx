@@ -52,7 +52,7 @@ export function SerialMonitor() {
   if (!tauri) {
     return (
       <div className="flex h-full flex-col justify-center px-3 text-xs text-aether-fg-dim">
-        Serial Monitor needs the desktop app.
+        {t("serial.needDesktop")}
         <span className="mt-1 font-mono text-aether-fg-muted">
           npm run tauri:dev
         </span>
@@ -68,10 +68,11 @@ export function SerialMonitor() {
           disabled={connected || connecting}
           onChange={(event) => setSelectedPath(event.target.value)}
           className="h-7 min-w-[140px] max-w-[220px] rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          aria-label="Serial port"
+          aria-label={t("serial.port")}
+          title={t("serial.port")}
         >
           {ports.length === 0 ? (
-            <option value="">No ports found</option>
+            <option value="">{t("serial.noPorts")}</option>
           ) : (
             ports.map((port) => (
               <option key={port.path} value={port.path}>
@@ -87,7 +88,8 @@ export function SerialMonitor() {
           disabled={connected || connecting}
           onChange={(event) => setBaudRate(Number(event.target.value))}
           className="h-7 rounded border border-aether-border bg-aether-bg px-1.5 text-[11px] text-aether-fg outline-none focus:border-aether-accent"
-          aria-label="Baud rate"
+          aria-label={t("serial.baud")}
+          title={t("serial.baud")}
         >
           {BAUD_RATES.map((rate) => (
             <option key={rate} value={rate}>
@@ -98,8 +100,8 @@ export function SerialMonitor() {
 
         <button
           type="button"
-          title="Refresh ports"
-          aria-label="Refresh ports"
+          title={t("serial.refresh")}
+          aria-label={t("serial.refresh")}
           onClick={() => {
             void refreshPorts();
           }}
@@ -111,17 +113,21 @@ export function SerialMonitor() {
         {connected ? (
           <button
             type="button"
+            title={t("serial.disconnect")}
+            aria-label={t("serial.disconnect")}
             onClick={() => {
               void disconnect();
             }}
             className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
           >
             <PlugZap size={13} />
-            Disconnect
+            {t("serial.disconnect")}
           </button>
         ) : (
           <button
             type="button"
+            title={t("serial.connect")}
+            aria-label={t("serial.connect")}
             disabled={!selectedPath || connecting}
             onClick={() => {
               void connect();
@@ -129,14 +135,14 @@ export function SerialMonitor() {
             className="flex h-7 items-center gap-1 rounded border border-aether-border bg-aether-accent-muted px-2 text-[11px] text-aether-fg hover:bg-aether-accent/30 disabled:opacity-40"
           >
             <Plug size={13} />
-            {connecting ? "Connecting…" : "Connect"}
+            {connecting ? t("serial.connecting") : t("serial.connect")}
           </button>
         )}
 
         <button
           type="button"
-          title="Clear output"
-          aria-label="Clear output"
+          title={t("serial.clear")}
+          aria-label={t("serial.clear")}
           onClick={clearLines}
           className="flex h-7 w-7 items-center justify-center rounded text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
         >
@@ -145,7 +151,7 @@ export function SerialMonitor() {
 
         <button
           type="button"
-          title={t("panel.plotter")}
+          title={t("panel.plotterTitle")}
           aria-label={t("panel.plotter")}
           onClick={() => setBottomPanelTab("plotter")}
           className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg"
@@ -154,14 +160,17 @@ export function SerialMonitor() {
           {t("panel.plotter")}
         </button>
 
-        <label className="ml-auto flex items-center gap-1 text-[11px] text-aether-fg-muted">
+        <label
+          className="ml-auto flex items-center gap-1 text-[11px] text-aether-fg-muted"
+          title={t("serial.autoscroll")}
+        >
           <input
             type="checkbox"
             checked={autoScroll}
             onChange={(event) => setAutoScroll(event.target.checked)}
             className="accent-aether-accent"
           />
-          Autoscroll
+          {t("serial.autoscroll")}
         </label>
       </div>
 

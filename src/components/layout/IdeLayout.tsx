@@ -106,7 +106,7 @@ export function IdeLayout() {
         {sidebarVisible && (
           <ResizeHandle
             orientation="vertical"
-            label="Resize sidebar"
+            labelKey="layout.resizeSidebar"
             onDrag={resizeSidebarBy}
             onDoubleClick={resetSidebarWidth}
           />
@@ -116,7 +116,7 @@ export function IdeLayout() {
           {bottomPanelVisible && (
             <ResizeHandle
               orientation="horizontal"
-              label="Resize bottom panel"
+              labelKey="layout.resizeBottom"
               onDrag={resizeBottomPanelBy}
               onDoubleClick={resetBottomPanelHeight}
             />

@@ -58,6 +58,8 @@ export function BottomPanel() {
               <button
                 key={tab.id}
                 type="button"
+                title={t(tab.titleKey)}
+                aria-label={t(tab.labelKey)}
                 onClick={() => visit(tab.id)}
                 className={cn(
                   "px-2 py-1 text-[11px] uppercase tracking-wide transition-colors hover:text-aether-fg",
@@ -72,8 +74,8 @@ export function BottomPanel() {
           </div>
           <button
             type="button"
-            title="Show Panel"
-            aria-label="Show Panel"
+            title={t("panel.show")}
+            aria-label={t("panel.show")}
             onClick={toggleBottomPanel}
             className="ml-auto flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
           >
@@ -88,7 +90,7 @@ export function BottomPanel() {
           !visible && "hidden",
         )}
         style={visible ? { height } : undefined}
-        aria-label="Bottom Panel"
+        aria-label={t("panel.aria")}
         aria-hidden={!visible}
       >
         <header className="flex h-8 shrink-0 items-center border-b border-aether-border px-2">
@@ -103,6 +105,8 @@ export function BottomPanel() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
+                  title={t(tab.titleKey)}
+                  aria-label={t(tab.labelKey)}
                   onClick={() => visit(tab.id)}
                   className={cn(
                     "relative px-2.5 py-1 text-[11px] uppercase tracking-wide transition-colors",
@@ -125,8 +129,8 @@ export function BottomPanel() {
           <div className="ml-auto flex items-center gap-0.5">
             <button
               type="button"
-              title="Hide Panel"
-              aria-label="Hide Panel"
+              title={t("panel.hide")}
+              aria-label={t("panel.hide")}
               onClick={() => setBottomPanelVisible(false)}
               className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
             >
@@ -134,8 +138,8 @@ export function BottomPanel() {
             </button>
             <button
               type="button"
-              title="Close Panel"
-              aria-label="Close Panel"
+              title={t("panel.close")}
+              aria-label={t("panel.close")}
               onClick={() => setBottomPanelVisible(false)}
               className="flex h-6 w-6 items-center justify-center text-aether-fg-muted hover:text-aether-fg"
             >
