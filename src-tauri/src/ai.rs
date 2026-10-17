@@ -166,16 +166,29 @@ fn emit_chunk(app: &AppHandle, text: String) {
     let _ = app.emit(AI_CHUNK_EVENT, AiChunkPayload { text });
 }
 
+fn build_ai_client(request_timeout_secs: u64) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .connect_timeout(std::time::Duration::from_secs(30))
+        .timeout(std::time::Duration::from_secs(request_timeout_secs))
+        .build()
+        .map_err(|e| format!("HTTP client error: {e}"))
+}
+
+fn map_request_error(err: reqwest::Error) -> String {
+    if err.is_timeout() || err.is_connect() {
+        return format!(
+            "Network error reaching the AI API (timeout/connect). Check VPN, proxy, firewall, and Base URL. Details: {err}"
+        );
+    }
+    format!("Request failed: {err}")
+}
+
 #[tauri::command]
 pub async fn ai_chat_completion(request: AiChatRequest) -> Result<String, String> {
     validate_request(&request)?;
 
     let url = normalize_base_url(&request.base_url);
-    let client = reqwest::Client::builder()
-        .connect_timeout(std::time::Duration::from_secs(5))
-        .timeout(std::time::Duration::from_secs(120))
-        .build()
-        .map_err(|e| format!("HTTP client error: {e}"))?;
+    let client = build_ai_client(120)?;
 
     let body = ChatCompletionsBody {
         model: request.model,
@@ -191,7 +204,7 @@ pub async fn ai_chat_completion(request: AiChatRequest) -> Result<String, String
         .json(&body)
         .send()
         .await
-        .map_err(|e| format!("Request failed: {e}"))?;
+        .map_err(map_request_error)?;
 
     let status = response.status();
     let text = response
@@ -280,11 +293,7 @@ async fn run_stream(
     request: AiChatRequest,
 ) -> Result<(), String> {
     let url = normalize_base_url(&request.base_url);
-    let client = reqwest::Client::builder()
-        .connect_timeout(std::time::Duration::from_secs(5))
-        .timeout(std::time::Duration::from_secs(180))
-        .build()
-        .map_err(|e| format!("HTTP client error: {e}"))?;
+    let client = build_ai_client(180)?;
 
     let body = ChatCompletionsBody {
         model: request.model,
@@ -301,7 +310,7 @@ async fn run_stream(
         .json(&body)
         .send()
         .await
-        .map_err(|e| format!("Request failed: {e}"))?;
+        .map_err(map_request_error)?;
 
     let status = response.status();
     if !status.is_success() {

@@ -1,6 +1,10 @@
 ﻿# Changelog
 
-## 0.2.39 вЂ” 2026-10-17
+## 0.2.40 — 2026-10-18
+
+- **AI Agent network** — connect timeout 5s→30s; clearer error when OpenRouter/API is unreachable (VPN/proxy/firewall)
+
+## 0.2.39 — 2026-10-17
 
 - **Arduino CLI** вЂ” first-class build tool: PATH + common Windows install detect, compile/upload/clean, FQBN mapping from `platformio.ini`, lib search/install into project `lib/`, core ensure (avr/esp32), Tools Doctor + Settings status
 - **Unified Doctor** вЂ” single Activity panel for PlatformIO / arduino-cli / COM / drivers / offline cache / Configurator with fix/recheck actions
