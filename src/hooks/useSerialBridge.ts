@@ -2,7 +2,11 @@ import { useEffect, useRef } from "react";
 import { suggestCameraUrlFromSerialLine } from "@/lib/cameraIp";
 import { isTauriRuntime } from "@/lib/tauri";
 import { ingestMspBytes } from "@/lib/mspIngest";
-import { lineLooksLikeRadioFail } from "@/lib/radioSerialDoctor";
+import {
+  lineLooksLikeRadioFail,
+  lineLooksLikeRadioJoinOk,
+  lineLooksLikeRadioRxOk,
+} from "@/lib/radioSerialDoctor";
 import {
   parseSerialPlotLine,
   sampleHasRadioChannels,
@@ -12,12 +16,14 @@ import {
   listenSerialData,
   listenSerialStatus,
 } from "@/lib/serial";
+import { t } from "@/hooks/useI18n";
 import { useCameraStore } from "@/stores/cameraStore";
 import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { usePlotterStore } from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 /** Subscribes to native serial events for the lifetime of the IDE shell. */
 export function useSerialBridge(): void {
@@ -26,6 +32,7 @@ export function useSerialBridge(): void {
   const hydrateStatus = useSerialStore((s) => s.hydrateStatus);
   const refreshPorts = useSerialStore((s) => s.refreshPorts);
   const openedPlotterForRadio = useRef(false);
+  const noticedRadioOk = useRef(false);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -33,6 +40,7 @@ export function useSerialBridge(): void {
     void hydrateStatus();
     void refreshPorts();
     openedPlotterForRadio.current = false;
+    noticedRadioOk.current = false;
 
     let disposed = false;
     let unlistenData: (() => void) | undefined;
@@ -70,6 +78,21 @@ export function useSerialBridge(): void {
           const pio = usePlatformIoStore.getState();
           if (pio.doctor.radio?.isRadioProject || /lora|radiolib|sx12/i.test(line)) {
             pio.showDoctor();
+          }
+        } else if (
+          !noticedRadioOk.current &&
+          (lineLooksLikeRadioRxOk(line) || lineLooksLikeRadioJoinOk(line))
+        ) {
+          noticedRadioOk.current = true;
+          const join = lineLooksLikeRadioJoinOk(line);
+          useSettingsStore
+            .getState()
+            .flashNotice(t(join ? "loraPath.joinOk" : "loraPath.rxOk"), 4500);
+          if (!join && !openedPlotterForRadio.current) {
+            openedPlotterForRadio.current = true;
+            const layout = useLayoutStore.getState();
+            layout.setBottomPanelVisible(true);
+            layout.setBottomPanelTab("plotter");
           }
         }
 

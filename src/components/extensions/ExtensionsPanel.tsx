@@ -143,6 +143,13 @@ export function ExtensionsPanel() {
         </div>
       </header>
 
+      <p
+        data-testid="extensions-store-not-yet"
+        className="mx-3 mb-2 rounded border border-aether-border/70 bg-aether-bg/50 px-2 py-1.5 text-[11px] leading-snug text-aether-fg-dim"
+      >
+        {t("extensions.storeNotYet")}
+      </p>
+
       <div className="flex gap-1 px-3 pb-2">
         {(
           [

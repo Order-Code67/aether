@@ -5,6 +5,10 @@ import type { Locale } from "@/i18n";
  * map to Russian when locale is ru for versions we ship notes for.
  */
 const NOTES_BY_VERSION: Record<string, { en: string; ru: string }> = {
+  "0.2.39": {
+    en: "Arduino CLI build path, Unified Doctor, scenario checklists, LoRa/BPLA polish, Blink→LoRa→Configurator onboarding, telemetry stub.",
+    ru: "Arduino CLI как инструмент сборки, единый Doctor, чеклисты сценариев, полировка LoRa/БПЛА, онбординг Blink→LoRa→Configurator, задел телеметрии.",
+  },
   "0.2.34": {
     en: "Reliability + hardware core: offline zip auto-import, board strip, AI ini awareness, Plotter RSSI/SNR, MSP RSSI, CI smoke, clean-Windows dist pack.",
     ru: "Надёжность и ядро: автоимпорт офлайн-zip, полоса платы, AI знает ini, Plotter RSSI/SNR, MSP RSSI, CI smoke, пакет для чистой Windows.",

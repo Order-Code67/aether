@@ -31,8 +31,52 @@ export function friendlyPioError(message: string, locale: Locale): string {
   }
   if (lower.includes("already running")) {
     return ru
-      ? "Задача PlatformIO уже выполняется."
-      : "A PlatformIO task is already running.";
+      ? "Задача сборки уже выполняется."
+      : "A firmware task is already running.";
+  }
+  if (
+    lower.includes("arduino-cli not found") ||
+    lower.includes("arduino cli not found")
+  ) {
+    return ru
+      ? "Не найден arduino-cli. Установите через Настройки → Инструменты или переключите сборку на PlatformIO."
+      : "arduino-cli not found. Install via Settings → Tools, or switch Build tool to PlatformIO.";
+  }
+  if (lower.includes("no .ino sketch")) {
+    return ru
+      ? "Нет файла .ino. Arduino CLI нужен скетч .ino (корень или src/). Для проектов только с .cpp используйте PlatformIO."
+      : "No .ino sketch found. Arduino CLI needs a .ino (root or src/). Use PlatformIO for .cpp-only projects.";
+  }
+  if (
+    lower.includes("no arduino fqbn mapping") ||
+    (lower.includes("fqbn") && lower.includes("mapping"))
+  ) {
+    const boardMatch = m.match(/board ['"]?([^'".\n]+)['"]?/i);
+    const board = boardMatch?.[1]?.trim();
+    if (ru) {
+      return board
+        ? `Нет соответствия FQBN для платы «${board}». Переключите инструмент сборки на PlatformIO или выберите распространённую плату (uno, megaatmega2560, esp32dev…).`
+        : "Нет соответствия FQBN для этой платы. Переключите инструмент сборки на PlatformIO или выберите распространённую плату Arduino/ESP (uno, megaatmega2560, esp32dev…).";
+    }
+    return board
+      ? `No Arduino FQBN mapping for board "${board}". Switch Build tool to PlatformIO, or use a common Arduino/ESP board (uno, megaatmega2560, esp32dev…).`
+      : "No Arduino FQBN mapping for this board. Switch Build tool to PlatformIO, or use a common Arduino/ESP board (uno, megaatmega2560, esp32dev…).";
+  }
+  if (
+    lower.includes("could not read board=") ||
+    lower.includes("could not read board")
+  ) {
+    return ru
+      ? "Не удалось прочитать board= из platformio.ini для Arduino CLI. Укажите плату в ini или переключитесь на PlatformIO."
+      : "Could not read board= from platformio.ini for Arduino CLI. Set board= in the ini, or switch to PlatformIO.";
+  }
+  if (
+    lower.includes("failed to install arduino core") ||
+    lower.includes("arduino-cli core install failed")
+  ) {
+    return ru
+      ? "Не удалось установить ядро Arduino CLI (avr/esp32). Проверьте сеть или установите вручную: arduino-cli core install arduino:avr / esp32:esp32."
+      : "Failed to install Arduino CLI core (avr/esp32). Check the network, or install manually: arduino-cli core install arduino:avr / esp32:esp32.";
   }
   if (
     lower.includes("invalid offline cache zip") ||

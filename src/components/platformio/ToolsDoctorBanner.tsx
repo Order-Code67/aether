@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { openArduinoCliInstallDocs } from "@/lib/arduinoCli";
 import { openWindowsOptionalFeatures } from "@/lib/platformio";
 import { isTauriRuntime } from "@/lib/tauri";
 import { usePlatformIoStore } from "@/stores/platformioStore";
@@ -49,6 +50,7 @@ export function ToolsDoctorBanner() {
   );
   const running = usePlatformIoStore((s) => s.running);
   const openSettings = useSettingsStore((s) => s.openSettings);
+  const openDoctorPanel = usePlatformIoStore((s) => s.openDoctorPanel);
   const locale = useSettingsStore((s) => s.locale);
 
   useEffect(() => {
@@ -77,8 +79,10 @@ export function ToolsDoctorBanner() {
   const pio = doctor.pio;
   const python = doctor.python;
   const clangd = doctor.clangd;
+  const arduinoCli = doctor.arduinoCli;
   const pioMissing = !pio?.installed;
   const pythonMissing = !python?.installed;
+  const arduinoCliMissing = !arduinoCli?.installed;
   const severity = pioMissing ? "warning" : "info";
   const busy = doctor.checking || doctor.installing;
   const radioTips =
@@ -126,6 +130,14 @@ export function ToolsDoctorBanner() {
                     ? t("doctor.pythonMissing")
                     : t("doctor.pythonOk", {
                         version: python?.version ?? "OK",
+                      })}
+                </li>
+                <li>
+                  {arduinoCliMissing
+                    ? t("doctor.arduinoCliMissing")
+                    : t("doctor.arduinoCliOk", {
+                        version:
+                          arduinoCli?.version || arduinoCli?.path || "OK",
                       })}
                 </li>
                 <li>{t("doctor.driversHint")}</li>
@@ -227,6 +239,14 @@ export function ToolsDoctorBanner() {
           </button>
           <button
             type="button"
+            onClick={() => openDoctorPanel()}
+            className="rounded border border-aether-border bg-aether-bg px-2 py-0.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
+            data-testid="doctor-banner-open-panel"
+          >
+            {t("doctor.openPanel")}
+          </button>
+          <button
+            type="button"
             onClick={() => openSettings("tools")}
             className="rounded border border-aether-border bg-aether-bg px-2 py-0.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised"
           >
@@ -242,6 +262,19 @@ export function ToolsDoctorBanner() {
             >
               <ExternalLink size={11} />
               {t("doctor.openDocs")}
+            </button>
+          )}
+          {arduinoCliMissing && (
+            <button
+              type="button"
+              onClick={() => {
+                void openArduinoCliInstallDocs();
+              }}
+              className="inline-flex items-center gap-1 text-[11px] text-aether-accent hover:underline"
+              title={t("doctor.openArduinoCliTitle")}
+            >
+              <ExternalLink size={11} />
+              {t("doctor.openArduinoCli")}
             </button>
           )}
           {pythonMissing && (

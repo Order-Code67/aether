@@ -1,20 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { ChartLine, Eraser, Plug, PlugZap, RefreshCw, Send } from "lucide-react";
+import {
+  ChartLine,
+  Circle,
+  Eraser,
+  Plug,
+  PlugZap,
+  RefreshCw,
+  Send,
+  Square,
+} from "lucide-react";
 import { PanelHint } from "@/components/hints/PanelHint";
 import { ComDriversHelp } from "@/components/serial/ComDriversHelp";
 import { useI18n } from "@/hooks/useI18n";
+import { serialEmptyReason } from "@/lib/plotterEmptyState";
 import { BAUD_RATES } from "@/lib/serial";
 import { isTauriRuntime } from "@/lib/tauri";
 import { cn } from "@/lib/cn";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useSerialStore } from "@/stores/serialStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { documentDir, join } from "@tauri-apps/api/path";
+import { save } from "@tauri-apps/plugin-dialog";
+import { mkdir, writeTextFile } from "@tauri-apps/plugin-fs";
 
 export function SerialMonitor() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tauri = isTauriRuntime();
   const [input, setInput] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
+  const flashNotice = useSettingsStore((s) => s.flashNotice);
 
   const ports = useSerialStore((s) => s.ports);
   const selectedPath = useSerialStore((s) => s.selectedPath);
@@ -24,6 +39,7 @@ export function SerialMonitor() {
   const lines = useSerialStore((s) => s.lines);
   const autoScroll = useSerialStore((s) => s.autoScroll);
   const error = useSerialStore((s) => s.error);
+  const recording = useSerialStore((s) => s.recording);
   const refreshPorts = useSerialStore((s) => s.refreshPorts);
   const setSelectedPath = useSerialStore((s) => s.setSelectedPath);
   const setBaudRate = useSerialStore((s) => s.setBaudRate);
@@ -32,6 +48,61 @@ export function SerialMonitor() {
   const disconnect = useSerialStore((s) => s.disconnect);
   const send = useSerialStore((s) => s.send);
   const clearLines = useSerialStore((s) => s.clearLines);
+  const startRecording = useSerialStore((s) => s.startRecording);
+  const stopRecording = useSerialStore((s) => s.stopRecording);
+
+  const emptyReason = serialEmptyReason({
+    connected,
+    portsEmpty: ports.length === 0,
+    hasLines: lines.length > 0,
+  });
+  const emptyMessage =
+    emptyReason === "no_ports"
+      ? t("serial.why.noPorts")
+      : emptyReason === "need_connect"
+        ? t("serial.why.needConnect")
+        : emptyReason === "waiting_data"
+          ? t("serial.why.waitingData")
+          : null;
+
+  const toggleRecord = async () => {
+    if (!recording) {
+      startRecording();
+      flashNotice(t("serial.recordingOn"), 2500);
+      return;
+    }
+    const recorded = stopRecording();
+    if (recorded.length === 0) {
+      flashNotice(t("serial.recordEmpty"));
+      return;
+    }
+    if (!tauri) {
+      flashNotice(t("serial.needDesktop"));
+      return;
+    }
+    try {
+      const docs = await documentDir();
+      const dir = await join(docs, "Aether", "serial");
+      await mkdir(dir, { recursive: true });
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const suggested = await join(dir, `serial-${stamp}.log`);
+      const chosen = await save({
+        title: locale === "ru" ? "Сохранить лог Serial" : "Save serial log",
+        defaultPath: suggested,
+        filters: [
+          { name: "Log", extensions: ["log", "txt"] },
+          { name: "All", extensions: ["*"] },
+        ],
+      });
+      if (typeof chosen !== "string" || !chosen) return;
+      await writeTextFile(chosen, recorded.join("\n"));
+      flashNotice(t("serial.recorded", { count: recorded.length }), 3500);
+    } catch (e) {
+      flashNotice(
+        e instanceof Error ? e.message : t("serial.recordFailed"),
+      );
+    }
+  };
 
   useEffect(() => {
     if (!tauri) return;
@@ -153,6 +224,26 @@ export function SerialMonitor() {
 
         <button
           type="button"
+          title={
+            recording ? t("serial.recordStopTitle") : t("serial.recordTitle")
+          }
+          aria-label={recording ? t("serial.recordStop") : t("serial.record")}
+          aria-pressed={recording}
+          data-testid="serial-record"
+          onClick={() => void toggleRecord()}
+          className={cn(
+            "flex h-7 items-center gap-1 rounded border px-2 text-[11px]",
+            recording
+              ? "border-aether-danger/50 bg-aether-danger/15 text-aether-fg"
+              : "border-aether-border text-aether-fg-muted hover:bg-aether-surface-raised hover:text-aether-fg",
+          )}
+        >
+          {recording ? <Square size={12} /> : <Circle size={12} />}
+          {recording ? t("serial.recordStop") : t("serial.record")}
+        </button>
+
+        <button
+          type="button"
           title={t("serial.plotterTitle")}
           aria-label={t("panel.plotter")}
           onClick={() => setBottomPanelTab("plotter")}
@@ -191,10 +282,8 @@ export function SerialMonitor() {
         aria-live="polite"
       >
         {lines.length === 0 ? (
-          <p className="text-aether-fg-dim">
-            {connected
-              ? "Connected. Waiting for data…"
-              : "Select a port and connect to start the Serial Monitor."}
+          <p className="whitespace-pre-wrap text-aether-fg-dim">
+            {emptyMessage ?? t("serial.why.needConnect")}
           </p>
         ) : (
           lines.map((line, index) => (
@@ -222,7 +311,9 @@ export function SerialMonitor() {
           value={input}
           onChange={(event) => setInput(event.target.value)}
           disabled={!connected}
-          placeholder={connected ? "Send line…" : "Connect to send"}
+          placeholder={
+            connected ? t("serial.sendPlaceholder") : t("serial.sendNeedConnect")
+          }
           className={cn(
             "h-7 min-w-0 flex-1 rounded border border-aether-border bg-aether-bg px-2 font-mono text-[11px] text-aether-fg outline-none",
             "focus:border-aether-accent disabled:opacity-40",
@@ -234,7 +325,7 @@ export function SerialMonitor() {
           className="flex h-7 items-center gap-1 rounded border border-aether-border px-2 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
         >
           <Send size={13} />
-          Send
+          {t("serial.send")}
         </button>
       </form>
     </div>

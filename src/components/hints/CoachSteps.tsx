@@ -1,6 +1,8 @@
-import { X } from "lucide-react";
+import { Navigation, Radio, Rocket, X } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
+import { useLayoutStore } from "@/stores/layoutStore";
+import { usePaletteStore } from "@/stores/paletteStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 
 interface CoachStepsProps {
@@ -8,7 +10,7 @@ interface CoachStepsProps {
 }
 
 /**
- * First-open coach: 4 steps (folder → board/COM → Build → Upload).
+ * First-open coach: Blink → LoRa → Configurator (matches onboarding tour).
  * Visible while Hints mode is on and the coach has not been dismissed.
  */
 export function CoachSteps({ className }: CoachStepsProps) {
@@ -18,15 +20,36 @@ export function CoachSteps({ className }: CoachStepsProps) {
   const setHintsCoachDismissed = useSettingsStore(
     (s) => s.setHintsCoachDismissed,
   );
+  const setActiveActivity = useLayoutStore((s) => s.setActiveActivity);
+  const requestOnboarding = usePaletteStore((s) => s.requestOnboarding);
 
   if (!hintsEnabled || dismissed) return null;
 
-  const steps = [
-    t("hints.coach.step1"),
-    t("hints.coach.step2"),
-    t("hints.coach.step3"),
-    t("hints.coach.step4"),
-  ] as const;
+  const steps: {
+    icon: typeof Rocket;
+    text: string;
+    onCta?: () => void;
+    cta?: string;
+  }[] = [
+    {
+      icon: Rocket,
+      text: t("hints.coach.step1"),
+      cta: t("hints.coach.cta.blink"),
+      onCta: () => requestOnboarding(),
+    },
+    {
+      icon: Radio,
+      text: t("hints.coach.step2"),
+      cta: t("hints.coach.cta.lora"),
+      onCta: () => requestOnboarding(),
+    },
+    {
+      icon: Navigation,
+      text: t("hints.coach.step3"),
+      cta: t("hints.coach.cta.configurator"),
+      onCta: () => setActiveActivity("inav"),
+    },
+  ];
 
   return (
     <div
@@ -51,10 +74,30 @@ export function CoachSteps({ className }: CoachStepsProps) {
           <X size={12} />
         </button>
       </div>
-      <ol className="space-y-0.5 text-[11px] leading-snug text-aether-fg-muted">
-        {steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
+      <ol className="space-y-1.5 text-[11px] leading-snug text-aether-fg-muted">
+        {steps.map((step) => {
+          const Icon = step.icon;
+          return (
+            <li key={step.text} className="flex items-start gap-1.5">
+              <Icon size={12} className="mt-0.5 shrink-0 text-cyan-300/80" />
+              <span className="min-w-0 flex-1">
+                {step.text}
+                {step.onCta && step.cta ? (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      onClick={step.onCta}
+                      className="text-aether-accent underline-offset-2 hover:underline"
+                    >
+                      {step.cta}
+                    </button>
+                  </>
+                ) : null}
+              </span>
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

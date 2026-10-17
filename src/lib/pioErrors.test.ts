@@ -40,4 +40,23 @@ describe("friendlyPioError", () => {
     );
     expect(ru).toMatch(/таймаут|офлайн/i);
   });
+
+  it("maps unmapped Arduino FQBN with board name (en/ru)", () => {
+    const raw =
+      "No Arduino FQBN mapping for board 'weird_board'. Switch build tool to PlatformIO.";
+    const en = friendlyPioError(raw, "en");
+    expect(en).toMatch(/weird_board/);
+    expect(en.toLowerCase()).toMatch(/platformio|fqbn/);
+    const ru = friendlyPioError(raw, "ru");
+    expect(ru).toMatch(/weird_board/);
+    expect(ru).toMatch(/FQBN|PlatformIO/i);
+  });
+
+  it("maps Arduino core install failure (en)", () => {
+    const msg = friendlyPioError(
+      "Failed to install Arduino core 'esp32:esp32': network error",
+      "en",
+    );
+    expect(msg.toLowerCase()).toMatch(/core|esp32|avr/);
+  });
 });

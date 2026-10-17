@@ -91,7 +91,7 @@ And on the prerelease tag `v0.2.17-beta.1`:
 
 - `Aether_0.2.17-beta.1_x64-setup.exe` (+ `.sig`)
 
-Optional: MSI + `.sig` files. Offline PlatformIO cache zip is separate — see [`OFFLINE_INSTALLER.md`](./OFFLINE_INSTALLER.md).
+Optional: MSI + `.sig` files. Offline PlatformIO cache / OfflineLibs zips are **separate** from NSIS — never embed multi‑GB toolchains in the main installer. See [`SIGNING_AND_RELEASES.md`](./SIGNING_AND_RELEASES.md) and [`OFFLINE_INSTALLER.md`](./OFFLINE_INSTALLER.md).
 
 Template:
 

@@ -3,11 +3,18 @@ import { X } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 import type { Locale } from "@/i18n";
 import { cn } from "@/lib/cn";
+import {
+  detectArduinoCli,
+  ensureArduinoCliCores,
+  openArduinoCliInstallDocs,
+  type ArduinoCliInfo,
+} from "@/lib/arduinoCli";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useAgentStore } from "@/stores/agentStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import {
   useSettingsStore,
+  type FirmwareTool,
   type SettingsTabId,
   type WordWrapSetting,
 } from "@/stores/settingsStore";
@@ -31,11 +38,19 @@ export function SettingsDialog() {
   const setTheme = useSettingsStore((s) => s.setTheme);
   const arduinoMode = useSettingsStore((s) => s.arduinoMode);
   const setArduinoMode = useSettingsStore((s) => s.setArduinoMode);
+  const firmwareTool = useSettingsStore((s) => s.firmwareTool);
+  const setFirmwareTool = useSettingsStore((s) => s.setFirmwareTool);
+  const setFirmwareToolForProject = usePlatformIoStore(
+    (s) => s.setFirmwareToolForProject,
+  );
+  const [coresBusy, setCoresBusy] = useState(false);
   const hintsEnabled = useSettingsStore((s) => s.hintsEnabled);
   const setHintsEnabled = useSettingsStore((s) => s.setHintsEnabled);
   const setHintsCoachDismissed = useSettingsStore(
     (s) => s.setHintsCoachDismissed,
   );
+  const telemetryOptIn = useSettingsStore((s) => s.telemetryOptIn);
+  const setTelemetryOptIn = useSettingsStore((s) => s.setTelemetryOptIn);
   const showExternalInavConfigurator = useSettingsStore(
     (s) => s.showExternalInavConfigurator,
   );
@@ -78,18 +93,26 @@ export function SettingsDialog() {
   const model = useAgentStore((s) => s.model);
   const includeActiveFile = useAgentStore((s) => s.includeActiveFile);
   const includeProblems = useAgentStore((s) => s.includeProblems);
+  const includeBoardHardware = useAgentStore((s) => s.includeBoardHardware);
   const setBaseUrl = useAgentStore((s) => s.setBaseUrl);
   const setApiKey = useAgentStore((s) => s.setApiKey);
   const setModel = useAgentStore((s) => s.setModel);
   const setIncludeActiveFile = useAgentStore((s) => s.setIncludeActiveFile);
   const setIncludeProblems = useAgentStore((s) => s.setIncludeProblems);
+  const setIncludeBoardHardware = useAgentStore(
+    (s) => s.setIncludeBoardHardware,
+  );
 
   const [tab, setTab] = useState<SettingsTab>("general");
   const [appVersion, setAppVersion] = useState<string>("0.1.0");
   const [vscodeStatus, setVscodeStatus] = useState<
     "idle" | "checking" | { installed: true; path: string } | { installed: false }
   >("idle");
+  const [arduinoCliStatus, setArduinoCliStatus] = useState<
+    "idle" | "checking" | ArduinoCliInfo
+  >("idle");
   const panelRef = useRef<HTMLDivElement>(null);
+  const runDoctor = usePlatformIoStore((s) => s.runDoctor);
 
   useEffect(() => {
     if (!open) return;
@@ -134,6 +157,13 @@ export function SettingsDialog() {
         }
       })
       .catch(() => setVscodeStatus({ installed: false }));
+
+    setArduinoCliStatus("checking");
+    void detectArduinoCli()
+      .then(setArduinoCliStatus)
+      .catch(() =>
+        setArduinoCliStatus({ installed: false, path: null, version: null }),
+      );
   }, [open, tab]);
 
   if (!open) return null;
@@ -271,6 +301,29 @@ export function SettingsDialog() {
                       className="mt-0.5"
                     />
                   </label>
+                  <label className="flex items-start justify-between gap-3">
+                    <span className="space-y-0.5">
+                      <span className="block text-aether-fg">
+                        {t("settings.telemetry")}
+                      </span>
+                      <span className="block text-[11px] text-aether-fg-muted">
+                        {t("settings.telemetryHint")}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      data-testid="settings-telemetry-toggle"
+                      checked={telemetryOptIn}
+                      onChange={(e) => {
+                        const on = e.target.checked;
+                        setTelemetryOptIn(on);
+                        void import("@/lib/telemetry").then(({ trackEvent }) => {
+                          trackEvent("telemetry_toggle", { enabled: on });
+                        });
+                      }}
+                      className="mt-0.5"
+                    />
+                  </label>
                 </div>
 
                 <label className="flex items-start justify-between gap-3 border-t border-aether-border pt-3">
@@ -305,6 +358,172 @@ export function SettingsDialog() {
             )}
             {tab === "tools" && (
               <div className="space-y-3">
+                <div className="space-y-2 border-b border-aether-border pb-3">
+                  <p className="font-medium text-aether-fg">
+                    {t("doctor.panelTitle")}
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-aether-fg-muted">
+                    {t("doctor.settingsHint")}
+                  </p>
+                  <button
+                    type="button"
+                    title={t("doctor.openTitle")}
+                    aria-label={t("doctor.openPanel")}
+                    data-testid="settings-open-doctor"
+                    onClick={() => {
+                      usePlatformIoStore.getState().openDoctorPanel();
+                      closeSettings();
+                    }}
+                    className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white hover:opacity-90"
+                  >
+                    {t("doctor.openPanel")}
+                  </button>
+                </div>
+                <div className="space-y-2 border-b border-aether-border pb-3">
+                  <div>
+                    <p className="font-medium text-aether-fg">
+                      {t("arduinoCli.settingsTitle")}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-aether-fg-muted">
+                      {t("arduinoCli.settingsHint")}
+                    </p>
+                    <p
+                      className="mt-1 text-[11px] leading-relaxed text-aether-fg-dim"
+                      data-testid="settings-arduino-cli-status"
+                    >
+                      {arduinoCliStatus === "idle" ||
+                      arduinoCliStatus === "checking"
+                        ? t("arduinoCli.statusChecking")
+                        : arduinoCliStatus.installed
+                          ? t("arduinoCli.statusInstalled", {
+                              version:
+                                arduinoCliStatus.version ||
+                                arduinoCliStatus.path ||
+                                "ok",
+                            })
+                          : t("arduinoCli.statusMissing")}
+                    </p>
+                  </div>
+                  <label className="flex items-start justify-between gap-3">
+                    <span className="space-y-0.5">
+                      <span className="block text-aether-fg">
+                        {t("arduinoCli.toolLabel")}
+                      </span>
+                      <span className="block text-[11px] text-aether-fg-muted">
+                        {t("arduinoCli.toolTitle")}
+                      </span>
+                    </span>
+                    <select
+                      value={firmwareTool}
+                      onChange={(e) => {
+                        const next: FirmwareTool =
+                          e.target.value === "arduino-cli"
+                            ? "arduino-cli"
+                            : "platformio";
+                        setFirmwareTool(next);
+                        // Align the open project with the new default.
+                        setFirmwareToolForProject(next);
+                      }}
+                      title={t("arduinoCli.toolTitle")}
+                      aria-label={t("arduinoCli.toolLabel")}
+                      data-testid="settings-firmware-tool"
+                      className="rounded border border-aether-border bg-aether-bg px-2 py-1 text-aether-fg outline-none focus:border-aether-accent"
+                    >
+                      <option value="platformio">
+                        {t("arduinoCli.toolPio")}
+                      </option>
+                      <option value="arduino-cli">
+                        {t("arduinoCli.toolArduino")}
+                      </option>
+                    </select>
+                  </label>
+                  <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+                    {t("arduinoCli.toolProjectHint")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      title={t("arduinoCli.recheckTitle")}
+                      aria-label={t("doctor.recheck")}
+                      disabled={!isTauriRuntime()}
+                      onClick={() => {
+                        setArduinoCliStatus("checking");
+                        void detectArduinoCli()
+                          .then(setArduinoCliStatus)
+                          .catch(() =>
+                            setArduinoCliStatus({
+                              installed: false,
+                              path: null,
+                              version: null,
+                            }),
+                          );
+                        void runDoctor();
+                      }}
+                      className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                    >
+                      {t("doctor.recheck")}
+                    </button>
+                    <button
+                      type="button"
+                      title={t("arduinoCli.ensureCoresTitle")}
+                      aria-label={t("arduinoCli.ensureCores")}
+                      disabled={
+                        !isTauriRuntime() ||
+                        coresBusy ||
+                        (arduinoCliStatus !== "idle" &&
+                          arduinoCliStatus !== "checking" &&
+                          !arduinoCliStatus.installed)
+                      }
+                      onClick={() => {
+                        setCoresBusy(true);
+                        void ensureArduinoCliCores()
+                          .then((msg) => {
+                            useSettingsStore
+                              .getState()
+                              .flashNotice(
+                                t("arduinoCli.ensureCoresDone", {
+                                  detail: msg,
+                                }),
+                              );
+                          })
+                          .catch((err) => {
+                            useSettingsStore
+                              .getState()
+                              .flashNotice(
+                                err instanceof Error
+                                  ? err.message
+                                  : t("arduinoCli.ensureCoresFailed"),
+                              );
+                          })
+                          .finally(() => setCoresBusy(false));
+                      }}
+                      className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                      data-testid="settings-arduino-ensure-cores"
+                    >
+                      {coresBusy
+                        ? t("arduinoCli.ensureCoresBusy")
+                        : t("arduinoCli.ensureCores")}
+                    </button>
+                    {(arduinoCliStatus === "idle" ||
+                      arduinoCliStatus === "checking" ||
+                      !arduinoCliStatus.installed) && (
+                      <button
+                        type="button"
+                        title={t("libraries.arduinoCliInstallTitle")}
+                        aria-label={t("libraries.arduinoCliInstall")}
+                        onClick={() => {
+                          void openArduinoCliInstallDocs();
+                        }}
+                        className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white hover:opacity-90"
+                      >
+                        {t("libraries.arduinoCliInstall")}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-aether-fg-dim">
+                    {t("arduinoCli.installHint")}
+                  </p>
+                </div>
                 <div className="space-y-2 border-b border-aether-border pb-3">
                   <label className="flex items-start justify-between gap-3">
                     <span className="space-y-0.5">
@@ -646,6 +865,14 @@ export function SettingsDialog() {
                   />
                   {t("settings.agent.attachProblems")}
                 </label>
+                <label className="flex items-center gap-2 text-aether-fg">
+                  <input
+                    type="checkbox"
+                    checked={includeBoardHardware}
+                    onChange={(e) => setIncludeBoardHardware(e.target.checked)}
+                  />
+                  {t("settings.agent.attachBoard")}
+                </label>
                 <p className="text-[11px] text-aether-fg-dim">
                   {t("settings.agent.keyHint")}
                 </p>
@@ -781,6 +1008,14 @@ function AboutPanel({ appVersion }: { appVersion: string }) {
         <p className="text-[10px] leading-relaxed text-aether-fg-dim">
           {t("updater.channelHint")}
         </p>
+        {updateChannel === "beta" && (
+          <p
+            className="text-[10px] leading-relaxed text-aether-warning/90"
+            data-testid="updater-beta-extras"
+          >
+            {t("updater.betaExtrasHint")}
+          </p>
+        )}
         <p className="text-[11px] leading-relaxed text-aether-fg-dim">
           {statusLine}
         </p>

@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  Stethoscope,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -28,6 +29,7 @@ const ACTIVITY_ICONS: Record<ActivityId, LucideIcon> = {
   "source-control": GitBranch,
   boards: Cpu,
   libraries: Library,
+  doctor: Stethoscope,
   inav: Plane,
   debug: Bug,
   agent: Sparkles,

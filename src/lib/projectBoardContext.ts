@@ -3,16 +3,71 @@ import {
   resolveLoraPinMap,
 } from "@/lib/hardwarePinMaps";
 
-/** Extract board= and lib_deps lines from platformio.ini text. */
-export function parsePlatformioIniSnippet(ini: string): {
+const MAX_ENV_SNIPPET = 3_500;
+
+/** Split platformio.ini into named sections (preserves original text). */
+export function splitPlatformioIniSections(
+  ini: string,
+): Array<{ name: string; body: string }> {
+  const lines = ini.split(/\r?\n/);
+  const sections: Array<{ name: string; body: string }> = [];
+  let currentName = "";
+  let currentLines: string[] = [];
+  const flush = () => {
+    if (currentName || currentLines.length) {
+      sections.push({ name: currentName, body: currentLines.join("\n") });
+    }
+    currentLines = [];
+  };
+  for (const line of lines) {
+    const header = line.match(/^\[([^\]]+)\]\s*$/);
+    if (header) {
+      flush();
+      currentName = header[1] ?? "";
+      currentLines = [line];
+      continue;
+    }
+    currentLines.push(line);
+  }
+  flush();
+  return sections;
+}
+
+/** Body of `[env:name]` (or first env) for SEARCH/REPLACE accuracy. */
+export function extractPlatformioEnvSection(
+  ini: string,
+  envName?: string | null,
+): string | null {
+  const sections = splitPlatformioIniSections(ini);
+  const wanted = envName?.trim();
+  if (wanted) {
+    const exact = sections.find(
+      (s) =>
+        s.name === `env:${wanted}` ||
+        s.name.toLowerCase() === `env:${wanted.toLowerCase()}`,
+    );
+    if (exact) return exact.body;
+  }
+  const firstEnv = sections.find((s) => /^env:/i.test(s.name));
+  return firstEnv?.body ?? null;
+}
+
+/** Extract board= and lib_deps lines from platformio.ini text (optionally one env). */
+export function parsePlatformioIniSnippet(
+  ini: string,
+  envName?: string | null,
+): {
   board: string | null;
   libDeps: string[];
   buildFlags: string[];
 } {
-  const boardMatch = ini.match(/^\s*board\s*=\s*(\S+)/m);
+  const scoped = envName ? extractPlatformioEnvSection(ini, envName) : null;
+  const text = scoped ?? ini;
+
+  const boardMatch = text.match(/^\s*board\s*=\s*(\S+)/m);
   const libDeps: string[] = [];
   const buildFlags: string[] = [];
-  const lines = ini.split(/\r?\n/);
+  const lines = text.split(/\r?\n/);
   let inLib = false;
   let inFlags = false;
   for (const line of lines) {
@@ -59,7 +114,7 @@ export function buildBoardHardwareContext(options: {
   if (env) parts.push(`Selected PlatformIO env: ${env}`);
 
   const parsed = options.iniText
-    ? parsePlatformioIniSnippet(options.iniText)
+    ? parsePlatformioIniSnippet(options.iniText, env || null)
     : null;
   if (parsed?.board) parts.push(`board = ${parsed.board}`);
   if (parsed?.libDeps.length) {
@@ -69,6 +124,17 @@ export function buildBoardHardwareContext(options: {
     parts.push(
       `build_flags:\n${parsed.buildFlags.map((d) => `  - ${d}`).join("\n")}`,
     );
+  }
+
+  if (options.iniText) {
+    const section = extractPlatformioEnvSection(options.iniText, env || null);
+    if (section) {
+      const body =
+        section.length > MAX_ENV_SNIPPET
+          ? `${section.slice(0, MAX_ENV_SNIPPET)}\n…(truncated)`
+          : section;
+      parts.push(`platformio.ini env section:\n\`\`\`ini\n${body}\n\`\`\``);
+    }
   }
 
   const pinMap = resolveLoraPinMap(env || parsed?.board);

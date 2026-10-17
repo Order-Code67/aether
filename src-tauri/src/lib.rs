@@ -72,6 +72,8 @@ pub fn run() {
             arduino_cli::arduino_cli_lib_search,
             arduino_cli::arduino_cli_lib_install,
             arduino_cli::arduino_cli_lib_list,
+            arduino_cli::arduino_cli_ensure_cores,
+            arduino_cli::arduino_cli_run,
             platformio::pio_cache_status,
             platformio::pio_find_sidecar_offline_zips,
             platformio::pio_prepare_offline_cache,

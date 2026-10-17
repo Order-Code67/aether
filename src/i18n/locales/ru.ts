@@ -2,7 +2,8 @@ import type { MessageKey } from "./en";
 
 export const ru: Record<MessageKey, string> = {
   "app.name": "Aether",
-  "app.tagline": "IDE для роботов, дронов и встраиваемых систем.",
+  "app.tagline":
+    "Arduino-first IDE для плат, LoRa-радио и БПЛА — не «ещё один VS Code».",
   "activity.explorer": "Проводник",
   "activity.explorerTitle": "Проводник — файлы и папки рабочей области",
   "activity.sources": "Откуда загружать",
@@ -16,6 +17,9 @@ export const ru: Record<MessageKey, string> = {
   "activity.boardsTitle": "Платы и цели — окружения PlatformIO",
   "activity.libraries": "Библиотеки",
   "activity.librariesTitle": "Библиотеки (книга) — поиск и установка",
+  "activity.doctor": "Doctor",
+  "activity.doctorTitle":
+    "Doctor — PlatformIO, arduino-cli, COM, драйверы, офлайн-кэш, Configurator",
   "activity.inav": "БПЛА",
   "activity.inavTitle": "БПЛА: Aether Configurator + COM / MSP / прошивка",
   "activity.debug": "Отладка",
@@ -75,6 +79,23 @@ export const ru: Record<MessageKey, string> = {
   "serial.autoscroll": "Автопрокрутка",
   "serial.noPorts": "Порты не найдены",
   "serial.needDesktop": "Serial Monitor нужен в десктопном приложении.",
+  "serial.send": "Отправить",
+  "serial.sendPlaceholder": "Отправить строку…",
+  "serial.sendNeedConnect": "Подключитесь, чтобы отправлять",
+  "serial.record": "Запись",
+  "serial.recordStop": "Стоп",
+  "serial.recordTitle": "Начать запись лога Serial; сохранить .log при остановке",
+  "serial.recordStopTitle": "Остановить запись и сохранить .log",
+  "serial.recordingOn": "Идёт запись Serial…",
+  "serial.recordEmpty": "Нечего сохранять — Serial молчал.",
+  "serial.recorded": "Сохранено строк в лог: {count}.",
+  "serial.recordFailed": "Не удалось сохранить лог Serial.",
+  "serial.why.noPorts":
+    "COM-порты не найдены.\nПочему: плата не подключена, кабель, нет драйверов CH340/CP210x.\nЧто делать: USB → Обновить → Doctor → Драйверы.",
+  "serial.why.needConnect":
+    "Выберите COM и нажмите Connect.\nПочему нет данных: монитор молчит, пока порт не открыт.",
+  "serial.why.waitingData":
+    "Подключено — ожидание строк.\nПочему тихо: скетч не печатает, неверный baud или порт занят другой программой.",
   "status.bar": "Строка состояния",
   "status.openProblems": "Открыть Проблемы",
   "status.openOutput": "Открыть вывод PlatformIO",
@@ -95,6 +116,33 @@ export const ru: Record<MessageKey, string> = {
     "Подключено — ожидание MAVLink HEARTBEAT / ATTITUDE / GPS…",
   "plotter.connectHint":
     "Подключите Serial Monitor, затем откройте Плоттер для живых графиков.",
+  "plotter.presets": "Пресеты плоттера",
+  "plotter.presetRssi": "RSSI/SNR",
+  "plotter.presetMsp": "MSP",
+  "plotter.presetMavlink": "MAVLink",
+  "plotter.presetRssiHint":
+    "Пресет RSSI/SNR — держите Serial на LoRa RX, который печатает rssi/snr.",
+  "plotter.presetMspHint":
+    "Пресет MSP — откройте БПЛА, подключите FC и включите live telemetry (RSSI/напряжение → Плоттер).",
+  "plotter.record": "Запись",
+  "plotter.recordStop": "Стоп",
+  "plotter.recordTitle": "Записывать точки графика; CSV при остановке",
+  "plotter.recordStopTitle": "Остановить запись и сохранить CSV",
+  "plotter.recordingOn": "Идёт запись плоттера…",
+  "plotter.recordEmpty": "Нечего сохранять — числовых выборок ещё нет.",
+  "plotter.recorded": "Сохранено выборок в CSV: {count}.",
+  "plotter.why.needConnect":
+    "Сначала подключите Serial.\nПочему пусто: плоттер рисует только трафик открытого порта.",
+  "plotter.why.paused":
+    "Плоттер на паузе — нажмите Продолжить, чтобы принимать новые точки.",
+  "plotter.why.waitingText":
+    "Подключено — ждём числа.\nПочему пусто: скетч должен печатать key:value, CSV или rssi=/snr=.",
+  "plotter.why.waitingMavlink":
+    "Ждём кадры MAVLink.\nПочему пусто: FC не шлёт HEARTBEAT/GPS или неверный baud/порт.",
+  "plotter.why.waitingMsp":
+    "Пресет MSP — выборок ещё нет.\nПочему: подключите FC в БПЛА и включите live telemetry.",
+  "plotter.why.channelsHidden":
+    "Данные есть, но все каналы скрыты — нажмите чип канала, чтобы показать.",
   "plotter.toggleChannel": "Переключить {channel}",
   "plotter.mode": "Режим разбора",
   "plotter.modeText": "Текст",
@@ -171,9 +219,11 @@ export const ru: Record<MessageKey, string> = {
   "profiles.rename": "Переименовать",
   "profiles.empty":
     "Профилей пока нет — откройте проект PlatformIO и сохраните один.",
-  "profiles.hardwareTitle": "Пресеты железа (LoRa)",
+  "profiles.hardwareTitle": "Шаблоны железа",
+  "profiles.hardwareBplaOpened":
+    "Открыто «{name}» — БПЛА / Aether Configurator готов.",
   "profiles.hardwareHint":
-    "Открывает встроенный пример с картой пинов. После открытия при необходимости выберите env.",
+    "Открывает встроенный пример с картой пинов и env. Библиотеки — из lib_deps (первая сборка). FC → путь БПЛА.",
   "profiles.hardwareOpen": "Открыть",
   "profiles.hardwareOpened": "Открыто «{name}»",
   "profiles.hardwareFailed": "Не удалось открыть пресет железа.",
@@ -202,26 +252,54 @@ export const ru: Record<MessageKey, string> = {
   "welcome.openDemo": "Демо-рабочая область",
   "welcome.openInVsCode": "Открыть в VS Code",
   "welcome.generateVsCode": "Создать конфиг VS Code…",
-  "welcome.quickStart": "Быстрый старт (60 с)",
+  "welcome.quickStart": "С чего начать",
   "welcome.cleanPc": "Чистый ПК (~15 мин)",
   "welcome.cleanPcHint":
-    "Установка → Doctor (PIO) → Import OfflineLibs → Примеры → Сборка+загрузка. См. docs/CLEAN_WINDOWS.md.",
+    "Установка → Doctor (PIO) → Import OfflineLibs → Примеры → Сборка+загрузка. Опционально: ядра Arduino CLI + Aether Configurator (БПЛА). См. docs/CLEAN_WINDOWS.md.",
+  "welcome.hardwareTitle": "Шаблоны железа",
+  "welcome.hardwareHint":
+    "Один клик: Heltec / T-Beam / Mega+RFM95 / FC — пример + env (libs в platformio.ini) или путь БПЛА.",
   "welcome.browserHint":
     "В браузере доступна демо-область. Реальные папки — через npm run tauri:dev.",
-  "hub.tagline": "Выберите путь — Arduino, PlatformIO, Aether Configurator, VS Code или ИИ.",
+  "hub.tagline":
+    "Arduino-first IDE для плат, LoRa-радио и БПЛА — плата → COM → загрузка, не «ещё один VS Code».",
   "hub.arduino": "Arduino",
-  "hub.arduinoDesc": "Мастер быстрого старта и новый Arduino-проект.",
+  "hub.arduinoDesc": "Быстрый старт: Blink → LoRa → Configurator.",
   "hub.platformio": "PlatformIO",
   "hub.platformioDesc": "Открыть папку и выбрать платы / окружения.",
   "hub.inav": "Aether Configurator",
   "hub.inavDesc": "Запуск Configurator с передачей COM; быстрый MSP/CLI/flash в Aether.",
   "hub.vscode": "VS Code",
-  "hub.vscodeDesc": "Открыть рабочую область в VS Code (десктоп).",
+  "hub.vscodeDesc": "Опционально: открыть ту же папку в VS Code (десктоп).",
   "hub.ai": "ИИ-ассистент",
   "hub.aiDesc": "Чат с агентом о проекте и прошивке.",
-  "onboarding.title": "Быстрый старт",
-  "onboarding.subtitle":
-    "Плата → COM-порт → Blink → загрузка примерно за минуту.",
+  "onboarding.title": "С чего начать",
+  "onboarding.subtitle": "Три экрана: Blink → LoRa → Configurator.",
+  "onboarding.tourNav": "Экраны онбординга",
+  "onboarding.tour.blink": "Blink",
+  "onboarding.tour.lora": "LoRa",
+  "onboarding.tour.configurator": "Configurator",
+  "onboarding.tour.blinkBody":
+    "Первая прошивка: плата, COM, создайте Blink, затем Сборка + загрузка.",
+  "onboarding.tour.loraBody":
+    "Дальше: откройте пару TX↔RX LoRa, прошейте обе платы, смотрите пакеты в Serial / Плоттере.",
+  "onboarding.tour.configuratorBody":
+    "Для полётных контроллеров: активность БПЛА открывает Aether Configurator с передачей COM.",
+  "onboarding.back": "Назад",
+  "onboarding.next": "Далее",
+  "onboarding.lora.cta": "Открыть пару LoRa TX + RX",
+  "onboarding.lora.ctaTitle": "Создать примеры TX и RX и открыть их как пару.",
+  "onboarding.lora.guide": "Открыть Платы / гид LoRa",
+  "onboarding.lora.guideTitle": "Показать гид LoRa над редактором.",
+  "onboarding.lora.guideHint":
+    "Панель LoRa над редактором — регион, пара и прошивка.",
+  "onboarding.lora.opened": "Пара LoRa TX + RX открыта.",
+  "onboarding.lora.failed": "Не удалось открыть пару LoRa.",
+  "onboarding.configurator.cta": "Открыть БПЛА / Configurator",
+  "onboarding.configurator.ctaTitle":
+    "Открыть активность БПЛА для запуска Aether Configurator.",
+  "onboarding.configurator.opened":
+    "Панель БПЛА открыта — выберите COM и запустите Configurator.",
   "onboarding.step.board": "1. Выберите плату",
   "onboarding.step.port": "2. Выберите COM-порт",
   "onboarding.step.project": "3. Создайте или откройте Blink",
@@ -245,7 +323,7 @@ export const ru: Record<MessageKey, string> = {
   "onboarding.finish": "Готово",
   "onboarding.progressHint":
     "Выполните шаги выше — галочки появляются по мере готовности.",
-  "onboarding.completedNotice": "Быстрый старт завершён.",
+  "onboarding.completedNotice": "Тур «С чего начать» завершён.",
   "drivers.portExistsWontOpen": "порт в списке, но не открывается",
   "drivers.portMissing": "порт не виден системе",
   "activity.more": "Ещё",
@@ -267,18 +345,53 @@ export const ru: Record<MessageKey, string> = {
     "Когда включено, в Welcome, «Откуда загружать», сборке, БПЛА, Serial и агенте появляются короткие инструкции. У иконок — быстрый тултип при наведении.",
   "hints.coach.title": "С чего начать",
   "hints.coach.dismiss": "Понятно",
-  "hints.coach.step1": "1. Откройте папку (или создайте проект)",
-  "hints.coach.step2": "2. Выберите плату / COM-порт",
-  "hints.coach.step3": "3. Сборка — компилирует прошивку",
-  "hints.coach.step4": "4. Загрузка — прошивает плату по COM",
+  "hints.coach.step1": "1. Blink — плата → COM → Сборка + загрузка",
+  "hints.coach.step2": "2. LoRa — открыть пару TX↔RX и прошить обе",
+  "hints.coach.step3": "3. Configurator — активность БПЛА для полётного контроллера",
+  "hints.coach.cta.blink": "Быстрый старт",
+  "hints.coach.cta.lora": "Платы / LoRa",
+  "hints.coach.cta.configurator": "Открыть БПЛА",
+  "hints.checklist.title": "Чек-листы сценариев",
+  "hints.checklist.cta.blink": "Мастер Blink",
+  "hints.checklist.cta.lora": "Тур → LoRa",
+  "hints.checklist.cta.bpla": "Открыть БПЛА",
+  "hints.checklist.blink.title": "Первый Blink",
+  "hints.checklist.blink.step1": "Welcome → Примеры → esp32-blink (или Mega)",
+  "hints.checklist.blink.step2": "Подключите плату; выберите COM на панели сборки",
+  "hints.checklist.blink.step3": "Инструмент: PlatformIO (или Arduino CLI, если есть .ino и CLI)",
+  "hints.checklist.blink.step4": "Сборка, затем Загрузка",
+  "hints.checklist.blink.step5": "Serial Monitor → LED / Serial.print",
+  "hints.checklist.lora.title": "LoRa TX ↔ RX",
+  "hints.checklist.lora.step1": "Путь LoRa → Открыть пару TX + RX (один регион на обеих)",
+  "hints.checklist.lora.step2": "Выберите регион и env; Doctor подтвердит пины платы",
+  "hints.checklist.lora.step3": "Flash both (или Upload каждой папки) — отдельный COM на плату",
+  "hints.checklist.lora.step4": "Serial на RX → строки RX:; Plotter для RSSI/SNR",
+  "hints.checklist.lora.step5": "При ошибке: Doctor (радио) + антенна; Join — для LoRaWAN",
+  "hints.checklist.bpla.title": "БПЛА: быстрый путь + Configurator",
+  "hints.checklist.bpla.step1": "Активность БПЛА → выберите COM (+ baud)",
+  "hints.checklist.bpla.step2": "Полная настройка FC? Откройте Aether Configurator (освободит COM, передаст порт/baud)",
+  "hints.checklist.bpla.step3": "Быстрая проверка в IDE? Подключить → MSP → опционально Plotter",
+  "hints.checklist.bpla.step4": "CLI или DFU .hex? Оставайтесь в Aether (освободите COM перед Configurator)",
+  "hints.checklist.bpla.step5": "Если Configurator нет: строка Doctor или npm run configurator:package",
   "hints.panel.welcome":
-    "Начните здесь: откройте папку, выберите плату и COM, затем Сборка и Загрузка на панели инструментов.",
+    "Arduino-first путь: Blink → LoRa → Configurator. Откройте папку, COM, Сборка + загрузка — VS Code по желанию.",
+  "settings.telemetry": "Локальная диагностика (opt-in)",
+  "settings.telemetryHint":
+    "По умолчанию выкл. При включении сбои Сборки/Загрузки пишутся только локально (без сервера и PII). См. docs/TELEMETRY.md.",
   "hints.panel.sources":
     "Откройте папку проекта, добавьте путь или скопируйте пример — затем выберите COM и соберите.",
   "hints.panel.build":
     "Выберите env и COM, затем Сборка (компиляция) и Загрузка (прошивка). Прогресс — во вкладке Вывод.",
+  "hints.panel.buildArduinoCli":
+    "Инструмент сборки: Arduino CLI. Нужен скетч .ino и известная плата. Вкладка Библиотеки → Arduino использует тот же CLI.",
+  "hints.panel.librariesArduino":
+    "Вкладка Arduino использует arduino-cli (официальный менеджер → lib/ проекта). Если CLI нет — установите в Настройки → Инструменты.",
   "hints.panel.bpla":
-    "Подключите COM для MSP/CLI здесь или запустите Aether Configurator для полной настройки FC.",
+    "В Aether: COM, MSP, CLI, DFU. В Configurator: порты, режимы, PID, OSD, миссия (полная настройка FC).",
+  "hints.panel.doctor":
+    "Doctor проверяет PlatformIO, arduino-cli, COM, драйверы, офлайн-кэш и Aether Configurator. У каждой строки — Fix / Установить / Проверить.",
+  "hints.panel.plotter":
+    "Пресеты: RSSI/SNR (текст Serial), MSP (телеметрия БПЛА), MAVLink. Запись сохраняет CSV при Стоп.",
   "hints.panel.serial":
     "Выберите COM и скорость, Connect — читать Serial.print. Перед Загрузкой отключите порт, если он занят.",
   "hints.panel.agent":
@@ -289,6 +402,38 @@ export const ru: Record<MessageKey, string> = {
   "hints.tip.compiledb": "IntelliSense DB — пересоздать compile_commands.json",
   "hints.tip.portRefresh": "Обновить список COM-портов",
   "hints.tip.settings": "Параметры — язык, тема, подсказки",
+  "arduinoCli.settingsTitle": "Arduino CLI",
+  "arduinoCli.settingsHint":
+    "Официальный CLI Arduino: менеджер библиотек и опционально Сборка/Загрузка для скетчей .ino (переключатель ниже или на панели сборки).",
+  "arduinoCli.statusChecking": "Поиск arduino-cli…",
+  "arduinoCli.statusInstalled": "Найден: {version}",
+  "arduinoCli.statusMissing":
+    "Не найден в PATH и обычных папках (Program Files, Scoop, WinGet Links).",
+  "arduinoCli.installHint":
+    "Windows: скачайте с сайта Arduino или winget install ArduinoSA.CLI, затем «Проверить снова». После установки перезапустите Aether, если PATH обновился.",
+  "arduinoCli.recheckTitle": "Проверить arduino-cli и тулчейн",
+  "arduinoCli.toolLabel": "Инструмент сборки",
+  "arduinoCli.toolTitle":
+    "PlatformIO (по умолчанию) или Arduino CLI для компиляции/прошивки скетчей .ino",
+  "arduinoCli.toolTitleProject":
+    "Инструмент сборки для этого проекта (запоминается по папке). Глобальный по умолчанию — в Настройки → Инструменты.",
+  "arduinoCli.toolProjectHint":
+    "Панель сборки запоминает PlatformIO ↔ Arduino CLI для каждой папки проекта; эта настройка — значение по умолчанию для новых папок.",
+  "arduinoCli.toolPio": "PlatformIO",
+  "arduinoCli.toolArduino": "Arduino CLI",
+  "arduinoCli.ensureCores": "Установить ядра AVR + ESP32",
+  "arduinoCli.ensureCoresBusy": "Установка ядер…",
+  "arduinoCli.ensureCoresTitle":
+    "Выполнить arduino-cli core install для arduino:avr и esp32:esp32, если их нет",
+  "arduinoCli.ensureCoresDone": "Ядра Arduino: {detail}",
+  "arduinoCli.ensureCoresFailed": "Не удалось установить ядра Arduino.",
+  "arduinoCli.missing":
+    "arduino-cli не найден — установите в Настройки → Инструменты",
+  "arduinoCli.error.missing":
+    "arduino-cli не найден. Установите (Настройки → Инструменты) или переключите инструмент сборки на PlatformIO.",
+  "arduinoCli.error.compiledb":
+    "IntelliSense DB — задача PlatformIO. Переключите инструмент сборки на PlatformIO.",
+  "arduinoCli.runVia": "Задача выполняется через Arduino CLI…",
   "settings.showExternalInavConfigurator":
     "Показывать кнопку внешнего iNav Configurator",
   "settings.showExternalInavConfiguratorHint":
@@ -303,7 +448,7 @@ export const ru: Record<MessageKey, string> = {
   "libraries.arduinoEmpty":
     "Найдите библиотеку Arduino (например Servo, Adafruit GFX) или нажмите популярный чип.",
   "libraries.arduinoCliMissing":
-    "arduino-cli не найден в PATH. Установите для официального Library Manager или продолжайте с реестром PlatformIO ниже.",
+    "arduino-cli не найден (PATH или обычные папки). Установите для официального Library Manager или продолжайте с реестром PlatformIO ниже.",
   "libraries.arduinoCliInstall": "Установить arduino-cli",
   "libraries.arduinoCliDetected": "arduino-cli: {version}",
   "libraries.arduinoCliInstallProgress":
@@ -374,7 +519,32 @@ export const ru: Record<MessageKey, string> = {
   "wizard.close": "Закрыть",
   "wizard.error": "Не удалось создать проект.",
   "doctor.title": "Проверка инструментов",
-  "doctor.openShort": "Диагностика",
+  "doctor.panelTitle": "Единый Doctor",
+  "doctor.openShort": "Doctor",
+  "doctor.openPanel": "Открыть панель Doctor",
+  "doctor.settingsHint":
+    "Одно место для PlatformIO, arduino-cli, COM, драйверов, офлайн-кэша и Aether Configurator — у каждой строки Fix / Установить / Проверить.",
+  "doctor.recheckAllTitle": "Перепроверить все строки Doctor",
+  "doctor.row.pio": "PlatformIO",
+  "doctor.row.arduinoCli": "Arduino CLI",
+  "doctor.row.com": "COM-порты",
+  "doctor.row.drivers": "USB serial драйверы",
+  "doctor.row.offline": "Офлайн-кэш",
+  "doctor.row.configurator": "Aether Configurator",
+  "doctor.row.python": "Python",
+  "doctor.comOk": "Портов: {count} — выбран {port}",
+  "doctor.comMissing":
+    "COM-портов нет в списке. Подключите плату, при необходимости CH340/CP210x, затем Проверить снова.",
+  "doctor.offlineOk": "espressif32 + atmelavr есть в home PlatformIO.",
+  "doctor.offlineMissing":
+    "Кэш платформ неполный — Prepare offline cache или Import OfflineLibs для быстрой первой сборки.",
+  "doctor.configuratorOk": "Найден: {path}",
+  "doctor.configuratorMissing":
+    "Aether Configurator не найден. npm run configurator:package или AETHER_CONFIGURATOR.",
+  "doctor.configuratorOpen": "Открыть Configurator",
+  "doctor.configuratorDocs": "Документация Configurator",
+  "doctor.panelFooter":
+    "Баннер всё ещё появляется, если чего-то не хватает. Эта панель — полный чеклист.",
   "doctor.ok": "Готово — найден PlatformIO.",
   "command.unknown": "Неизвестная команда: {id}",
   "command.failed": "Команда не выполнена: {message}",
@@ -385,6 +555,12 @@ export const ru: Record<MessageKey, string> = {
   "doctor.pythonOk": "Python: {version}",
   "doctor.pythonMissing":
     "Python не найден (нужен для установки PlatformIO через pip). Установите Python 3 с pip и Add to PATH.",
+  "doctor.arduinoCliOk": "Arduino CLI: {version}",
+  "doctor.arduinoCliMissing":
+    "Arduino CLI не найден (необязательно). Нужен для официального менеджера библиотек и Сборки/Загрузки .ino — см. «Установить arduino-cli» ниже.",
+  "doctor.openArduinoCli": "Установить arduino-cli",
+  "doctor.openArduinoCliTitle":
+    "Открыть документацию по установке Arduino CLI (скачать / winget)",
   "doctor.driversHint":
     "Драйверы COM: многим платам на Windows нужны CH340 или CP210x. Aether не ставит неподписанные драйверы сам — откройте «Дополнительные компоненты» Windows или страницы производителей ниже.",
   "doctor.radioTitle": "Подсказки Radio / LoRa",
@@ -724,6 +900,8 @@ export const ru: Record<MessageKey, string> = {
   "extensions.offline":
     "Офлайн — показан встроенный каталог. Загрузка с маркетплейса нужна сеть.",
   "extensions.publish": "Публикация",
+  "extensions.storeNotYet":
+    "Подписанный удалённый магазин расширений — пока нет. Только локальные пакеты, URL каталога и Publish hub. См. docs/PUBLISHING.md.",
   "common.error": "Ошибка",
   "common.loading": "Загрузка…",
   "common.refresh": "Обновить",
@@ -760,10 +938,13 @@ export const ru: Record<MessageKey, string> = {
   "updater.channel.beta": "Beta",
   "updater.channelHint":
     "Stable — latest.json (не prerelease); Beta — latest-beta.json на prerelease при наличии (см. docs/UPDATES.md).",
+  "updater.betaExtrasHint":
+    "Beta может раньше Stable показывать изменения Arduino CLI / подсказок (Hints). Подпись та же — ставьте только подписанные фиды.",
   "updater.channelLabel": "Канал: {channel}",
   "updater.badge.beta": "Beta",
   "updater.feedHint":
     "Подписанные обновления через Tauri updater. Stable → latest.json; Beta → latest-beta.json (prerelease).",
+  "updater.feedOk": "Фид релизов доступен (подписанные обновления).",
   "status.fcSession": "FC · {port}",
   "status.fcSessionTitle": "Открыть БПЛА / Aether Configurator",
   "inav.title": "FC Configurator",
@@ -955,7 +1136,7 @@ export const ru: Record<MessageKey, string> = {
   "inav.deleteProfileConfirm": "Удалить этот профиль iNav?",
   "inav.openConfigurator": "Открыть iNav Configurator",
   "inav.configuratorHint":
-    "Запускает внешний Electron Configurator. Aether сначала освобождает COM-порт.",
+    "Опционально: официальный Electron iNav. Aether сначала освобождает COM. Повседневная настройка FC — Aether Configurator (панель БПЛА).",
   "inav.configuratorMissing":
     "iNav Configurator не найден в типичных путях установки и PATH.\n\nОткрыть страницу релизов на GitHub для скачивания?",
   "inav.configuratorLaunched": "iNav Configurator запущен.",
@@ -994,15 +1175,32 @@ export const ru: Record<MessageKey, string> = {
   "loraPath.wizard": "Мастер",
   "loraPath.examples": "Примеры TX/RX",
   "loraPath.pair": "Открыть пару TX + RX",
-  "loraPath.pairOpened": "LoRa TX + RX открыты (TX активен, RX — вторая папка).",
+  "loraPath.pairOpened":
+    "LoRa TX + RX открыты (один регион; TX активен, RX — вторая папка).",
   "loraPath.pairFailed": "Не удалось открыть пару LoRa TX/RX.",
+  "loraPath.join": "Join / LoRaWAN",
+  "loraPath.joinOpened":
+    "Открыт stub LoRaWAN OTAA — ключи в config.h, Upload, Join в Serial.",
+  "loraPath.joinFailed": "Не удалось открыть пример LoRaWAN Join.",
+  "loraPath.regionTitle": "Регион для пары TX+RX и Join (должен совпадать на обеих платах)",
   "loraPath.step.pins": "Пины",
   "loraPath.step.upload": "Прошивка",
+  "loraPath.step.flashBoth": "Flash both",
+  "loraPath.step.serialRx": "Serial RX",
   "loraPath.step.plotter": "Plotter RSSI",
   "loraPath.step.doctor": "Doctor",
+  "loraPath.flashBothDone":
+    "TX + RX прошиты. Подключите Serial к COM платы RX для пакетов.",
+  "loraPath.flashBothFailed": "Flash both не удался — смотрите Output / Doctor.",
+  "loraPath.serialRxHint":
+    "Выберите COM платы RX, Connect на Serial, ищите строки RX: (RSSI/SNR).",
+  "loraPath.rxOk": "Пакет LoRa RX OK — откройте Plotter для RSSI/SNR.",
+  "loraPath.joinOk": "LoRaWAN Join OK — дальше должны идти uplink.",
   "bplaPath.title": "БПЛА",
   "bplaPath.hint":
     "Полная настройка FC → Aether Configurator. Ниже: быстрый COM / MSP / CLI / DFU в IDE. Arduino остаётся основным путём.",
+  "bplaPath.whenToUse":
+    "Configurator = порты/режимы/PID/OSD. IDE ниже = быстрый COM, MSP, CLI, DFU без выхода из Aether.",
   "bplaPath.step.com": "COM в Aether",
   "bplaPath.step.msp": "MSP / телеметрия",
   "bplaPath.step.cli": "CLI",
@@ -1015,11 +1213,14 @@ export const ru: Record<MessageKey, string> = {
   "bplaPath.configuratorOpen": "Открыть Aether Configurator",
   "bplaPath.configuratorLaunching": "Запуск…",
   "bplaPath.configuratorLaunched": "Aether Configurator запущен.",
+  "bplaPath.configuratorReleased":
+    "COM освобождён для Configurator — подключитесь снова здесь после закрытия.",
   "bplaPath.configuratorInstalled": "Найден: {path}",
   "bplaPath.configuratorMissing":
     "Aether Configurator не найден. npm run configurator:package или AETHER_CONFIGURATOR.",
   "bplaPath.configuratorDesktop":
     "Aether Configurator доступен в десктоп-приложении (npm run tauri:dev).",
+  "agent.appliedTo": "Применено к {path}",
   "inav.msp.gps": "GPS",
   "inav.msp.gpsValue": "{fix} · {sats} спутн.",
   "inav.msp.latLon": "Шир. / Долг.",
@@ -1134,33 +1335,39 @@ export const ru: Record<MessageKey, string> = {
   "profiles.applyTitle":
     "Применить сохранённый профиль — переключит env и порт Upload.",
   "doctor.openTitle":
-    "Доктор toolchain — проверка PlatformIO, портов, драйверов и подсказок по радио.",
+    "Единый Doctor — PlatformIO, arduino-cli, COM, драйверы, офлайн-кэш, Configurator.",
   "loraPath.wizardTitle":
     "Мастер нового проекта — создать PlatformIO-проект под LoRa.",
   "loraPath.examplesTitle":
     "Открыть примеры TX/RX LoRa из каталога.",
   "loraPath.pairTitle":
-    "Открыть пару TX+RX (TX активный, RX — вторая папка workspace).",
+    "Открыть пару TX+RX (один регион; TX активный, RX — вторая папка).",
+  "loraPath.joinTitle":
+    "Открыть stub LoRaWAN OTAA — Join и uplink (DevEUI/AppKey в config.h).",
   "loraPath.step.pinsTitle":
     "Подсказки по пинам (NSS/DIO/RST) через Доктор — сверьте с разводкой платы.",
   "loraPath.step.uploadTitle":
     "Залить текущий LoRa-скетч — прогресс во вкладке Output.",
+  "loraPath.step.flashBothTitle":
+    "Сначала TX, потом RX (нужна открытая пара и COM на каждую папку).",
+  "loraPath.step.serialRxTitle":
+    "Открыть Serial Monitor — COM платы RX для подтверждения пакетов.",
   "loraPath.step.plotterTitle":
     "Открыть Serial Plotter для RSSI/SNR после подключения RX-скетча.",
   "loraPath.step.doctorTitle":
     "Открыть Доктор: проверки радио-проекта и подсказки по COM/драйверам.",
   "hub.arduinoTitle":
-    "Путь Arduino — быстрый старт (плата → COM → Blink → загрузка).",
+    "Arduino-first путь — тур Blink → LoRa → Configurator.",
   "hub.platformioTitle":
     "Путь PlatformIO — открыть папку и выбрать платы / окружения.",
   "hub.inavTitle":
     "Aether Configurator — COM, MSP/CLI/прошивка для настройки FC.",
   "hub.vscodeTitle":
-    "Открыть текущую папку workspace в VS Code (нужен десктоп).",
+    "Опционально: открыть текущую папку workspace в VS Code (десктоп).",
   "hub.aiTitle":
     "ИИ-агент — вопросы по прошивке, платам и этому проекту.",
   "welcome.quickStartTitle":
-    "Мастер быстрого старта (~60 с): плата, COM, Blink, загрузка.",
+    "С чего начать: Blink → LoRa → Configurator (плата, COM, загрузка).",
   "welcome.newProjectTitle":
     "Создать новый PlatformIO / Arduino-проект мастером.",
   "welcome.openFolderTitle":

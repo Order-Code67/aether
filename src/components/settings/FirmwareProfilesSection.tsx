@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import type { MessageKey } from "@/i18n";
-import { materializeBundledExample } from "@/lib/examples";
 import {
   exportFirmwareProfilesToFile,
   importFirmwareProfilesFromFile,
 } from "@/lib/firmwareProfilesFile";
 import { HARDWARE_PROFILE_PRESETS } from "@/lib/hardwareProfiles";
+import { applyHardwareTemplate } from "@/lib/hardwareTemplates";
 import { openLoraTxRxPair } from "@/lib/loraPair";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
@@ -27,9 +27,6 @@ export function FirmwareProfilesSection() {
   const replaceProfiles = useFirmwareProfileStore((s) => s.replaceProfiles);
   const mergeProfiles = useFirmwareProfileStore((s) => s.mergeProfiles);
   const isProject = usePlatformIoStore((s) => s.isProject);
-  const setSelectedEnv = usePlatformIoStore((s) => s.setSelectedEnv);
-  const refreshProject = usePlatformIoStore((s) => s.refreshProject);
-  const openFolderAt = useWorkspaceStore((s) => s.openFolderAt);
   const kind = useWorkspaceStore((s) => s.kind);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
   const [name, setName] = useState("");
@@ -112,16 +109,16 @@ export function FirmwareProfilesSection() {
       flashNotice(t("profiles.desktopOnly"));
       return;
     }
-    const preset = HARDWARE_PROFILE_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
     setHwBusy(presetId);
     try {
-      const path = await materializeBundledExample(preset.exampleId);
-      await openFolderAt(path);
-      await refreshProject();
-      setSelectedEnv(preset.env);
+      const { preset } = await applyHardwareTemplate(presetId);
       const label = locale === "ru" ? preset.labelRu : preset.labelEn;
-      flashNotice(t("profiles.hardwareOpened", { name: label }), 3500);
+      flashNotice(
+        preset.kind === "bpla"
+          ? t("profiles.hardwareBplaOpened", { name: label })
+          : t("profiles.hardwareOpened", { name: label }),
+        4000,
+      );
     } catch (e) {
       flashNotice(
         e instanceof Error ? e.message : t("profiles.hardwareFailed"),

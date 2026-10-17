@@ -8,6 +8,9 @@ export type WordWrapSetting = "on" | "off" | "wordWrapColumn";
 export type { ThemeId };
 export type { UpdateChannel };
 
+/** Firmware build/upload backend for .ino / Arduino-style projects. */
+export type FirmwareTool = "platformio" | "arduino-cli";
+
 export type SettingsTabId =
   | "general"
   | "editor"
@@ -26,6 +29,10 @@ interface SettingsState {
    * prefer Sketch mode, emphasize Serial + Output.
    */
   arduinoMode: boolean;
+  /**
+   * Build/Upload backend: PlatformIO (default) or Arduino CLI for .ino sketches.
+   */
+  firmwareTool: FirmwareTool;
   /** Arduino-like Explorer: emphasize main sketch, hide .pio clutter. Default ON. */
   sketchMode: boolean;
   /** When Sketch mode is on, still show the full file tree. */
@@ -37,8 +44,15 @@ interface SettingsState {
    * Default ON for new users (missing key on rehydrate keeps initial true).
    */
   hintsEnabled: boolean;
-  /** True after user dismisses the first-open 4-step coach. */
+  /** True after user dismisses the first-open coach (Blink → LoRa → Configurator). */
   hintsCoachDismissed: boolean;
+  /** Checked steps for scenario checklists (`scenarioId:messageKey` → true). */
+  hintsChecklistChecked: Record<string, boolean>;
+  /**
+   * Opt-in local diagnostics (build/upload fail). Default OFF — no remote
+   * telemetry; see docs/TELEMETRY.md and src/lib/telemetry.ts.
+   */
+  telemetryOptIn: boolean;
   /**
    * Show the optional «Open external iNav Configurator» control in the FC
    * workspace / checklist / command palette. Off by default — prefer in-app config.
@@ -62,11 +76,14 @@ interface SettingsState {
   setLocale: (locale: Locale) => void;
   setTheme: (theme: ThemeId) => void;
   setArduinoMode: (v: boolean) => void;
+  setFirmwareTool: (v: FirmwareTool) => void;
   setSketchMode: (v: boolean) => void;
   setShowAllFiles: (v: boolean) => void;
   setOnboardingDone: (v: boolean) => void;
   setHintsEnabled: (v: boolean) => void;
   setHintsCoachDismissed: (v: boolean) => void;
+  toggleHintsChecklistStep: (stepId: string) => void;
+  setTelemetryOptIn: (v: boolean) => void;
   setShowExternalInavConfigurator: (v: boolean) => void;
   setUpdateChannel: (channel: UpdateChannel) => void;
   setFontSize: (n: number) => void;
@@ -101,11 +118,14 @@ export const useSettingsStore = create<SettingsState>()(
       locale: detectDefaultLocale(),
       theme: "dark",
       arduinoMode: false,
+      firmwareTool: "platformio",
       sketchMode: true,
       showAllFiles: false,
       onboardingDone: false,
       hintsEnabled: true,
       hintsCoachDismissed: false,
+      hintsChecklistChecked: {},
+      telemetryOptIn: false,
       showExternalInavConfigurator: false,
       updateChannel: "stable",
       ...EDITOR_DEFAULTS,
@@ -136,11 +156,23 @@ export const useSettingsStore = create<SettingsState>()(
           // Prefer Sketch mode when entering Arduino simplified UI.
           sketchMode: v ? true : s.sketchMode,
         })),
+      setFirmwareTool: (v) =>
+        set({
+          firmwareTool: v === "arduino-cli" ? "arduino-cli" : "platformio",
+        }),
       setSketchMode: (v) => set({ sketchMode: v }),
       setShowAllFiles: (v) => set({ showAllFiles: v }),
       setOnboardingDone: (v) => set({ onboardingDone: v }),
       setHintsEnabled: (v) => set({ hintsEnabled: v }),
       setHintsCoachDismissed: (v) => set({ hintsCoachDismissed: v }),
+      toggleHintsChecklistStep: (stepId) =>
+        set((s) => {
+          const next = { ...s.hintsChecklistChecked };
+          if (next[stepId]) delete next[stepId];
+          else next[stepId] = true;
+          return { hintsChecklistChecked: next };
+        }),
+      setTelemetryOptIn: (v) => set({ telemetryOptIn: Boolean(v) }),
       setShowExternalInavConfigurator: (v) =>
         set({ showExternalInavConfigurator: v }),
       setUpdateChannel: (channel) =>
@@ -173,11 +205,14 @@ export const useSettingsStore = create<SettingsState>()(
         locale: state.locale,
         theme: state.theme,
         arduinoMode: state.arduinoMode,
+        firmwareTool: state.firmwareTool,
         sketchMode: state.sketchMode,
         showAllFiles: state.showAllFiles,
         onboardingDone: state.onboardingDone,
         hintsEnabled: state.hintsEnabled,
         hintsCoachDismissed: state.hintsCoachDismissed,
+        hintsChecklistChecked: state.hintsChecklistChecked,
+        telemetryOptIn: state.telemetryOptIn,
         showExternalInavConfigurator: state.showExternalInavConfigurator,
         updateChannel: state.updateChannel,
         fontSize: state.fontSize,

@@ -1,6 +1,6 @@
 # Aether
 
-Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32, ESP8266, and more).
+**Arduino-first IDE** for boards, LoRa radio, and БПЛА — board → COM → upload, with Aether Configurator for flight controllers. Not another VS Code skin.
 
 **Stack:** Tauri 2 · React 19 · TypeScript · Vite · Tailwind CSS · Zustand · Monaco · serialport
 
@@ -37,7 +37,8 @@ Modern IDE for programming robots, drones, and embedded systems (Arduino, ESP32,
 
 ## Not yet
 
-- Signed remote extension store / cloud publisher accounts
+- Signed remote extension store / cloud publisher accounts (local packs + Publish hub only — see [`docs/PUBLISHING.md`](docs/PUBLISHING.md))
+- Full macOS / Linux desktop parity (Windows is the supported release target today — see [`docs/PLATFORM.md`](docs/PLATFORM.md))
 
 ## Prerequisites (Windows)
 
@@ -89,21 +90,24 @@ Browser-only preview (`npm run dev`) has no real filesystem/serial.
 3. Click a root name (pin) to set it **active** — PlatformIO Build/Upload, Terminal cwd, and relative Agent paths use the active root
 4. Hover a root → remove it from the workspace without closing others
 
-## Release build
+## Release build (Windows NSIS — keep it lean)
 
-```bash
+The **main NSIS installer** ships the app only (no multi‑GB PlatformIO toolchains). Ship **OfflineLibs** (or full OfflineCache) as a **separate** zip next to the setup.
+
+```powershell
 # Sign updater artifacts (required for auto-update)
-# PowerShell: $env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content -Raw src-tauri\keys\aether.key)
+$env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content -Raw src-tauri\keys\aether.key)
 npm run tauri:build
+# Optional libs pack (~50–80 MB) — do not embed in NSIS:
+npm run build:offline-libs
+npm run package:dist   # → release/Aether_Dist_* (setup + OfflineLibs + README-FIRST)
 ```
 
 Installers land under `src-tauri/target/release/bundle/` (copy to `release/` for a local package).
 
-Ready package for **0.1.0**: `release/Aether_0.1.0_x64-setup.exe`, `release/latest.json`, see [`CHANGELOG.md`](CHANGELOG.md).
+Publishing updates: [`docs/UPDATES.md`](docs/UPDATES.md) · signing + lean install: [`docs/SIGNING_AND_RELEASES.md`](docs/SIGNING_AND_RELEASES.md) · offline packs: [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md) · clean PC: [`docs/CLEAN_WINDOWS.md`](docs/CLEAN_WINDOWS.md).
 
-Publishing updates: [`docs/UPDATES.md`](docs/UPDATES.md) — regenerate `latest.json` + `latest-beta.json` with `.\scripts\make-latest-json.ps1`.
-
-Offline toolchain pack (separate from the installer): `npm run build:offline-cache` → see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md).
+Opt-in local diagnostics (default off): [`docs/TELEMETRY.md`](docs/TELEMETRY.md).
 
 ## Serial Monitor
 

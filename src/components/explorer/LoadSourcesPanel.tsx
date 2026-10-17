@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { CoachSteps } from "@/components/hints/CoachSteps";
 import { PanelHint } from "@/components/hints/PanelHint";
+import { ScenarioChecklists } from "@/components/hints/ScenarioChecklists";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { useI18n } from "@/hooks/useI18n";
@@ -60,6 +61,7 @@ export function LoadSourcesPanel() {
 
       <div className="aether-scroll flex-1 space-y-4 overflow-auto px-3 pb-4 text-xs">
         <CoachSteps />
+        <ScenarioChecklists />
         <PanelHint messageKey="hints.panel.sources" />
         {!hintsEnabled && (
           <p className="leading-relaxed text-aether-fg-dim">{t("sources.hint")}</p>

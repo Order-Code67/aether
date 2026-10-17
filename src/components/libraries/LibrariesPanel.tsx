@@ -14,11 +14,12 @@ import { cn } from "@/lib/cn";
 import { errorMessage } from "@/lib/errors";
 import { parseGithubLibSpec } from "@/lib/githubLibSpec";
 import { friendlyPioError } from "@/lib/pioErrors";
+import { PanelHint } from "@/components/hints/PanelHint";
 import {
-  ARDUINO_CLI_DOCS_URL,
   detectArduinoCli,
   installArduinoCliLibrary,
   listArduinoCliLibFolders,
+  openArduinoCliInstallDocs,
   searchArduinoCliLibraries,
   type ArduinoCliInfo,
 } from "@/lib/arduinoCli";
@@ -620,6 +621,12 @@ export function LibrariesPanel() {
             ? t("libraries.githubTabHint")
             : t("libraries.hint")}
       </p>
+      {managerTab === "arduino" && (
+        <PanelHint
+          messageKey="hints.panel.librariesArduino"
+          className="mx-3 mb-2"
+        />
+      )}
 
       {managerTab === "arduino" && arduinoCli && (
         <div className="mx-3 mb-2 space-y-1.5 rounded border border-aether-border px-2 py-1.5">
@@ -643,20 +650,7 @@ export function LibrariesPanel() {
                 title={t("libraries.arduinoCliInstallTitle")}
                 aria-label={t("libraries.arduinoCliInstall")}
                 onClick={() => {
-                  void (async () => {
-                    try {
-                      const { openUrl } = await import(
-                        "@tauri-apps/plugin-opener"
-                      );
-                      await openUrl(ARDUINO_CLI_DOCS_URL);
-                    } catch {
-                      window.open(
-                        ARDUINO_CLI_DOCS_URL,
-                        "_blank",
-                        "noopener,noreferrer",
-                      );
-                    }
-                  })();
+                  void openArduinoCliInstallDocs();
                 }}
                 className="rounded border border-aether-accent bg-aether-accent px-2 py-0.5 text-[11px] text-white"
               >

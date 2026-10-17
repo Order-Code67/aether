@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.38",
+  "version": "0.2.39",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "workspaces": [
@@ -61,3 +61,4 @@
     "vitest": "^3.2.4"
   }
 }
+

@@ -68,5 +68,33 @@ build_flags =
     });
     expect(ctx).toContain("lib_deps");
     expect(ctx).toContain("NSS=");
+    expect(ctx).toContain("platformio.ini env section");
+  });
+
+  it("scopes multi-env ini to selected env", () => {
+    const ini = `
+[env:heltec_wifi_lora_32_V3]
+board = heltec_wifi_lora_32_V3
+lib_deps =
+	jgromes/RadioLib
+build_flags =
+	-DAETHER_LORA_NSS=8
+
+[env:esp32dev]
+board = esp32dev
+lib_deps =
+	bblanchon/ArduinoJson
+build_flags =
+	-DAETHER_LORA_NSS=5
+`;
+    const heltec = parsePlatformioIniSnippet(ini, "heltec_wifi_lora_32_V3");
+    expect(heltec.board).toBe("heltec_wifi_lora_32_V3");
+    expect(heltec.libDeps).toContain("jgromes/RadioLib");
+    expect(heltec.buildFlags.some((f) => f.includes("NSS=8"))).toBe(true);
+
+    const esp = parsePlatformioIniSnippet(ini, "esp32dev");
+    expect(esp.board).toBe("esp32dev");
+    expect(esp.libDeps).toContain("bblanchon/ArduinoJson");
+    expect(esp.buildFlags.some((f) => f.includes("NSS=5"))).toBe(true);
   });
 });

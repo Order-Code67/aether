@@ -7,6 +7,7 @@ export type ActivityId =
   | "source-control"
   | "boards"
   | "libraries"
+  | "doctor"
   | "inav"
   | "debug"
   | "agent"
@@ -57,6 +58,11 @@ export const ACTIVITY_ITEMS: readonly ActivityItem[] = [
     id: "libraries",
     labelKey: "activity.libraries",
     titleKey: "activity.librariesTitle",
+  },
+  {
+    id: "doctor",
+    labelKey: "activity.doctor",
+    titleKey: "activity.doctorTitle",
   },
   {
     id: "inav",

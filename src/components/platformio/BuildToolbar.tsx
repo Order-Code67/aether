@@ -53,12 +53,23 @@ export function BuildToolbar() {
   const profiles = useFirmwareProfileStore((s) => s.profiles);
   const saveCurrentAs = useFirmwareProfileStore((s) => s.saveCurrentAs);
   const applyProfile = useFirmwareProfileStore((s) => s.applyProfile);
-  const showDoctor = usePlatformIoStore((s) => s.showDoctor);
-  const runDoctor = usePlatformIoStore((s) => s.runDoctor);
+  const openDoctorPanel = usePlatformIoStore((s) => s.openDoctorPanel);
+  const arduinoCli = usePlatformIoStore((s) => s.doctor.arduinoCli);
+  const firmwareToolByRoot = usePlatformIoStore((s) => s.firmwareToolByRoot);
+  const setFirmwareToolForProject = usePlatformIoStore(
+    (s) => s.setFirmwareToolForProject,
+  );
   const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const globalFirmwareTool = useSettingsStore((s) => s.firmwareTool);
 
   const selectedPort =
     (rootPath && uploadPortByRoot[rootPath]) || serialPath || "";
+  const firmwareTool =
+    (rootPath && firmwareToolByRoot[rootPath]) || globalFirmwareTool;
+  const useArduinoCli = firmwareTool === "arduino-cli";
+  const toolReady = useArduinoCli
+    ? Boolean(arduinoCli?.installed)
+    : Boolean(info?.installed);
 
   useEffect(() => {
     if (kind === "folder" && isProject) {
@@ -70,7 +81,7 @@ export function BuildToolbar() {
     return null;
   }
 
-  const disabled = running || !info?.installed;
+  const disabled = running || !toolReady;
   const uploadDisabled = disabled || !selectedPort;
   const showProgress =
     running ||
@@ -91,9 +102,23 @@ export function BuildToolbar() {
         data-aether-chrome
         className="flex h-8 items-center gap-1 px-2"
       >
-      <span className="mr-1 text-[11px] font-medium uppercase tracking-wide text-aether-fg-dim">
-        PlatformIO
-      </span>
+      <select
+        value={firmwareTool}
+        disabled={running}
+        onChange={(event) => {
+          const v = event.target.value;
+          setFirmwareToolForProject(
+            v === "arduino-cli" ? "arduino-cli" : "platformio",
+          );
+        }}
+        className="mr-1 h-6 max-w-[130px] rounded border border-aether-border bg-aether-bg px-1 text-[11px] font-medium text-aether-fg outline-none focus:border-aether-accent disabled:opacity-40"
+        aria-label={t("arduinoCli.toolLabel")}
+        title={t("arduinoCli.toolTitleProject")}
+        data-testid="build-firmware-tool"
+      >
+        <option value="platformio">{t("arduinoCli.toolPio")}</option>
+        <option value="arduino-cli">{t("arduinoCli.toolArduino")}</option>
+      </select>
 
       <span className="mr-0.5 text-[10px] text-aether-fg-dim">{t("pio.env")}</span>
       {envs.length > 0 ? (
@@ -208,23 +233,25 @@ export function BuildToolbar() {
         </button>
       </Tooltip>
 
-      <Tooltip content={t("hints.tip.compiledb")} side="bottom">
-        <button
-          type="button"
-          aria-label={t("pio.compiledb")}
-          disabled={disabled}
-          onClick={() => {
-            void runTask("compiledb");
-          }}
-          className={cn(
-            "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
-            "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
-          )}
-        >
-          <FileCode2 size={13} />
-          {t("pio.compiledb")}
-        </button>
-      </Tooltip>
+      {!useArduinoCli && (
+        <Tooltip content={t("hints.tip.compiledb")} side="bottom">
+          <button
+            type="button"
+            aria-label={t("pio.compiledb")}
+            disabled={disabled}
+            onClick={() => {
+              void runTask("compiledb");
+            }}
+            className={cn(
+              "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
+              "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
+            )}
+          >
+            <FileCode2 size={13} />
+            {t("pio.compiledb")}
+          </button>
+        </Tooltip>
+      )}
 
       <button
         type="button"
@@ -280,10 +307,7 @@ export function BuildToolbar() {
         title={t("doctor.openTitle")}
         aria-label={t("doctor.title")}
         disabled={running}
-        onClick={() => {
-          showDoctor();
-          void runDoctor();
-        }}
+        onClick={() => openDoctorPanel()}
         className={cn(
           "flex h-6 items-center gap-1 rounded px-2 text-[11px] text-aether-fg-muted",
           "hover:bg-aether-surface-raised hover:text-aether-fg disabled:opacity-40",
@@ -311,13 +335,18 @@ export function BuildToolbar() {
         </span>
       )}
 
-      {!info?.installed && (
+      {!toolReady && (
         <span className="ml-2 text-[11px] text-aether-warning">
-          {t("pio.missing")}
+          {useArduinoCli ? t("arduinoCli.missing") : t("pio.missing")}
         </span>
       )}
       </div>
-      <PanelHint messageKey="hints.panel.build" className="mx-2 mb-1.5 mt-0.5" />
+      <PanelHint
+        messageKey={
+          useArduinoCli ? "hints.panel.buildArduinoCli" : "hints.panel.build"
+        }
+        className="mx-2 mb-1.5 mt-0.5"
+      />
     </div>
   );
 }

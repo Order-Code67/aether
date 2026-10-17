@@ -8,6 +8,12 @@ import {
   type PioProgress,
 } from "@/lib/pioProgress";
 import {
+  detectArduinoCli,
+  runArduinoCliTask,
+  type ArduinoCliInfo,
+} from "@/lib/arduinoCli";
+import type { FirmwareTool } from "@/stores/settingsStore";
+import {
   cancelPioTask,
   detectPio,
   detectPython,
@@ -66,6 +72,8 @@ export interface DoctorReport {
   pio: PioInfo | null;
   python: PythonInfo | null;
   clangd: LspInfo | null;
+  /** Arduino CLI (PATH + common install locations). */
+  arduinoCli: ArduinoCliInfo | null;
   /** True when PlatformIO CLI is present (clangd/python tips are optional). */
   ok: boolean;
   /** LoRa / radio wiring tips when the open project looks like a radio sketch. */
@@ -81,6 +89,11 @@ interface PlatformIoState {
   selectedEnvByRoot: Record<string, string>;
   /** Upload port preference keyed by workspace root (falls back to serial selection). */
   uploadPortByRoot: Record<string, string>;
+  /**
+   * PlatformIO ↔ Arduino CLI choice keyed by workspace root.
+   * Falls back to global Settings → Tools → firmwareTool.
+   */
+  firmwareToolByRoot: Record<string, FirmwareTool>;
   running: boolean;
   lastTask: PioTask | null;
   lastSuccess: boolean | null;
@@ -103,6 +116,10 @@ interface PlatformIoState {
   setSelectedEnv: (env: string) => void;
   setUploadPort: (port: string) => void;
   getUploadPort: () => string;
+  /** Effective build tool for the open project (per-root, else global). */
+  getFirmwareTool: () => FirmwareTool;
+  /** Persist PlatformIO / Arduino CLI for the current project root. */
+  setFirmwareToolForProject: (tool: FirmwareTool) => void;
   appendOutput: (payload: PioOutputPayload) => void;
   applyStatus: (status: PioStatusPayload) => void;
   clearOutput: () => void;
@@ -119,6 +136,8 @@ interface PlatformIoState {
   importSidecarOfflineZip: () => Promise<void>;
   dismissDoctor: () => void;
   showDoctor: () => void;
+  /** Open the Unified Doctor activity and refresh checks. */
+  openDoctorPanel: () => void;
 }
 
 function localizeError(message: string): string {
@@ -135,6 +154,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       selectedEnv: "",
       selectedEnvByRoot: {},
       uploadPortByRoot: {},
+      firmwareToolByRoot: {},
       running: false,
       lastTask: null,
       lastSuccess: null,
@@ -148,6 +168,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         installing: false,
         installError: null,
         pio: null,
+        arduinoCli: null,
         python: null,
         clangd: null,
         ok: true,
@@ -305,6 +326,34 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           : undefined;
         if (byRoot) return byRoot;
         return useSerialStore.getState().selectedPath;
+      },
+
+      getFirmwareTool: () => {
+        const { rootPath } = useWorkspaceStore.getState();
+        const byRoot = rootPath
+          ? get().firmwareToolByRoot[rootPath]
+          : undefined;
+        if (byRoot === "arduino-cli" || byRoot === "platformio") {
+          return byRoot;
+        }
+        return useSettingsStore.getState().firmwareTool;
+      },
+
+      setFirmwareToolForProject: (tool) => {
+        const normalized: FirmwareTool =
+          tool === "arduino-cli" ? "arduino-cli" : "platformio";
+        const { rootPath } = useWorkspaceStore.getState();
+        if (!rootPath) {
+          // No folder open — update global default only.
+          useSettingsStore.getState().setFirmwareTool(normalized);
+          return;
+        }
+        set((state) => ({
+          firmwareToolByRoot: {
+            ...state.firmwareToolByRoot,
+            [rootPath]: normalized,
+          },
+        }));
       },
 
       appendOutput: (payload) => {
@@ -521,6 +570,13 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           void import("@/lib/supportReport").then(({ persistLastErrorReport }) => {
             void persistLastErrorReport(useSettingsStore.getState().locale);
           });
+          // Opt-in local telemetry (no remote send) — see docs/TELEMETRY.md.
+          void import("@/lib/telemetry").then(({ trackBuildOrUploadFail }) => {
+            trackBuildOrUploadFail(task === "upload" ? "upload" : "build", {
+              tool: get().getFirmwareTool(),
+              errorClass: "task_fail",
+            });
+          });
           // LoRa wow path: surface Radio Doctor tips on build/upload fail.
           void get().refreshRadioDoctorTips().then(() => {
             if (get().doctor.radio?.isRadioProject) {
@@ -573,6 +629,20 @@ export const usePlatformIoStore = create<PlatformIoState>()(
           return;
         }
 
+        const firmwareTool = get().getFirmwareTool();
+        const useArduinoCli = firmwareTool === "arduino-cli";
+        const arduinoCli =
+          get().doctor.arduinoCli ??
+          (useArduinoCli ? await detectArduinoCli() : null);
+        if (useArduinoCli && !arduinoCli?.installed) {
+          set({ error: t("arduinoCli.error.missing") });
+          return;
+        }
+        if (useArduinoCli && task === "compiledb") {
+          set({ error: t("arduinoCli.error.compiledb") });
+          return;
+        }
+
         let uploadPort = get().getUploadPort().trim();
         if (task === "upload") {
           uploadPort = (await get().syncUploadPort()).trim() || uploadPort;
@@ -612,14 +682,29 @@ export const usePlatformIoStore = create<PlatformIoState>()(
             line: t("pio.uploadWillDisconnect"),
           });
         }
+        if (useArduinoCli) {
+          get().appendOutput({
+            stream: "system",
+            line: t("arduinoCli.runVia"),
+          });
+        }
 
         try {
-          await runPioTask({
-            cwd: rootPath,
-            task: task as "build" | "upload" | "clean" | "compiledb",
-            env: get().selectedEnv || null,
-            uploadPort: task === "upload" ? uploadPort : null,
-          });
+          if (useArduinoCli) {
+            await runArduinoCliTask({
+              cwd: rootPath,
+              task: task as "build" | "upload" | "clean" | "compiledb",
+              env: get().selectedEnv || null,
+              uploadPort: task === "upload" ? uploadPort : null,
+            });
+          } else {
+            await runPioTask({
+              cwd: rootPath,
+              task: task as "build" | "upload" | "clean" | "compiledb",
+              env: get().selectedEnv || null,
+              uploadPort: task === "upload" ? uploadPort : null,
+            });
+          }
         } catch (error) {
           set({
             running: false,
@@ -690,6 +775,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               pio: { installed: false, command: null, version: null },
               python: { installed: false, command: null, version: null },
               clangd: { installed: false, command: null, version: null },
+              arduinoCli: { installed: false, path: null, version: null },
               ok: false,
               radio: null,
             },
@@ -707,10 +793,11 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         }));
 
         try {
-          const [pio, python, clangd] = await Promise.all([
+          const [pio, python, clangd, arduinoCli] = await Promise.all([
             detectPio(),
             detectPython(),
             lspDetect(),
+            detectArduinoCli(),
           ]);
 
           let radio: RadioDoctorHints | null = null;
@@ -737,6 +824,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               pio,
               python,
               clangd,
+              arduinoCli,
               ok: pio.installed,
               radio,
             },
@@ -755,6 +843,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
               pio: get().info,
               python: get().doctor.python,
               clangd: null,
+              arduinoCli: get().doctor.arduinoCli,
               ok: false,
               radio: get().doctor.radio,
             },
@@ -979,6 +1068,13 @@ export const usePlatformIoStore = create<PlatformIoState>()(
       dismissDoctor: () => set({ doctorDismissed: true }),
 
       showDoctor: () => set({ doctorDismissed: false }),
+
+      openDoctorPanel: () => {
+        set({ doctorDismissed: false });
+        useLayoutStore.getState().setActiveActivity("doctor");
+        void get().runDoctor();
+        void get().refreshOfflineCache();
+      },
     }),
     {
       name: "aether-platformio",
@@ -986,6 +1082,7 @@ export const usePlatformIoStore = create<PlatformIoState>()(
         selectedEnv: state.selectedEnv,
         selectedEnvByRoot: state.selectedEnvByRoot,
         uploadPortByRoot: state.uploadPortByRoot,
+        firmwareToolByRoot: state.firmwareToolByRoot,
         doctorDismissed: state.doctorDismissed,
       }),
     },

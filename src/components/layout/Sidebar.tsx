@@ -17,6 +17,7 @@ import { LoadSourcesPanel } from "@/components/explorer/LoadSourcesPanel";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { BplaStudioPanel } from "@/components/inav/BplaStudioPanel";
 import { LibrariesPanel } from "@/components/libraries/LibrariesPanel";
+import { UnifiedDoctorPanel } from "@/components/platformio/UnifiedDoctorPanel";
 import { SearchPanel } from "@/components/search/SearchPanel";
 import { SourceControlPanel } from "@/components/scm/SourceControlPanel";
 import { useI18n } from "@/hooks/useI18n";
@@ -506,6 +507,8 @@ export function Sidebar() {
           <BoardsSidebar />
         ) : activeActivity === "libraries" ? (
           <LibrariesPanel />
+        ) : activeActivity === "doctor" ? (
+          <UnifiedDoctorPanel />
         ) : activeActivity === "inav" ? (
           <BplaStudioPanel />
         ) : activeActivity === "debug" ? (

@@ -139,7 +139,7 @@ export function BplaStudioPanel() {
         port: selectedPath || undefined,
         baud: baudRate,
       });
-      flash(t("bplaPath.configuratorLaunched"));
+      flash(t("bplaPath.configuratorReleased"), 6000);
     } catch (e) {
       const raw = configuratorErrorMessage(e);
       const msg = raw.includes("AETHER_CONFIGURATOR_MISSING")
@@ -187,6 +187,12 @@ export function BplaStudioPanel() {
             {t("bplaPath.hint")}
           </p>
         )}
+        <p
+          className="text-[10px] leading-relaxed text-aether-fg-dim"
+          data-testid="bpla-when-to-use"
+        >
+          {t("bplaPath.whenToUse")}
+        </p>
 
         {/* Aether Configurator */}
         <section

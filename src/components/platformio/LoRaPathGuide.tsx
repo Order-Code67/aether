@@ -5,17 +5,25 @@ import {
   Stethoscope,
   Upload,
   MapPin,
+  Layers,
+  Terminal,
 } from "lucide-react";
 import { OpenExamplesDialog } from "@/components/explorer/OpenExamplesDialog";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/cn";
 import { resolveLoraPinMap } from "@/lib/hardwarePinMaps";
+import {
+  flashLoraPairBoth,
+  getLastLoraPair,
+  openLoraTxRxPair,
+  openLorawanJoinExample,
+} from "@/lib/loraPair";
+import { LORA_REGIONS, type LoraRegionId } from "@/lib/loraRegions";
 import { joinPath } from "@/lib/paths";
 import { parsePlatformioIniSnippet } from "@/lib/projectBoardContext";
 import { isTauriRuntime } from "@/lib/tauri";
 import { readTextFile } from "@tauri-apps/plugin-fs";
-import { openLoraTxRxPair } from "@/lib/loraPair";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -26,11 +34,11 @@ import { useWorkspaceStore } from "@/stores/workspaceStore";
  * Visible when the open project looks like radio / LoRa.
  */
 export function LoRaPathGuide() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isProject = usePlatformIoStore((s) => s.isProject);
   const radio = usePlatformIoStore((s) => s.doctor.radio);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
-  const showDoctor = usePlatformIoStore((s) => s.showDoctor);
+  const openDoctorPanel = usePlatformIoStore((s) => s.openDoctorPanel);
   const runDoctor = usePlatformIoStore((s) => s.runDoctor);
   const runTask = usePlatformIoStore((s) => s.runTask);
   const running = usePlatformIoStore((s) => s.running);
@@ -43,6 +51,9 @@ export function LoRaPathGuide() {
   const [dismissed, setDismissed] = useState(false);
   const [iniRadio, setIniRadio] = useState(false);
   const [pairBusy, setPairBusy] = useState(false);
+  const [flashBusy, setFlashBusy] = useState(false);
+  const [joinBusy, setJoinBusy] = useState(false);
+  const [region, setRegion] = useState<LoraRegionId>("EU868");
 
   useEffect(() => {
     if (!isTauriRuntime() || !rootPath || !isProject) {
@@ -54,10 +65,12 @@ export function LoRaPathGuide() {
       try {
         const text = await readTextFile(joinPath(rootPath, "platformio.ini"));
         if (cancelled) return;
-        const snip = parsePlatformioIniSnippet(text);
+        const snip = parsePlatformioIniSnippet(text, selectedEnv || null);
         const pin = resolveLoraPinMap(selectedEnv || snip.board);
         const libs = snip.libDeps.some((d) => /radiolib|\blora\b|lmic/i.test(d));
         setIniRadio(Boolean(pin || libs));
+        const m = text.match(/-DAETHER_LORA_REGION_(EU868|US915|RU864)/);
+        if (m?.[1]) setRegion(m[1] as LoraRegionId);
         if (pin || libs) void runDoctor();
       } catch {
         if (!cancelled) setIniRadio(false);
@@ -71,6 +84,8 @@ export function LoRaPathGuide() {
   const isRadio = Boolean(radio?.isRadioProject || iniRadio);
   if (dismissed || !isProject || !isRadio) return null;
 
+  const env = selectedEnv || "heltec_wifi_lora_32_V3";
+
   const steps = [
     {
       id: "pins",
@@ -78,8 +93,7 @@ export function LoRaPathGuide() {
       label: t("loraPath.step.pins"),
       titleKey: "loraPath.step.pinsTitle" as const,
       action: () => {
-        /* BoardHardwareStrip is always above — nudge Doctor for pin map tip */
-        showDoctor();
+        openDoctorPanel();
       },
     },
     {
@@ -92,6 +106,41 @@ export function LoRaPathGuide() {
         void runTask("upload");
         setBottomPanelVisible(true);
         setBottomPanelTab("output");
+      },
+    },
+    {
+      id: "flashBoth",
+      icon: Layers,
+      label: t("loraPath.step.flashBoth"),
+      titleKey: "loraPath.step.flashBothTitle" as const,
+      action: () => {
+        if (running || flashBusy) return;
+        setFlashBusy(true);
+        setBottomPanelVisible(true);
+        setBottomPanelTab("output");
+        void flashLoraPairBoth(getLastLoraPair())
+          .then(() => {
+            flashNotice(t("loraPath.flashBothDone"), 5000);
+            setBottomPanelTab("serial");
+          })
+          .catch((e) => {
+            flashNotice(
+              e instanceof Error ? e.message : t("loraPath.flashBothFailed"),
+            );
+            openDoctorPanel();
+          })
+          .finally(() => setFlashBusy(false));
+      },
+    },
+    {
+      id: "serial",
+      icon: Terminal,
+      label: t("loraPath.step.serialRx"),
+      titleKey: "loraPath.step.serialRxTitle" as const,
+      action: () => {
+        setBottomPanelVisible(true);
+        setBottomPanelTab("serial");
+        flashNotice(t("loraPath.serialRxHint"), 4000);
       },
     },
     {
@@ -109,7 +158,7 @@ export function LoRaPathGuide() {
       icon: Stethoscope,
       label: t("loraPath.step.doctor"),
       titleKey: "loraPath.step.doctorTitle" as const,
-      action: () => showDoctor(),
+      action: () => openDoctorPanel(),
     },
   ] as const;
 
@@ -127,6 +176,26 @@ export function LoRaPathGuide() {
         <Radio size={11} />
         {t("loraPath.title")}
       </span>
+      <label
+        className="inline-flex items-center gap-1 text-aether-fg-muted"
+        title={t("loraPath.regionTitle")}
+      >
+        <span className="sr-only">{t("wizard.region")}</span>
+        <select
+          data-testid="lora-path-region"
+          value={region}
+          disabled={pairBusy || joinBusy}
+          onChange={(e) => setRegion(e.target.value as LoraRegionId)}
+          className="h-5 max-w-[110px] rounded border border-aether-border/80 bg-transparent px-1 text-[10px] text-aether-fg"
+          aria-label={t("wizard.region")}
+        >
+          {LORA_REGIONS.map((r) => (
+            <option key={r.id} value={r.id}>
+              {locale === "ru" ? r.labelRu : r.labelEn}
+            </option>
+          ))}
+        </select>
+      </label>
       <button
         type="button"
         title={t("loraPath.wizardTitle")}
@@ -153,9 +222,10 @@ export function LoRaPathGuide() {
         disabled={pairBusy || !isTauriRuntime()}
         onClick={() => {
           setPairBusy(true);
-          void openLoraTxRxPair(selectedEnv || "heltec_wifi_lora_32_V3")
+          void openLoraTxRxPair({ env, region })
             .then(() => {
               flashNotice(t("loraPath.pairOpened"), 4000);
+              void runDoctor();
             })
             .catch((e) => {
               flashNotice(
@@ -168,8 +238,35 @@ export function LoRaPathGuide() {
       >
         {pairBusy ? "…" : t("loraPath.pair")}
       </button>
+      <button
+        type="button"
+        data-testid="lora-path-join"
+        title={t("loraPath.joinTitle")}
+        aria-label={t("loraPath.join")}
+        disabled={joinBusy || !isTauriRuntime()}
+        onClick={() => {
+          setJoinBusy(true);
+          void openLorawanJoinExample(env, region)
+            .then(() => {
+              flashNotice(t("loraPath.joinOpened"), 5000);
+              void runDoctor();
+            })
+            .catch((e) => {
+              flashNotice(
+                e instanceof Error ? e.message : t("loraPath.joinFailed"),
+              );
+            })
+            .finally(() => setJoinBusy(false));
+        }}
+        className="rounded border border-aether-border/80 px-1.5 py-0.5 text-aether-fg-muted hover:border-cyan-500/50 hover:text-aether-fg disabled:opacity-40"
+      >
+        {joinBusy ? "…" : t("loraPath.join")}
+      </button>
       {steps.map((step) => {
         const Icon = step.icon;
+        const busy =
+          (step.id === "flashBoth" && flashBusy) ||
+          (step.id === "upload" && running);
         return (
           <button
             key={step.id}
@@ -177,14 +274,16 @@ export function LoRaPathGuide() {
             data-testid={`lora-path-${step.id}`}
             title={t(step.titleKey)}
             aria-label={step.label}
+            disabled={busy}
             onClick={step.action}
             className={cn(
               "inline-flex items-center gap-1 rounded border border-aether-border/80 px-1.5 py-0.5",
               "text-aether-fg-muted hover:border-cyan-500/50 hover:text-aether-fg",
+              "disabled:opacity-40",
             )}
           >
             <Icon size={10} />
-            {step.label}
+            {busy ? "…" : step.label}
           </button>
         );
       })}

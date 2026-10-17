@@ -92,6 +92,17 @@ export function getCommands(): Command[] {
       },
     },
     {
+      id: "file.hardwareTemplates",
+      title: "Hardware Templates…",
+      category: "File",
+      keywords:
+        "heltec t-beam mega rfm95 lora fc bpla hardware template шаблон железо",
+      run: () => {
+        useSettingsStore.getState().openSettings("general");
+        // Profiles / hardware templates live under General → Firmware profiles.
+      },
+    },
+    {
       id: "file.save",
       title: "Save",
       category: "File",
@@ -600,12 +611,12 @@ export function getCommands(): Command[] {
     },
     {
       id: "pio.doctor",
-      title: "PlatformIO: Check Tools…",
+      title: "Doctor: Check Tools…",
       category: "PlatformIO",
-      keywords: "doctor toolchain clangd python диагностика",
+      keywords:
+        "doctor toolchain clangd python arduino-cli com drivers offline configurator диагностика",
       run: () => {
-        usePlatformIoStore.getState().showDoctor();
-        void usePlatformIoStore.getState().runDoctor();
+        usePlatformIoStore.getState().openDoctorPanel();
       },
     },
     {

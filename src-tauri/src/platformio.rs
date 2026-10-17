@@ -69,6 +69,17 @@ impl Default for PioState {
     }
 }
 
+impl PioState {
+    /// Shared with arduino-cli so only one firmware task runs at a time.
+    pub(crate) fn running_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.running)
+    }
+
+    pub(crate) fn child_slot(&self) -> Arc<Mutex<Option<Child>>> {
+        Arc::clone(&self.child)
+    }
+}
+
 fn resolve_pio_command() -> Option<String> {
     for candidate in ["pio", "platformio", "platformio.exe", "pio.exe"] {
         if let Ok(path) = which::which(candidate) {
@@ -224,11 +235,11 @@ fn parse_envs_from_ini(contents: &str) -> Vec<String> {
     envs
 }
 
-fn emit_status(app: &AppHandle, status: PioStatusPayload) {
+pub(crate) fn emit_status(app: &AppHandle, status: PioStatusPayload) {
     let _ = app.emit(PIO_STATUS_EVENT, status);
 }
 
-fn emit_line(app: &AppHandle, stream: &str, line: String) {
+pub(crate) fn emit_line(app: &AppHandle, stream: &str, line: String) {
     let _ = app.emit(
         PIO_OUTPUT_EVENT,
         PioOutputPayload {

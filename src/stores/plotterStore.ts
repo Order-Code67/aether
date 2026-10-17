@@ -20,10 +20,15 @@ const MAX_POINTS = 400;
 
 export type PlotterParseMode = "text" | "mavlink";
 
+/** Quick channel/mode presets for Radio / MSP / MAVLink workflows. */
+export type PlotterPreset = "custom" | "rssi-snr" | "msp" | "mavlink";
+
 export interface PlotPoint {
   t: number;
   values: Record<string, number>;
 }
+
+const MAX_RECORD_POINTS = 20_000;
 
 /** Live MAVLink HUD snapshot (not a full GCS). */
 export interface TelemetryHud {
@@ -55,6 +60,7 @@ export type TelemetryVehicleInfo = Pick<
 interface PlotterState {
   paused: boolean;
   parseMode: PlotterParseMode;
+  preset: PlotterPreset;
   points: PlotPoint[];
   channels: string[];
   /** Channel id → visible */
@@ -66,8 +72,11 @@ interface PlotterState {
   zoomSamples: number;
   /** Samples scrolled back from the latest point. */
   panFromEnd: number;
+  recording: boolean;
+  recordPoints: PlotPoint[];
   setPaused: (paused: boolean) => void;
   setParseMode: (mode: PlotterParseMode) => void;
+  applyPreset: (preset: PlotterPreset) => void;
   toggleChannel: (channel: string) => void;
   clear: () => void;
   zoomIn: () => void;
@@ -75,10 +84,27 @@ interface PlotterState {
   resetZoom: () => void;
   setPanFromEnd: (pan: number) => void;
   nudgePan: (delta: number) => void;
+  startRecording: () => void;
+  stopRecording: () => PlotPoint[];
   ingestLine: (line: string) => void;
   /** Push a pre-built sample (e.g. MSP RSSI/voltage) without parsing a text line. */
   ingestSample: (sample: Record<string, number>) => void;
   ingestBytes: (bytes: ArrayLike<number>) => void;
+}
+
+function preferRadioVisibility(
+  channels: string[],
+  visibility: Record<string, boolean>,
+): Record<string, boolean> {
+  const next = { ...visibility };
+  for (const ch of channels) {
+    next[ch] = /^(rssi|snr)$/i.test(ch);
+  }
+  // If none match yet, leave defaults so future RSSI/SNR show.
+  if (!channels.some((c) => /^(rssi|snr)$/i.test(c))) {
+    return visibility;
+  }
+  return next;
 }
 
 const mavParser = new MavlinkMinimalParser();
@@ -193,17 +219,36 @@ function applyResultToHud(
 }
 
 function appendSample(
-  state: Pick<PlotterState, "points" | "channels" | "visibility" | "seq">,
+  state: Pick<
+    PlotterState,
+    | "points"
+    | "channels"
+    | "visibility"
+    | "seq"
+    | "preset"
+    | "recording"
+    | "recordPoints"
+  >,
   sample: Record<string, number>,
-): Pick<PlotterState, "points" | "channels" | "visibility" | "seq"> {
+): Pick<
+  PlotterState,
+  | "points"
+  | "channels"
+  | "visibility"
+  | "seq"
+  | "recordPoints"
+> {
   const channels = [...state.channels];
-  const visibility = { ...state.visibility };
+  let visibility = { ...state.visibility };
   for (const key of Object.keys(sample)) {
     if (!channels.includes(key)) {
       channels.push(key);
       // Prefer radio channels visible by default
       if (visibility[key] === undefined) visibility[key] = true;
     }
+  }
+  if (state.preset === "rssi-snr") {
+    visibility = preferRadioVisibility(channels, visibility);
   }
   const next: PlotPoint = {
     t: state.seq + 1,
@@ -213,10 +258,20 @@ function appendSample(
   const ordered = sampleHasRadioChannels(sample)
     ? orderPlotChannels(channels)
     : channels;
+  let recordPoints = state.recordPoints;
+  if (state.recording) {
+    recordPoints = [...state.recordPoints, next];
+    if (recordPoints.length > MAX_RECORD_POINTS) {
+      recordPoints = recordPoints.slice(
+        recordPoints.length - MAX_RECORD_POINTS,
+      );
+    }
+  }
   return {
     seq: next.t,
     channels: ordered,
     visibility,
+    recordPoints,
     points:
       points.length > MAX_POINTS
         ? points.slice(points.length - MAX_POINTS)
@@ -229,6 +284,7 @@ export const usePlotterStore = create<PlotterState>()(
     (set, get) => ({
       paused: false,
       parseMode: "text",
+      preset: "custom",
       points: [],
       channels: [],
       visibility: {},
@@ -236,12 +292,48 @@ export const usePlotterStore = create<PlotterState>()(
       vehicle: null,
       zoomSamples: PLOTTER_ZOOM_MAX,
       panFromEnd: 0,
+      recording: false,
+      recordPoints: [],
 
       setPaused: (paused) => set({ paused }),
 
       setParseMode: (mode) => {
         mavParser.reset();
-        set({ parseMode: mode, vehicle: mode === "mavlink" ? get().vehicle : null });
+        set({
+          parseMode: mode,
+          preset: mode === "mavlink" ? "mavlink" : get().preset === "mavlink" ? "custom" : get().preset,
+          vehicle: mode === "mavlink" ? get().vehicle : null,
+        });
+      },
+
+      applyPreset: (preset) => {
+        mavParser.reset();
+        if (preset === "mavlink") {
+          set({
+            preset,
+            parseMode: "mavlink",
+            paused: false,
+          });
+          return;
+        }
+        if (preset === "rssi-snr") {
+          set((state) => ({
+            preset,
+            parseMode: "text",
+            paused: false,
+            visibility: preferRadioVisibility(state.channels, state.visibility),
+          }));
+          return;
+        }
+        if (preset === "msp") {
+          set({
+            preset,
+            parseMode: "text",
+            paused: false,
+          });
+          return;
+        }
+        set({ preset: "custom" });
       },
 
       toggleChannel: (channel) =>
@@ -250,6 +342,7 @@ export const usePlotterStore = create<PlotterState>()(
             ...state.visibility,
             [channel]: !(state.visibility[channel] ?? true),
           },
+          preset: "custom",
         })),
 
       clear: () => {
@@ -262,6 +355,14 @@ export const usePlotterStore = create<PlotterState>()(
           vehicle: null,
           panFromEnd: 0,
         });
+      },
+
+      startRecording: () => set({ recording: true, recordPoints: [] }),
+
+      stopRecording: () => {
+        const points = get().recordPoints;
+        set({ recording: false });
+        return points;
       },
 
       zoomIn: () =>
@@ -320,6 +421,9 @@ export const usePlotterStore = create<PlotterState>()(
             visibility: state.visibility,
             seq: state.seq,
             vehicle: state.vehicle,
+            preset: state.preset,
+            recording: state.recording,
+            recordPoints: state.recordPoints,
           };
           for (const result of results) {
             next = {
@@ -342,6 +446,7 @@ export const usePlotterStore = create<PlotterState>()(
         paused: state.paused,
         visibility: state.visibility,
         parseMode: state.parseMode,
+        preset: state.preset,
         zoomSamples: state.zoomSamples,
       }),
     },

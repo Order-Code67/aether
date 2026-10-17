@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import {
+  Circle,
   Download,
   Eraser,
   Minus,
@@ -7,14 +8,21 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Square,
 } from "lucide-react";
+import { PanelHint } from "@/components/hints/PanelHint";
 import { useI18n } from "@/hooks/useI18n";
 import { gpsFixLabel } from "@/lib/mavlinkMinimal";
+import { plotterEmptyReason } from "@/lib/plotterEmptyState";
 import { plotPointsToCsv, slicePlotWindow } from "@/lib/plotterExport";
 import { channelColor, sampleHasRadioChannels } from "@/lib/serialPlotter";
 import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
-import { usePlotterStore } from "@/stores/plotterStore";
+import { useLayoutStore } from "@/stores/layoutStore";
+import {
+  usePlotterStore,
+  type PlotterPreset,
+} from "@/stores/plotterStore";
 import { useSerialStore } from "@/stores/serialStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { documentDir, join } from "@tauri-apps/api/path";
@@ -36,22 +44,28 @@ export function SerialPlotter() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paused = usePlotterStore((s) => s.paused);
   const parseMode = usePlotterStore((s) => s.parseMode);
+  const preset = usePlotterStore((s) => s.preset);
   const points = usePlotterStore((s) => s.points);
   const channels = usePlotterStore((s) => s.channels);
   const visibility = usePlotterStore((s) => s.visibility);
   const vehicle = usePlotterStore((s) => s.vehicle);
   const zoomSamples = usePlotterStore((s) => s.zoomSamples);
   const panFromEnd = usePlotterStore((s) => s.panFromEnd);
+  const recording = usePlotterStore((s) => s.recording);
   const setPaused = usePlotterStore((s) => s.setPaused);
-  const setParseMode = usePlotterStore((s) => s.setParseMode);
+  const applyPreset = usePlotterStore((s) => s.applyPreset);
   const toggleChannel = usePlotterStore((s) => s.toggleChannel);
   const clear = usePlotterStore((s) => s.clear);
   const zoomIn = usePlotterStore((s) => s.zoomIn);
   const zoomOut = usePlotterStore((s) => s.zoomOut);
   const resetZoom = usePlotterStore((s) => s.resetZoom);
   const nudgePan = usePlotterStore((s) => s.nudgePan);
+  const startRecording = usePlotterStore((s) => s.startRecording);
+  const stopRecording = usePlotterStore((s) => s.stopRecording);
   const connected = useSerialStore((s) => s.connected);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
+  const setActiveActivity = useLayoutStore((s) => s.setActiveActivity);
+  const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
 
   const visiblePoints = useMemo(
     () => slicePlotWindow(points, zoomSamples, panFromEnd),
@@ -63,6 +77,88 @@ export function SerialPlotter() {
       points.some((p) => sampleHasRadioChannels(p.values)),
     [channels, points],
   );
+
+  const visibleChannelCount = useMemo(
+    () => channels.filter((c) => visibility[c] !== false).length,
+    [channels, visibility],
+  );
+
+  const emptyReason = plotterEmptyReason({
+    connected,
+    paused,
+    parseMode,
+    preset,
+    hasPoints: points.length > 0,
+    visibleChannelCount,
+    channelCount: channels.length,
+  });
+
+  const emptyMessage = emptyReason
+    ? t(
+        emptyReason === "need_connect"
+          ? "plotter.why.needConnect"
+          : emptyReason === "paused"
+            ? "plotter.why.paused"
+            : emptyReason === "waiting_mavlink"
+              ? "plotter.why.waitingMavlink"
+              : emptyReason === "waiting_msp"
+                ? "plotter.why.waitingMsp"
+                : emptyReason === "channels_hidden"
+                  ? "plotter.why.channelsHidden"
+                  : "plotter.why.waitingText",
+      )
+    : null;
+
+  const onPreset = (next: PlotterPreset) => {
+    applyPreset(next);
+    if (next === "msp") {
+      setActiveActivity("inav");
+      flashNotice(t("plotter.presetMspHint"), 4500);
+    } else if (next === "rssi-snr") {
+      setBottomPanelTab("serial");
+      flashNotice(t("plotter.presetRssiHint"), 4000);
+    }
+  };
+
+  const togglePlotRecord = async () => {
+    if (!recording) {
+      startRecording();
+      flashNotice(t("plotter.recordingOn"), 2500);
+      return;
+    }
+    const recorded = stopRecording();
+    if (recorded.length === 0) {
+      flashNotice(t("plotter.recordEmpty"));
+      return;
+    }
+    if (!isTauriRuntime()) {
+      flashNotice(t("plotter.desktopOnly"));
+      return;
+    }
+    const csv = plotPointsToCsv({
+      points: recorded,
+      channels: channels.length > 0 ? channels : ["value"],
+    });
+    try {
+      const docs = await documentDir();
+      const dir = await join(docs, "Aether", "plotter");
+      await mkdir(dir, { recursive: true });
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const suggested = await join(dir, `plot-record-${stamp}.csv`);
+      const chosen = await save({
+        title: locale === "ru" ? "Сохранить запись плоттера" : "Save plotter log",
+        defaultPath: suggested,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
+      });
+      if (typeof chosen !== "string" || !chosen) return;
+      await writeTextFile(chosen, csv);
+      flashNotice(t("plotter.recorded", { count: recorded.length }), 3500);
+    } catch (e) {
+      flashNotice(
+        e instanceof Error ? e.message : t("plotter.exportFailed"),
+      );
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -102,17 +198,13 @@ export function SerialPlotter() {
 
       const visible = channels.filter((c) => visibility[c] !== false);
       if (visiblePoints.length === 0 || visible.length === 0) {
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.fillStyle = "rgba(255,255,255,0.45)";
         ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
-        ctx.fillText(
-          connected
-            ? parseMode === "mavlink"
-              ? t("plotter.waitingMavlink")
-              : t("plotter.waiting")
-            : t("plotter.connectHint"),
-          pad.l + 8,
-          pad.t + 18,
-        );
+        const msg = emptyMessage ?? t("plotter.connectHint");
+        const lines = msg.split("\n");
+        lines.forEach((line, i) => {
+          ctx.fillText(line, pad.l + 8, pad.t + 18 + i * 16);
+        });
         return;
       }
 
@@ -168,7 +260,7 @@ export function SerialPlotter() {
     const ro = new ResizeObserver(() => draw());
     ro.observe(parent);
     return () => ro.disconnect();
-  }, [visiblePoints, channels, visibility, connected, parseMode, t]);
+  }, [visiblePoints, channels, visibility, connected, parseMode, emptyMessage, t]);
 
   const exportCsv = async (scope: "visible" | "all") => {
     if (!isTauriRuntime()) {
@@ -208,36 +300,37 @@ export function SerialPlotter() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <PanelHint messageKey="hints.panel.plotter" className="mx-2 mt-1.5" />
       <div className="flex flex-wrap items-center gap-1.5 border-b border-aether-border px-2 py-1.5">
         <div
           className="flex h-7 items-center rounded border border-aether-border p-0.5 text-[11px]"
           role="group"
-          aria-label={t("plotter.mode")}
+          aria-label={t("plotter.presets")}
         >
-          <button
-            type="button"
-            onClick={() => setParseMode("text")}
-            className={cn(
-              "rounded px-2 py-0.5",
-              parseMode === "text"
-                ? "bg-aether-accent-muted text-aether-fg"
-                : "text-aether-fg-muted hover:text-aether-fg",
-            )}
-          >
-            {t("plotter.modeText")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setParseMode("mavlink")}
-            className={cn(
-              "rounded px-2 py-0.5",
-              parseMode === "mavlink"
-                ? "bg-aether-accent-muted text-aether-fg"
-                : "text-aether-fg-muted hover:text-aether-fg",
-            )}
-          >
-            {t("plotter.modeMavlink")}
-          </button>
+          {(
+            [
+              ["rssi-snr", "plotter.presetRssi"],
+              ["msp", "plotter.presetMsp"],
+              ["mavlink", "plotter.presetMavlink"],
+            ] as const
+          ).map(([id, key]) => (
+            <button
+              key={id}
+              type="button"
+              title={t(key)}
+              aria-label={t(key)}
+              aria-pressed={preset === id}
+              onClick={() => onPreset(id)}
+              className={cn(
+                "rounded px-2 py-0.5",
+                preset === id
+                  ? "bg-aether-accent-muted text-aether-fg"
+                  : "text-aether-fg-muted hover:text-aether-fg",
+              )}
+            >
+              {t(key)}
+            </button>
+          ))}
         </div>
         {hasRadio && parseMode === "text" && (
           <span
@@ -299,6 +392,27 @@ export function SerialPlotter() {
             <RotateCcw size={12} />
           </button>
         </div>
+        <button
+          type="button"
+          title={
+            recording ? t("plotter.recordStopTitle") : t("plotter.recordTitle")
+          }
+          aria-label={
+            recording ? t("plotter.recordStop") : t("plotter.record")
+          }
+          aria-pressed={recording}
+          onClick={() => void togglePlotRecord()}
+          className={cn(
+            "flex h-7 items-center gap-1 rounded border px-2 text-[11px]",
+            recording
+              ? "border-aether-danger/50 bg-aether-danger/15 text-aether-fg"
+              : "border-aether-border text-aether-fg hover:bg-aether-surface-raised",
+          )}
+          data-testid="plotter-record"
+        >
+          {recording ? <Square size={12} /> : <Circle size={12} />}
+          {recording ? t("plotter.recordStop") : t("plotter.record")}
+        </button>
         <button
           type="button"
           title={t("plotter.exportCsv")}

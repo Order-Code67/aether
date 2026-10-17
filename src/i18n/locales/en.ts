@@ -1,6 +1,7 @@
 ﻿export const en = {
   "app.name": "Aether",
-  "app.tagline": "IDE for robots, drones, and embedded systems.",
+  "app.tagline":
+    "Arduino-first IDE for boards, LoRa radio, and БПЛА — not another VS Code.",
   "activity.explorer": "Explorer",
   "activity.explorerTitle": "Explorer — workspace files and folders",
   "activity.sources": "Where to load",
@@ -14,12 +15,15 @@
   "activity.boardsTitle": "Boards & targets — PlatformIO environments",
   "activity.libraries": "Libraries",
   "activity.librariesTitle": "Libraries (book) — search & install Arduino libs",
+  "activity.doctor": "Doctor",
+  "activity.doctorTitle":
+    "Doctor — PlatformIO, arduino-cli, COM, drivers, offline cache, Configurator",
   "activity.inav": "БПЛА",
   "activity.inavTitle": "BPLA: Aether Configurator + COM / MSP / flash",
   "status.fcSession": "FC · {port}",
   "status.fcSessionTitle": "Open BPLA / Aether Configurator",
   "hub.inav": "Aether Configurator",
-  "hub.inavDesc": "Launch Configurator with COM handoff; quick MSP/CLI/flash in Aether.",
+  "hub.inavDesc": "БПЛА path — Configurator with COM handoff; MSP/CLI/flash in Aether.",
   "activity.debug": "Run and Debug",
   "activity.debugTitle": "Run and Debug — breakpoints and PIO debug",
   "activity.agent": "AI Agent",
@@ -77,6 +81,23 @@
   "serial.autoscroll": "Autoscroll",
   "serial.noPorts": "No ports found",
   "serial.needDesktop": "Serial Monitor needs the desktop app.",
+  "serial.send": "Send",
+  "serial.sendPlaceholder": "Send line…",
+  "serial.sendNeedConnect": "Connect to send",
+  "serial.record": "Record",
+  "serial.recordStop": "Stop",
+  "serial.recordTitle": "Start recording serial log to a file on stop",
+  "serial.recordStopTitle": "Stop recording and save .log",
+  "serial.recordingOn": "Recording serial log…",
+  "serial.recordEmpty": "Nothing recorded — serial was silent.",
+  "serial.recorded": "Saved {count} lines to serial log.",
+  "serial.recordFailed": "Could not save serial log.",
+  "serial.why.noPorts":
+    "No COM ports found.\nWhy: board unplugged, wrong cable, or missing CH340/CP210x drivers.\nFix: plug in USB → Refresh → Doctor → Drivers.",
+  "serial.why.needConnect":
+    "Select a COM port and Connect.\nWhy no data: Serial Monitor is idle until the port is open.",
+  "serial.why.waitingData":
+    "Connected — waiting for lines.\nWhy silent: sketch not printing, wrong baud, or another app holds the port.",
   "status.bar": "Status Bar",
   "status.openProblems": "Open Problems",
   "status.openOutput": "Open PlatformIO Output",
@@ -96,6 +117,33 @@
   "plotter.waitingMavlink":
     "Connected — waiting for MAVLink HEARTBEAT / ATTITUDE / GPS…",
   "plotter.connectHint": "Connect Serial Monitor, then open Plotter for live charts.",
+  "plotter.presets": "Plotter presets",
+  "plotter.presetRssi": "RSSI/SNR",
+  "plotter.presetMsp": "MSP",
+  "plotter.presetMavlink": "MAVLink",
+  "plotter.presetRssiHint":
+    "RSSI/SNR preset — keep Serial open on a LoRa RX sketch that prints rssi/snr.",
+  "plotter.presetMspHint":
+    "MSP preset — open БПЛА, Connect FC, enable live telemetry to feed RSSI/voltage into Plotter.",
+  "plotter.record": "Record",
+  "plotter.recordStop": "Stop",
+  "plotter.recordTitle": "Record plot samples; save CSV on stop",
+  "plotter.recordStopTitle": "Stop recording and save CSV",
+  "plotter.recordingOn": "Recording plot samples…",
+  "plotter.recordEmpty": "Nothing recorded — no numeric samples yet.",
+  "plotter.recorded": "Saved {count} plot samples to CSV.",
+  "plotter.why.needConnect":
+    "Connect Serial first.\nWhy no plot: Plotter only charts open-port traffic.",
+  "plotter.why.paused":
+    "Plotter is paused — Resume to accept new samples.",
+  "plotter.why.waitingText":
+    "Connected — waiting for numbers.\nWhy empty: sketch must print key:value, CSV, or rssi=/snr= lines.",
+  "plotter.why.waitingMavlink":
+    "Waiting for MAVLink frames.\nWhy empty: FC not sending HEARTBEAT/GPS, or baud/port wrong.",
+  "plotter.why.waitingMsp":
+    "MSP preset — no samples yet.\nWhy: connect FC in БПЛА and start live telemetry (RSSI/voltage).",
+  "plotter.why.channelsHidden":
+    "Samples exist but all channels are hidden — click a channel chip to show it.",
   "plotter.toggleChannel": "Toggle {channel}",
   "plotter.mode": "Parse mode",
   "plotter.modeText": "Text",
@@ -171,9 +219,11 @@
   "profiles.delete": "Delete",
   "profiles.rename": "Rename",
   "profiles.empty": "No profiles yet — open a PlatformIO project and save one.",
-  "profiles.hardwareTitle": "Hardware presets (LoRa)",
+  "profiles.hardwareTitle": "Hardware templates",
+  "profiles.hardwareBplaOpened":
+    "Opened “{name}” — БПЛА / Aether Configurator is ready.",
   "profiles.hardwareHint":
-    "Opens a bundled example with pin maps for that board. Pick env after open if needed.",
+    "One-click example + env (libs from platformio.ini on first build). FC opens the БПЛА / Configurator path.",
   "profiles.hardwareOpen": "Open",
   "profiles.hardwareOpened": "Opened “{name}”",
   "profiles.hardwareFailed": "Could not open hardware preset.",
@@ -202,23 +252,50 @@
   "welcome.openDemo": "Open Demo Workspace",
   "welcome.openInVsCode": "Open in VS Code",
   "welcome.generateVsCode": "Generate VS Code config…",
-  "welcome.quickStart": "Quick start (60s)",
+  "welcome.quickStart": "Getting started",
   "welcome.cleanPc": "Clean PC (~15 min)",
   "welcome.cleanPcHint":
-    "Install → Doctor (PIO) → Import OfflineLibs → Examples → Build+Upload. See docs/CLEAN_WINDOWS.md.",
+    "Install → Doctor (PIO) → Import OfflineLibs → Examples → Build+Upload. Optional: Arduino CLI cores + Aether Configurator (БПЛА). See docs/CLEAN_WINDOWS.md.",
+  "welcome.hardwareTitle": "Hardware templates",
+  "welcome.hardwareHint":
+    "One-click Heltec / T-Beam / Mega+RFM95 / FC — opens example + env (libs via platformio.ini) or БПЛА path.",
   "welcome.browserHint":
     "Browser preview can use the demo workspace. Real folders require npm run tauri:dev.",
-  "hub.tagline": "Choose a path — Arduino, PlatformIO, Aether Configurator, VS Code, or AI.",
+  "hub.tagline":
+    "Arduino-first IDE for boards, LoRa radio, and БПЛА — board → COM → upload, not another VS Code.",
   "hub.arduino": "Arduino",
-  "hub.arduinoDesc": "Quick Start wizard and new Arduino-style project.",
+  "hub.arduinoDesc": "Quick Start: Blink → LoRa → Configurator path.",
   "hub.platformio": "PlatformIO",
   "hub.platformioDesc": "Open a folder and pick boards / environments.",
   "hub.vscode": "VS Code",
-  "hub.vscodeDesc": "Open the workspace in VS Code (desktop).",
+  "hub.vscodeDesc": "Optional: open the same folder in VS Code (desktop).",
   "hub.ai": "AI Assistant",
   "hub.aiDesc": "Chat with the agent about your project and firmware.",
-  "onboarding.title": "Quick start",
-  "onboarding.subtitle": "Board → COM port → Blink → Upload in about a minute.",
+  "onboarding.title": "Getting started",
+  "onboarding.subtitle": "Three paths: Blink → LoRa → Configurator.",
+  "onboarding.tourNav": "Onboarding screens",
+  "onboarding.tour.blink": "Blink",
+  "onboarding.tour.lora": "LoRa",
+  "onboarding.tour.configurator": "Configurator",
+  "onboarding.tour.blinkBody":
+    "First flash: pick a board, COM port, create Blink, then Build + Upload.",
+  "onboarding.tour.loraBody":
+    "Next: open a TX↔RX LoRa pair, flash both boards, watch packets in Serial / Plotter.",
+  "onboarding.tour.configuratorBody":
+    "For flight controllers: Activity БПЛА opens Aether Configurator with COM handoff.",
+  "onboarding.back": "Back",
+  "onboarding.next": "Next",
+  "onboarding.lora.cta": "Open LoRa TX + RX pair",
+  "onboarding.lora.ctaTitle": "Materialize TX and RX examples and open them as a pair.",
+  "onboarding.lora.guide": "Open Boards / LoRa guide",
+  "onboarding.lora.guideTitle": "Show the LoRa path guide in the editor.",
+  "onboarding.lora.guideHint": "Use the LoRa path bar above the editor for region, pair, and flash.",
+  "onboarding.lora.opened": "LoRa TX + RX pair opened.",
+  "onboarding.lora.failed": "Could not open the LoRa pair.",
+  "onboarding.configurator.cta": "Open БПЛА / Configurator",
+  "onboarding.configurator.ctaTitle":
+    "Open the БПЛА activity to launch Aether Configurator.",
+  "onboarding.configurator.opened": "БПЛА panel opened — pick COM and launch Configurator.",
   "onboarding.step.board": "1. Choose board",
   "onboarding.step.port": "2. Select COM port",
   "onboarding.step.project": "3. Create or open Blink starter",
@@ -241,7 +318,7 @@
   "onboarding.skip": "Skip",
   "onboarding.finish": "Done",
   "onboarding.progressHint": "Complete the steps above — checklist ticks as you go.",
-  "onboarding.completedNotice": "Quick start complete.",
+  "onboarding.completedNotice": "Getting started tour complete.",
   "drivers.portExistsWontOpen": "port listed, will not open",
   "drivers.portMissing": "port not visible to the OS",
   "activity.more": "More",
@@ -263,18 +340,53 @@
     "When on, short how-to lines appear in Welcome, Where to load, Build, BPLA, Serial, and Agent. Icon buttons show a fast tooltip on hover.",
   "hints.coach.title": "Getting started",
   "hints.coach.dismiss": "Got it",
-  "hints.coach.step1": "1. Open a folder (or create a project)",
-  "hints.coach.step2": "2. Pick board / COM port",
-  "hints.coach.step3": "3. Build — compile firmware",
-  "hints.coach.step4": "4. Upload — flash the board over COM",
+  "hints.coach.step1": "1. Blink — board → COM → Build + Upload",
+  "hints.coach.step2": "2. LoRa — open TX↔RX pair and flash both",
+  "hints.coach.step3": "3. Configurator — БПЛА activity for the flight controller",
+  "hints.coach.cta.blink": "Quick start",
+  "hints.coach.cta.lora": "Boards / LoRa",
+  "hints.coach.cta.configurator": "Open БПЛА",
+  "hints.checklist.title": "Scenario checklists",
+  "hints.checklist.cta.blink": "Start Blink wizard",
+  "hints.checklist.cta.lora": "Open tour → LoRa",
+  "hints.checklist.cta.bpla": "Open БПЛА",
+  "hints.checklist.blink.title": "First Blink",
+  "hints.checklist.blink.step1": "Welcome → Examples → esp32-blink (or Mega)",
+  "hints.checklist.blink.step2": "Plug the board; pick COM in the build toolbar",
+  "hints.checklist.blink.step3": "Build tool: PlatformIO (or Arduino CLI if .ino + CLI installed)",
+  "hints.checklist.blink.step4": "Build, then Upload",
+  "hints.checklist.blink.step5": "Serial Monitor → see LED / Serial.print",
+  "hints.checklist.lora.title": "LoRa TX ↔ RX",
+  "hints.checklist.lora.step1": "LoRa path → Open TX + RX pair (same region on both)",
+  "hints.checklist.lora.step2": "Pick region + env; Doctor confirms pins for your board",
+  "hints.checklist.lora.step3": "Flash both (or Upload each folder) — separate COM per board",
+  "hints.checklist.lora.step4": "Serial on RX → confirm RX: packets; Plotter for RSSI/SNR",
+  "hints.checklist.lora.step5": "On fail: Doctor radio tips + antenna / wiring; Join for LoRaWAN",
+  "hints.checklist.bpla.title": "UAV: IDE quick path + Configurator",
+  "hints.checklist.bpla.step1": "Activity БПЛА → pick COM (+ baud)",
+  "hints.checklist.bpla.step2": "Full FC setup? Open Aether Configurator (releases COM, passes port/baud)",
+  "hints.checklist.bpla.step3": "Quick check in IDE? Connect → MSP refresh → optional Plotter",
+  "hints.checklist.bpla.step4": "CLI snippet or DFU .hex? Stay in Aether (release COM before Configurator)",
+  "hints.checklist.bpla.step5": "If Configurator missing: Doctor row or npm run configurator:package",
   "hints.panel.welcome":
-    "Start here: open a folder, pick a board and COM, then Build and Upload from the toolbar.",
+    "Arduino-first path: Blink → LoRa → Configurator. Open a folder, pick COM, Build + Upload — VS Code is optional.",
+  "settings.telemetry": "Local diagnostics (opt-in)",
+  "settings.telemetryHint":
+    "Off by default. When on, Build/Upload failures are logged locally only (no server, no PII). See docs/TELEMETRY.md.",
   "hints.panel.sources":
     "Open a project folder, add a path, or copy an example — then pick COM and Build.",
   "hints.panel.build":
     "Choose env + COM, then Build (compile) and Upload (flash). Output tab shows progress.",
+  "hints.panel.buildArduinoCli":
+    "Build tool: Arduino CLI. Needs a .ino sketch + mapped board. Libraries → Arduino tab uses the same CLI.",
+  "hints.panel.librariesArduino":
+    "Arduino tab uses arduino-cli when installed (official Library Manager → project lib/). Install CLI from Settings → Tools if missing.",
   "hints.panel.bpla":
-    "Connect COM for MSP/CLI here, or launch Aether Configurator for full FC setup.",
+    "In Aether: COM, MSP peek, CLI, DFU flash. In Configurator: ports, modes, PID, OSD, mission (full FC setup).",
+  "hints.panel.doctor":
+    "Doctor checks PlatformIO, arduino-cli, COM, drivers, offline cache, and Aether Configurator. Use Fix / Install / Recheck on each row.",
+  "hints.panel.plotter":
+    "Presets: RSSI/SNR (Serial text), MSP (БПЛА telemetry), MAVLink. Record saves CSV when you stop.",
   "hints.panel.serial":
     "Pick COM + baud, Connect to read Serial.print. Disconnect before Upload if the port is busy.",
   "hints.panel.agent":
@@ -285,6 +397,37 @@
   "hints.tip.compiledb": "IntelliSense DB — regenerate compile_commands.json",
   "hints.tip.portRefresh": "Refresh COM ports",
   "hints.tip.settings": "Settings — language, theme, hints",
+  "arduinoCli.settingsTitle": "Arduino CLI",
+  "arduinoCli.settingsHint":
+    "Official Arduino command-line tool: Library Manager, and optional Build/Upload for .ino sketches (toggle below or in the build toolbar).",
+  "arduinoCli.statusChecking": "Checking for arduino-cli…",
+  "arduinoCli.statusInstalled": "Found: {version}",
+  "arduinoCli.statusMissing":
+    "Not found on PATH or common install folders (Program Files, Scoop, WinGet Links).",
+  "arduinoCli.installHint":
+    "Windows: download from the Arduino docs, or winget install ArduinoSA.CLI, then Recheck. Restart Aether after install if PATH changed.",
+  "arduinoCli.recheckTitle": "Recheck arduino-cli and toolchain",
+  "arduinoCli.toolLabel": "Build tool",
+  "arduinoCli.toolTitle":
+    "PlatformIO (default) or Arduino CLI for compile/upload of .ino sketches",
+  "arduinoCli.toolTitleProject":
+    "Build tool for this project (remembered per folder). Global default is in Settings → Tools.",
+  "arduinoCli.toolProjectHint":
+    "Build toolbar remembers PlatformIO ↔ Arduino CLI per project folder; this setting is the default for new folders.",
+  "arduinoCli.toolPio": "PlatformIO",
+  "arduinoCli.toolArduino": "Arduino CLI",
+  "arduinoCli.ensureCores": "Install AVR + ESP32 cores",
+  "arduinoCli.ensureCoresBusy": "Installing cores…",
+  "arduinoCli.ensureCoresTitle":
+    "Run arduino-cli core install for arduino:avr and esp32:esp32 when missing",
+  "arduinoCli.ensureCoresDone": "Arduino cores: {detail}",
+  "arduinoCli.ensureCoresFailed": "Could not install Arduino cores.",
+  "arduinoCli.missing": "arduino-cli not found — install via Settings → Tools",
+  "arduinoCli.error.missing":
+    "arduino-cli not found. Install it (Settings → Tools) or switch Build tool to PlatformIO.",
+  "arduinoCli.error.compiledb":
+    "IntelliSense DB is a PlatformIO task. Switch Build tool to PlatformIO.",
+  "arduinoCli.runVia": "Using Arduino CLI for this task…",
   "settings.showExternalInavConfigurator":
     "Show external iNav Configurator button",
   "settings.showExternalInavConfiguratorHint":
@@ -299,7 +442,7 @@
   "libraries.arduinoEmpty":
     "Search for an Arduino library (e.g. Servo, Adafruit GFX) or tap a popular chip.",
   "libraries.arduinoCliMissing":
-    "arduino-cli was not found on PATH. Install it for official Library Manager search/install, or continue with PlatformIO registry below.",
+    "arduino-cli was not found (PATH or common folders). Install it for official Library Manager search/install, or continue with PlatformIO registry below.",
   "libraries.arduinoCliInstall": "Install arduino-cli",
   "libraries.arduinoCliDetected": "arduino-cli: {version}",
   "libraries.arduinoCliInstallProgress":
@@ -370,7 +513,32 @@
   "wizard.close": "Close",
   "wizard.error": "Failed to create project.",
   "doctor.title": "Toolchain check",
+  "doctor.panelTitle": "Unified Doctor",
   "doctor.openShort": "Doctor",
+  "doctor.openPanel": "Open Doctor panel",
+  "doctor.settingsHint":
+    "One place for PlatformIO, arduino-cli, COM ports, drivers, offline cache, and Aether Configurator — each with Fix / Install / Recheck.",
+  "doctor.recheckAllTitle": "Recheck all Doctor rows",
+  "doctor.row.pio": "PlatformIO",
+  "doctor.row.arduinoCli": "Arduino CLI",
+  "doctor.row.com": "COM ports",
+  "doctor.row.drivers": "USB serial drivers",
+  "doctor.row.offline": "Offline cache",
+  "doctor.row.configurator": "Aether Configurator",
+  "doctor.row.python": "Python",
+  "doctor.comOk": "{count} port(s) — selected {port}",
+  "doctor.comMissing":
+    "No COM ports listed. Plug in the board, install CH340/CP210x if needed, then Recheck.",
+  "doctor.offlineOk": "espressif32 + atmelavr present in PlatformIO home.",
+  "doctor.offlineMissing":
+    "Platform cache incomplete — Prepare offline cache or Import OfflineLibs for faster first builds.",
+  "doctor.configuratorOk": "Found: {path}",
+  "doctor.configuratorMissing":
+    "Aether Configurator not found. Build with npm run configurator:package or set AETHER_CONFIGURATOR.",
+  "doctor.configuratorOpen": "Open Configurator",
+  "doctor.configuratorDocs": "Configurator docs",
+  "doctor.panelFooter":
+    "Banner still appears when tools are missing. This panel is the full checklist.",
   "doctor.ok": "All set — PlatformIO was found.",
   "command.unknown": "Unknown command: {id}",
   "command.failed": "Command failed: {message}",
@@ -381,6 +549,12 @@
   "doctor.pythonOk": "Python: {version}",
   "doctor.pythonMissing":
     "Python not found (needed to install PlatformIO via pip). Install Python 3 with pip and Add to PATH.",
+  "doctor.arduinoCliOk": "Arduino CLI: {version}",
+  "doctor.arduinoCliMissing":
+    "Arduino CLI not found (optional). Install for official Library Manager and .ino Build/Upload — see Install arduino-cli below.",
+  "doctor.openArduinoCli": "Install arduino-cli",
+  "doctor.openArduinoCliTitle":
+    "Open Arduino CLI installation docs (download / winget)",
   "doctor.driversHint":
     "Serial drivers: many boards need CH340 or CP210x on Windows. Aether cannot install unsigned drivers automatically — open Optional Features or the vendor pages below.",
   "doctor.radioTitle": "Radio / LoRa tips",
@@ -720,6 +894,8 @@
   "extensions.offline":
     "Offline — showing bundled catalog only. Remote marketplace download needs internet.",
   "extensions.publish": "Publish",
+  "extensions.storeNotYet":
+    "Signed remote extension store — not yet. Local packs, catalog URL, and Publish hub only. See docs/PUBLISHING.md.",
   "common.error": "Error",
   "common.loading": "Loading…",
   "common.refresh": "Refresh",
@@ -756,10 +932,13 @@
   "updater.channel.beta": "Beta",
   "updater.channelHint":
     "Stable uses latest.json (non-prerelease); Beta uses latest-beta.json pointing at a prerelease when published (see docs/UPDATES.md).",
+  "updater.betaExtrasHint":
+    "Beta may also preview Arduino CLI / Hints UI changes before they land on Stable. Signing is unchanged — only install signed feeds.",
   "updater.channelLabel": "Channel: {channel}",
   "updater.badge.beta": "Beta",
   "updater.feedHint":
     "Signed updates via Tauri updater. Stable → latest.json (non-prerelease); Beta → latest-beta.json (prerelease when published).",
+  "updater.feedOk": "Release feed reachable (signed updates).",
   "inav.title": "FC Configurator",
   "inav.hint":
     "Connect the flight controller through Aether (left panel → Connect). Full iNav configurator in this window: PID, rates, RX, nav, parameters, presets. Owns the COM port. No motors/arm. EEPROM save is explicit only.",
@@ -948,7 +1127,7 @@
   "inav.deleteProfileConfirm": "Delete this iNav profile?",
   "inav.openConfigurator": "Open external iNav Configurator (optional)",
   "inav.configuratorHint":
-    "Optional: launches the official Electron app. Aether disconnects first. Prefer configuring here — Connect via Aether.",
+    "Optional official iNav Electron app. Aether releases COM first. Day-to-day FC setup: Aether Configurator (БПЛА panel).",
   "inav.configuratorMissing":
     "iNav Configurator was not found in common install paths or PATH.\n\nOpen the GitHub releases page to download it?",
   "inav.configuratorLaunched": "iNav Configurator launched.",
@@ -986,15 +1165,32 @@
   "loraPath.wizard": "Wizard",
   "loraPath.examples": "TX/RX examples",
   "loraPath.pair": "Open TX + RX pair",
-  "loraPath.pairOpened": "LoRa TX + RX opened (TX active, RX as second folder).",
+  "loraPath.pairOpened":
+    "LoRa TX + RX opened (same region on both; TX active, RX second folder).",
   "loraPath.pairFailed": "Could not open LoRa TX/RX pair.",
+  "loraPath.join": "Join / LoRaWAN",
+  "loraPath.joinOpened":
+    "LoRaWAN OTAA stub opened — set keys in config.h, Upload, watch Join on Serial.",
+  "loraPath.joinFailed": "Could not open LoRaWAN Join example.",
+  "loraPath.regionTitle": "Region for TX+RX pair and Join (must match on both peers)",
   "loraPath.step.pins": "Pins",
   "loraPath.step.upload": "Upload",
+  "loraPath.step.flashBoth": "Flash both",
+  "loraPath.step.serialRx": "Serial RX",
   "loraPath.step.plotter": "Plotter RSSI",
   "loraPath.step.doctor": "Doctor",
+  "loraPath.flashBothDone":
+    "TX + RX uploaded. Connect Serial to the RX COM to confirm packets.",
+  "loraPath.flashBothFailed": "Flash both failed — check Output / Doctor.",
+  "loraPath.serialRxHint":
+    "Pick the RX board COM, connect Serial, watch for RX: lines (RSSI/SNR).",
+  "loraPath.rxOk": "LoRa RX packet OK — open Plotter for RSSI/SNR.",
+  "loraPath.joinOk": "LoRaWAN Join OK — uplinks should follow.",
   "bplaPath.title": "BPLA",
   "bplaPath.hint":
     "Full FC setup → Aether Configurator. Below: quick COM / MSP / CLI / DFU in the IDE. Arduino remains the primary IDE path.",
+  "bplaPath.whenToUse":
+    "Configurator = ports/modes/PID/OSD. IDE below = quick COM check, MSP, CLI, DFU without leaving Aether.",
   "bplaPath.step.com": "COM in Aether",
   "bplaPath.step.msp": "MSP / telemetry",
   "bplaPath.step.cli": "CLI",
@@ -1007,11 +1203,14 @@
   "bplaPath.configuratorOpen": "Open Aether Configurator",
   "bplaPath.configuratorLaunching": "Launching…",
   "bplaPath.configuratorLaunched": "Aether Configurator launched.",
+  "bplaPath.configuratorReleased":
+    "COM released for Configurator — reconnect here when you close it.",
   "bplaPath.configuratorInstalled": "Found: {path}",
   "bplaPath.configuratorMissing":
     "Aether Configurator not found. Run npm run configurator:package or set AETHER_CONFIGURATOR.",
   "bplaPath.configuratorDesktop":
     "Aether Configurator requires the desktop app (npm run tauri:dev).",
+  "agent.appliedTo": "Applied to {path}",
   "inav.msp.gps": "GPS",
   "inav.msp.gpsValue": "{fix} · {sats} sats",
   "inav.msp.latLon": "Lat / Lon",
@@ -1123,33 +1322,39 @@
   "profiles.applyTitle":
     "Apply a saved profile — switches env and upload port to that snapshot.",
   "doctor.openTitle":
-    "Toolchain Doctor — check PlatformIO, ports, drivers, and radio tips.",
+    "Unified Doctor — PlatformIO, arduino-cli, COM, drivers, offline cache, Configurator.",
   "loraPath.wizardTitle":
     "New Project wizard — create a LoRa-ready PlatformIO project.",
   "loraPath.examplesTitle":
     "Open bundled TX/RX LoRa examples from the catalog.",
   "loraPath.pairTitle":
-    "Open TX and RX example folders together (TX active, RX as second root).",
+    "Open TX and RX example folders together (same region; TX active, RX as second root).",
+  "loraPath.joinTitle":
+    "Open LoRaWAN OTAA stub — Join then uplink (set DevEUI/AppKey in config.h).",
   "loraPath.step.pinsTitle":
     "Show pin-map tips (NSS/DIO/RST) via Doctor — match your board wiring.",
   "loraPath.step.uploadTitle":
     "Upload the current LoRa sketch, then watch Output for flash progress.",
+  "loraPath.step.flashBothTitle":
+    "Upload TX then RX automatically (needs an opened pair and COM per folder).",
+  "loraPath.step.serialRxTitle":
+    "Open Serial Monitor — connect to the RX board COM to confirm packets.",
   "loraPath.step.plotterTitle":
     "Open Serial Plotter for live RSSI/SNR after the RX sketch is connected.",
   "loraPath.step.doctorTitle":
     "Open Doctor for radio project checks and COM/driver hints.",
   "hub.arduinoTitle":
-    "Arduino path — open Quick Start (board → COM → Blink → Upload).",
+    "Arduino-first path — Blink → LoRa → Configurator tour.",
   "hub.platformioTitle":
     "PlatformIO path — open a folder and pick boards / environments.",
   "hub.inavTitle":
     "Aether Configurator — COM handoff, MSP/CLI/flash for FC setup.",
   "hub.vscodeTitle":
-    "Open the current workspace folder in VS Code (desktop app).",
+    "Optional: open the current workspace folder in VS Code (desktop).",
   "hub.aiTitle":
     "AI Agent — ask about firmware, boards, and this project.",
   "welcome.quickStartTitle":
-    "Quick start wizard (~60s): board, COM port, Blink, upload.",
+    "Getting started: Blink → LoRa → Configurator (board, COM, upload).",
   "welcome.newProjectTitle":
     "Create a new PlatformIO / Arduino-style project with the wizard.",
   "welcome.openFolderTitle":

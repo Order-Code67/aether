@@ -14,8 +14,10 @@ Launched from Aether Activity **БПЛА** with COM handoff. Does **not** replac
 ## Integration status (Aether IDE)
 
 - **Arduino-first:** the IDE core stays board → sketch → COM → upload. LoRa is Arduino + radio.
-- **БПЛА:** Activity **БПЛА** → **Open Aether Configurator** (detect / launch + COM `--port` / `--baud`). Env: `AETHER_CONFIGURATOR`.
+- **БПЛА:** Activity **БПЛА** → **Open Aether Configurator** (detect / launch + COM `--port` / `--baud`).
+- **Detect paths (Windows):** `AETHER_CONFIGURATOR` → next to `Aether.exe` → `D:\CFG\Aether\Aether Configurator.exe` → `%LOCALAPPDATA%\Programs\Aether Configurator` → Program Files → PATH.
 - Build locally: `npm run configurator:package` → `apps/aether-configurator/release/`.
+- **Dist packs:** `npm run package:dist` copies a portable Configurator into `Aether_Dist_*` only if ≤ ~120 MB; larger Electron bundles stay out of the USB pack — README-FIRST documents detect paths instead.
 - БПЛА-Студия is **no longer** launched from the IDE.
 
 ## What works today

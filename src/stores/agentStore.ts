@@ -86,6 +86,9 @@ interface AgentState {
 function buildSystemPrompt(): string {
   const { kind, rootName, folders, activeFolderPath } =
     useWorkspaceStore.getState();
+  const editor = useEditorStore.getState();
+  const activeTab = editor.tabs.find((tab) => tab.id === editor.activeTabId);
+  const pio = usePlatformIoStore.getState();
   const parts = [
     "You are Aether Agent, an expert assistant for robotics, drones, and embedded systems (Arduino, ESP32, ESP8266, PlatformIO, C/C++).",
     "Be concise and practical. Prefer correct code and clear flashing/debug steps.",
@@ -102,10 +105,19 @@ function buildSystemPrompt(): string {
     "```cpp src/main.cpp",
     "// full file contents",
     "```",
-    "The IDE can preview and apply these edits with one click.",
+    "The IDE can preview and apply these edits with one click — always include the target path.",
     "For PlatformIO projects, prefer SEARCH/REPLACE on platformio.ini for board=, lib_deps, and LoRa build_flags (AETHER_LORA_* / region). Keep pin maps and region consistent with the selected env.",
     "When board/radio context is attached, use those NSS/DIO/RST/OLED pins and lib_deps instead of guessing.",
   ];
+  if (activeTab?.path && /\.ino$/i.test(activeTab.path)) {
+    parts.push(
+      `Active sketch is Arduino .ino (${activeTab.path}) — prefer SEARCH/REPLACE on that path over inventing src/main.cpp unless the project is PlatformIO with src/.`,
+    );
+  } else if (pio.isProject) {
+    parts.push(
+      "This is a PlatformIO project — prefer src/main.cpp and platformio.ini paths unless the user opened a .ino.",
+    );
+  }
   if (kind === "folder" && folders.length > 0) {
     const list = folders
       .map((f) =>
@@ -138,13 +150,34 @@ async function buildContextBlock(): Promise<string> {
   }
 
   if (state.includeProblems) {
-    const problems = useProblemsStore.getState().problems.slice(0, 12);
+    const all = useProblemsStore.getState().problems;
+    const ranked = [...all].sort((a, b) => {
+      const sev = (s: string) =>
+        s === "error" ? 0 : s === "warning" ? 1 : 2;
+      return sev(a.severity) - sev(b.severity);
+    });
+    const problems = ranked.slice(0, 12);
     if (problems.length > 0) {
       const lines = problems.map(
         (p) =>
           `- [${p.severity}] ${p.absolutePath ?? p.file}:${p.line}:${p.column} ${p.message}`,
       );
       chunks.push(`Current build problems:\n${lines.join("\n")}`);
+    }
+
+    const pio = usePlatformIoStore.getState();
+    if (pio.lastSuccess === false) {
+      const meta: string[] = ["Last PlatformIO build failed."];
+      if (pio.selectedEnv) meta.push(`env: ${pio.selectedEnv}`);
+      if (pio.error) meta.push(`error: ${pio.error}`);
+      const tail = pio.lines
+        .slice(-40)
+        .map((l) => l.text)
+        .join("\n");
+      if (tail.trim()) {
+        meta.push(`Output tail:\n\`\`\`\n${tail}\n\`\`\``);
+      }
+      chunks.push(meta.join("\n"));
     }
   }
 
@@ -281,14 +314,15 @@ export const useAgentStore = create<AgentState>()(
       applyEdit: async (edit) => {
         try {
           const path = await applyAgentEdit(edit);
+          const status = t("agent.appliedTo", { path });
           set({
-            applyStatus: `Applied to ${path}`,
+            applyStatus: status,
             error: null,
             preview: null,
             previewEditId: null,
           });
           window.setTimeout(() => {
-            if (useAgentStore.getState().applyStatus?.startsWith("Applied")) {
+            if (useAgentStore.getState().applyStatus === status) {
               set({ applyStatus: null });
             }
           }, 2500);
@@ -309,14 +343,15 @@ export const useAgentStore = create<AgentState>()(
         if (!preview) return;
         try {
           await writeEditorContent(preview.path, preview.next);
+          const status = t("agent.appliedTo", { path: preview.path });
           set({
-            applyStatus: `Applied to ${preview.path}`,
+            applyStatus: status,
             error: null,
             preview: null,
             previewEditId: null,
           });
           window.setTimeout(() => {
-            if (useAgentStore.getState().applyStatus?.startsWith("Applied")) {
+            if (useAgentStore.getState().applyStatus === status) {
               set({ applyStatus: null });
             }
           }, 2500);

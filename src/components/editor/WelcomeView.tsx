@@ -9,6 +9,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { CoachSteps } from "@/components/hints/CoachSteps";
+import { ScenarioChecklists } from "@/components/hints/ScenarioChecklists";
 import { PanelHint } from "@/components/hints/PanelHint";
 import { CircuitBackground } from "@/components/welcome/CircuitBackground";
 import { NewProjectDialog } from "@/components/explorer/NewProjectDialog";
@@ -17,6 +18,8 @@ import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { useI18n } from "@/hooks/useI18n";
 import { errorMessage } from "@/lib/errors";
 import { cn } from "@/lib/cn";
+import { featuredHardwarePresets } from "@/lib/hardwareProfiles";
+import { applyHardwareTemplate } from "@/lib/hardwareTemplates";
 import { isTauriRuntime } from "@/lib/tauri";
 import {
   formatGenerateSummary,
@@ -41,19 +44,43 @@ async function ensureWorkspaceFolder(): Promise<string | null> {
 type HubId = "arduino" | "platformio" | "inav" | "vscode" | "ai";
 
 export function WelcomeView() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const openFolder = useWorkspaceStore((s) => s.openFolder);
   const openDemoWorkspace = useWorkspaceStore((s) => s.openDemoWorkspace);
   const error = useWorkspaceStore((s) => s.error);
   const flashNotice = useSettingsStore((s) => s.flashNotice);
-  const openSettings = useSettingsStore((s) => s.openSettings);
-  const showDoctor = usePlatformIoStore((s) => s.showDoctor);
+  const openDoctorPanel = usePlatformIoStore((s) => s.openDoctorPanel);
   const setActiveActivity = useLayoutStore((s) => s.setActiveActivity);
   const tauri = isTauriRuntime();
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [vscodeBusy, setVscodeBusy] = useState(false);
+  const [hwBusy, setHwBusy] = useState<string | null>(null);
+
+  const openHardware = async (presetId: string) => {
+    if (!tauri) {
+      flashNotice(t("profiles.desktopOnly"));
+      return;
+    }
+    setHwBusy(presetId);
+    try {
+      const { preset } = await applyHardwareTemplate(presetId);
+      const label = locale === "ru" ? preset.labelRu : preset.labelEn;
+      flashNotice(
+        preset.kind === "bpla"
+          ? t("profiles.hardwareBplaOpened", { name: label })
+          : t("profiles.hardwareOpened", { name: label }),
+        4000,
+      );
+    } catch (e) {
+      flashNotice(
+        e instanceof Error ? e.message : t("profiles.hardwareFailed"),
+      );
+    } finally {
+      setHwBusy(null);
+    }
+  };
 
   const runOpenVsCode = async () => {
     if (!tauri) {
@@ -224,6 +251,7 @@ export function WelcomeView() {
         </p>
 
         <CoachSteps className="mx-auto mt-4 max-w-md" />
+        <ScenarioChecklists className="mx-auto mt-3 max-w-md" />
         <PanelHint
           messageKey="hints.panel.welcome"
           className="mx-auto mt-3 max-w-md text-left"
@@ -282,6 +310,39 @@ export function WelcomeView() {
           })}
         </div>
 
+        {tauri && (
+          <div
+            className="mt-5 w-full max-w-2xl"
+            data-testid="welcome-hardware-templates"
+          >
+            <p className="text-center text-[11px] font-medium uppercase tracking-wide text-aether-fg-muted">
+              {t("welcome.hardwareTitle")}
+            </p>
+            <p className="mt-1 text-center text-[10px] text-aether-fg-dim">
+              {t("welcome.hardwareHint")}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
+              {featuredHardwarePresets().map((p) => {
+                const label = locale === "ru" ? p.labelRu : p.labelEn;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    data-testid={`welcome-hw-${p.id}`}
+                    title={label}
+                    aria-label={label}
+                    disabled={hwBusy === p.id}
+                    onClick={() => void openHardware(p.id)}
+                    className="rounded border border-aether-border/80 bg-aether-surface/60 px-2.5 py-1 text-[11px] text-aether-fg hover:border-aether-accent/60 hover:bg-aether-surface-raised disabled:opacity-40"
+                  >
+                    {hwBusy === p.id ? t("wizard.creating") : label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
@@ -300,10 +361,7 @@ export function WelcomeView() {
               data-testid="welcome-clean-pc-btn"
               title={t("welcome.cleanPcHint")}
               aria-label={t("welcome.cleanPc")}
-              onClick={() => {
-                showDoctor();
-                openSettings("tools");
-              }}
+              onClick={() => openDoctorPanel()}
               className="rounded border border-transparent px-2 py-1 text-[11px] text-aether-fg-muted hover:text-aether-fg"
             >
               {t("welcome.cleanPc")}

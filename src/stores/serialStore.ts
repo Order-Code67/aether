@@ -14,6 +14,7 @@ import {
 import { isTauriRuntime } from "@/lib/tauri";
 
 const MAX_LINES = 2000;
+const MAX_RECORD_LINES = 50_000;
 
 interface SerialState {
   ports: SerialPortInfo[];
@@ -24,6 +25,8 @@ interface SerialState {
   lines: string[];
   autoScroll: boolean;
   error: string | null;
+  recording: boolean;
+  recordLines: string[];
   refreshPorts: () => Promise<void>;
   setSelectedPath: (path: string) => void;
   setBaudRate: (baud: number) => void;
@@ -35,6 +38,8 @@ interface SerialState {
   sendBytes: (bytes: number[] | Uint8Array) => Promise<void>;
   appendLine: (line: string) => void;
   clearLines: () => void;
+  startRecording: () => void;
+  stopRecording: () => string[];
   applyStatus: (status: SerialStatus) => void;
   hydrateStatus: () => Promise<void>;
 }
@@ -50,6 +55,8 @@ export const useSerialStore = create<SerialState>()(
       lines: [],
       autoScroll: true,
       error: null,
+      recording: false,
+      recordLines: [],
 
       refreshPorts: async () => {
         if (!isTauriRuntime()) {
@@ -174,13 +181,30 @@ export const useSerialStore = create<SerialState>()(
       appendLine: (line) =>
         set((state) => {
           const next = [...state.lines, line];
-          if (next.length > MAX_LINES) {
-            return { lines: next.slice(next.length - MAX_LINES) };
-          }
-          return { lines: next };
+          const lines =
+            next.length > MAX_LINES
+              ? next.slice(next.length - MAX_LINES)
+              : next;
+          if (!state.recording) return { lines };
+          const recordNext = [...state.recordLines, line];
+          return {
+            lines,
+            recordLines:
+              recordNext.length > MAX_RECORD_LINES
+                ? recordNext.slice(recordNext.length - MAX_RECORD_LINES)
+                : recordNext,
+          };
         }),
 
       clearLines: () => set({ lines: [] }),
+
+      startRecording: () => set({ recording: true, recordLines: [] }),
+
+      stopRecording: () => {
+        const lines = get().recordLines;
+        set({ recording: false });
+        return lines;
+      },
 
       applyStatus: (status) =>
         set({

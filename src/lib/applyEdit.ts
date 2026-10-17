@@ -105,9 +105,15 @@ export function extractCodeBlocks(content: string): CodeBlock[] {
   return blocks;
 }
 
+function activeTabPath(): string | null {
+  const editor = useEditorStore.getState();
+  const tab = editor.tabs.find((t) => t.id === editor.activeTabId);
+  return tab?.path ?? null;
+}
+
 export function resolveApplyPath(path: string | null): string | null {
   if (!path) {
-    return useEditorStore.getState().activeTabId;
+    return activeTabPath();
   }
 
   if (
@@ -123,7 +129,7 @@ export function resolveApplyPath(path: string | null): string | null {
 
   const root = useWorkspaceStore.getState().rootPath;
   if (!root) {
-    return useEditorStore.getState().activeTabId;
+    return activeTabPath();
   }
   return joinPath(root, path.replace(/^\.[/\\]/, ""));
 }

@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { languageLabel, tabNameFromPath } from "@/types/editor";
 import { useDebugStore } from "@/stores/debugStore";
 import { useEditorStore } from "@/stores/editorStore";
+import { useInavStore } from "@/stores/inavStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { useLspStore } from "@/stores/lspStore";
 import { useOfflineStore } from "@/stores/offlineStore";
@@ -42,6 +43,7 @@ export function StatusBar() {
   const serialConnected = useSerialStore((s) => s.connected);
   const serialPath = useSerialStore((s) => s.selectedPath);
   const serialBaud = useSerialStore((s) => s.baudRate);
+  const fcSessionActive = useInavStore((s) => s.sessionActive);
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab);
   const pioInstalled = usePlatformIoStore((s) => s.info?.installed ?? false);
   const isProject = usePlatformIoStore((s) => s.isProject);
@@ -232,6 +234,19 @@ export function StatusBar() {
           >
             {uploadPort || t("pio.portNone")}
           </span>
+        )}
+        {fcSessionActive && serialPath && (
+          <button
+            type="button"
+            data-testid="status-fc-session"
+            title={t("status.fcSessionTitle")}
+            aria-label={t("status.fcSession", { port: serialPath })}
+            onClick={() => setActiveActivity("inav")}
+            className="flex max-w-[140px] items-center gap-1 truncate opacity-90 hover:opacity-100"
+          >
+            <Radio size={12} />
+            {t("status.fcSession", { port: serialPath })}
+          </button>
         )}
         {kind === "folder" && (
           <span

@@ -2,6 +2,8 @@
 
 Aether’s **Publish** tab is a lightweight publishing hub: author packages, publish to an in-app catalog, and export files you can host anywhere.
 
+**Signed remote extension store — not yet.** The Extensions panel shows that status; keep local packs, catalog URL, and this hub only. Do not treat Marketplace as a curated App Store.
+
 This is **not** a signed cloud store. Integrity uses an optional SHA-256 content hash; remote install still trusts HTTPS + JSON validation.
 
 ## Workflow
