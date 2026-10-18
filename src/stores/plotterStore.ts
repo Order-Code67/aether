@@ -40,6 +40,8 @@ export interface TelemetryHud {
   lat: number | null;
   lon: number | null;
   alt: number | null;
+  /** Relative / AGL altitude meters when GLOBAL_POSITION_INT provides it. */
+  relativeAlt: number | null;
   fixType: number | null;
   satellites: number | null;
   voltage: number | null;
@@ -119,6 +121,7 @@ function emptyHudFromHeartbeat(hb: MavlinkHeartbeat): TelemetryHud {
     lat: null,
     lon: null,
     alt: null,
+    relativeAlt: null,
     fixType: null,
     satellites: null,
     voltage: null,
@@ -156,6 +159,7 @@ function applyResultToHud(
     lat: null,
     lon: null,
     alt: null,
+    relativeAlt: null,
     fixType: null,
     satellites: null,
     voltage: null,
@@ -166,6 +170,15 @@ function applyResultToHud(
     heading: null,
     throttle: null,
   };
+
+  if (result.kind === "attitude") {
+    const yawDeg = ((result.data.yaw * 180) / Math.PI + 360) % 360;
+    return {
+      ...hud,
+      // Continuous AHRS yaw; GPS/VFR heading overwrite when those msgs arrive
+      heading: yawDeg,
+    };
+  }
 
   if (result.kind === "sys_status") {
     return {
@@ -201,6 +214,7 @@ function applyResultToHud(
       lat: result.data.lat,
       lon: result.data.lon,
       alt: result.data.alt,
+      relativeAlt: result.data.relativeAlt,
       groundspeed: result.data.groundspeed,
       heading: result.data.hdg ?? hud.heading,
     };

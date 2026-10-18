@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru" data-root=".">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Engineering FPV — оборудование, программы, новости</title>
+  <meta name="description" content="Engineering FPV: оборудование для FPV и БПЛА, программы Aether, новости и о компании." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23121218'/%3E%3Cpath d='M32 12 L48 48 H38.5 L35.2 39.2 H28.8 L25.5 48 H16 L32 12Z' fill='%233d9eff'/%3E%3Ccircle cx='32' cy='44' r='2.5' fill='%232ec4b6'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/site.css" />
+</head>
+<body data-page="home">
+  <header id="site-header"></header>
+  <main class="wrap">
+    <section class="hero">
+      <div class="kicker">Engineering FPV</div>
+      <h1>Инженерия FPV<br />и <em>софт для БПЛА</em></h1>
+      <p class="lead">Оборудование, программы и новости в одном месте. Главный продукт — Aether: IDE для плат, COM, PlatformIO и Configurator.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="software/index.html">Программы</a>
+        <a class="btn btn-ghost" href="equipment/index.html">Оборудование</a>
+      </div>
+      <div class="meta">engineering-fpv.ru · черновик</div>
+    </section>
+
+    <section>
+      <h2>Разделы сайта</h2>
+      <p class="sub">Оборудование, программы, компания и новости. Тексты ниже — для проверки перед публикацией.</p>
+      <div class="grid cols-4">
+        <a class="card" href="equipment/index.html">
+          <div class="tag">каталог</div>
+          <h3>Оборудование</h3>
+          <p>Контроллеры, радио, видео, платы и комплекты. Модели и цены появятся после согласования линейки.</p>
+        </a>
+        <a class="card" href="software/index.html">
+          <div class="tag">софт</div>
+          <h3>Программы</h3>
+          <p>Aether для Windows, конфигуратор полётника и готовящаяся БПЛА-Студия.</p>
+        </a>
+        <a class="card" href="about/index.html">
+          <div class="tag">бренд</div>
+          <h3>О компании</h3>
+          <p>Чем занимается Engineering FPV: железо, прошивки и софт для FPV и БПЛА.</p>
+        </a>
+        <a class="card" href="news/index.html">
+          <div class="tag">блог</div>
+          <h3>Новости</h3>
+          <p>Заметки о сайте, релизах Aether и каталоге. Даты черновые.</p>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Последние новости</h2>
+      <p class="sub">Свежие черновики. Перед запуском поправим даты и формулировки.</p>
+      <div class="news-list" data-home-news></div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

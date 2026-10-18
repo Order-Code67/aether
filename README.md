@@ -34,6 +34,7 @@
 - **Auto-updater** — signed Tauri updates; Stable / Beta channel in Settings → About → Updates
 - **Offline PlatformIO cache** — Prepare online or Import a portable zip (ESP32 + AVR); see [`docs/OFFLINE_INSTALLER.md`](docs/OFFLINE_INSTALLER.md)
 - **Aether Configurator** — Activity **БПЛА**: detect/launch with COM `--port`/`--baud` handoff (`AETHER_CONFIGURATOR`); app in `apps/aether-configurator/` ([`docs/AETHER_CONFIGURATOR.md`](docs/AETHER_CONFIGURATOR.md))
+- **Optical navigation (GPS-denied)** — Camera panel: optical flow + dead reckoning → NED / optional WGS84 from a geo anchor; MAVLink `VISION_POSITION_ESTIMATE` helper ([`docs/OPTICAL_NAV.md`](docs/OPTICAL_NAV.md))
 
 ## Not yet
 

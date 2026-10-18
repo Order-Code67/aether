@@ -83,7 +83,11 @@ impl PioState {
 fn resolve_pio_command() -> Option<String> {
     for candidate in ["pio", "platformio", "platformio.exe", "pio.exe"] {
         if let Ok(path) = which::which(candidate) {
-            return Some(path.to_string_lossy().to_string());
+            // Prefer real installs over empty WindowsApps stubs
+            let s = path.to_string_lossy();
+            if !s.contains("WindowsApps") {
+                return Some(s.to_string());
+            }
         }
     }
 
@@ -93,8 +97,11 @@ fn resolve_pio_command() -> Option<String> {
             homes.push(PathBuf::from(home));
         }
     }
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        homes.push(PathBuf::from(local));
+    }
 
-    for home in homes {
+    for home in &homes {
         let candidates = [
             home.join(".platformio")
                 .join("penv")
@@ -113,6 +120,23 @@ fn resolve_pio_command() -> Option<String> {
         for path in candidates {
             if path.is_file() {
                 return Some(path.to_string_lossy().to_string());
+            }
+        }
+    }
+
+    // pip --user / Official Python installs: …\Python3xx\Scripts\pio.exe
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        let py_root = PathBuf::from(local).join("Programs").join("Python");
+        if let Ok(entries) = std::fs::read_dir(&py_root) {
+            let mut dirs: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+            dirs.sort_by_key(|e| std::cmp::Reverse(e.file_name()));
+            for entry in dirs {
+                for name in ["pio.exe", "platformio.exe"] {
+                    let path = entry.path().join("Scripts").join(name);
+                    if path.is_file() {
+                        return Some(path.to_string_lossy().to_string());
+                    }
+                }
             }
         }
     }
@@ -287,9 +311,38 @@ pub fn pio_detect() -> PioInfo {
 fn resolve_python_command() -> Option<String> {
     for candidate in ["python", "python3", "py"] {
         if let Ok(path) = which::which(candidate) {
-            return Some(path.to_string_lossy().to_string());
+            let s = path.to_string_lossy().to_string();
+            // Skip Microsoft Store stub that opens the Store instead of running Python
+            if s.contains("WindowsApps") {
+                continue;
+            }
+            return Some(s);
         }
     }
+
+    // Fallback when User PATH was not inherited by the GUI process yet
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        let py_root = PathBuf::from(&local).join("Programs").join("Python");
+        if let Ok(entries) = std::fs::read_dir(&py_root) {
+            let mut dirs: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+            dirs.sort_by_key(|e| std::cmp::Reverse(e.file_name()));
+            for entry in dirs {
+                let path = entry.path().join("python.exe");
+                if path.is_file() {
+                    return Some(path.to_string_lossy().to_string());
+                }
+            }
+        }
+        let launcher = PathBuf::from(local)
+            .join("Programs")
+            .join("Python")
+            .join("Launcher")
+            .join("py.exe");
+        if launcher.is_file() {
+            return Some(launcher.to_string_lossy().to_string());
+        }
+    }
+
     None
 }
 

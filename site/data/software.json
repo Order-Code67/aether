@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "id": "aether",
+      "title": "Aether",
+      "summary": "IDE для плат, LoRa и БПЛА на Windows. Редактор, дерево проекта, монитор COM, терминал, сборка и прошивка через PlatformIO, Git и русский интерфейс.",
+      "tag": "IDE",
+      "price": "скачать",
+      "status": "Windows, релизы на GitHub",
+      "link": "https://github.com/Order-Code67/aether/releases/latest"
+    },
+    {
+      "id": "aether-configurator",
+      "title": "Aether Configurator",
+      "summary": "Окно настройки полётного контроллера: порты, режимы, параметры. Запускается из Aether и получает выбранный COM-порт.",
+      "tag": "FC",
+      "price": "в составе Aether",
+      "status": "идёт вместе с IDE",
+      "link": "https://github.com/Order-Code67/aether"
+    },
+    {
+      "id": "bpla-studio",
+      "title": "БПЛА-Студия",
+      "summary": "Отдельный конфигуратор под iNav, Betaflight и ArduPilot. Черновик продукта: публичной сборки на сайте пока нет.",
+      "tag": "FC",
+      "price": "скоро",
+      "status": "черновик, без публичной сборки",
+      "link": ""
+    }
+  ]
+}

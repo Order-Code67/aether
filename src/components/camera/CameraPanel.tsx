@@ -6,6 +6,8 @@ import {
   RefreshCw,
   Unplug,
 } from "lucide-react";
+import { OpticalNavBar } from "@/components/camera/OpticalNavBar";
+import { OpticalNavCompass } from "@/components/camera/OpticalNavCompass";
 import { useI18n } from "@/hooks/useI18n";
 import {
   recordCameraSeriesToFolder,
@@ -16,6 +18,7 @@ import { cn } from "@/lib/cn";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useCameraStore } from "@/stores/cameraStore";
 import { useFirmwareProfileStore } from "@/stores/firmwareProfileStore";
+import { useOpticalNavStore } from "@/stores/opticalNavStore";
 import { usePlatformIoStore } from "@/stores/platformioStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 
@@ -46,6 +49,8 @@ export function CameraPanel() {
   const flashNotice = useSettingsStore((s) => s.flashNotice);
   const selectedEnv = usePlatformIoStore((s) => s.selectedEnv);
   const profiles = useFirmwareProfileStore((s) => s.profiles);
+  const opticalNavEnabled = useOpticalNavStore((s) => s.enabled);
+  const processFrameUrl = useOpticalNavStore((s) => s.processFrameUrl);
   const abortRef = useRef(false);
 
   const activeProfile = profiles.find(
@@ -62,6 +67,12 @@ export function CameraPanel() {
     const id = window.setInterval(() => refresh(), refreshMs);
     return () => window.clearInterval(id);
   }, [refreshMs, status, refresh, recording]);
+
+  // Optical nav: each new live frame URL → optical flow + dead reckoning
+  useEffect(() => {
+    if (!opticalNavEnabled || status !== "live" || !displaySrc) return;
+    void processFrameUrl(displaySrc);
+  }, [opticalNavEnabled, status, displaySrc, processFrameUrl]);
 
   // While reconnecting / after error, prefer last good frame so UI does not flash blank.
   const shownSrc =
@@ -277,6 +288,8 @@ export function CameraPanel() {
         </div>
       )}
 
+      <OpticalNavBar />
+
       <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black/40">
         {shownSrc || displaySrc ? (
           <>
@@ -306,6 +319,7 @@ export function CameraPanel() {
             {t("camera.hint")}
           </p>
         )}
+        <OpticalNavCompass />
         {(status === "error" || status === "reconnecting") && (
           <p className="absolute bottom-2 left-2 right-2 rounded bg-aether-danger/20 px-2 py-1 text-center text-[11px] text-aether-danger">
             {status === "reconnecting"

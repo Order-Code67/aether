@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Автономный дрон без GPS — BOM (печать)</title>
+  <style>
+    :root {
+      --ink: #111;
+      --muted: #444;
+      --line: #bbb;
+      --head: #000;
+      --band: #f0f0f0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font: 10.5pt/1.35 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: #e8e8e8;
+    }
+
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 12mm auto;
+      padding: 12mm 14mm;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .no-print {
+      width: 210mm;
+      margin: 12mm auto 0;
+      padding: 10px 14px;
+      background: #1a1a1a;
+      color: #f5f5f5;
+      font-size: 11pt;
+      border-radius: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .no-print button {
+      cursor: pointer;
+      border: 0;
+      background: #fff;
+      color: #111;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 16pt;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 9.5pt;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--head);
+      font-size: 8.5pt;
+      color: var(--muted);
+    }
+
+    h2 {
+      margin: 14px 0 6px;
+      font-size: 11.5pt;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 2px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      margin: 10px 0 4px;
+      font-size: 10.5pt;
+      page-break-after: avoid;
+    }
+
+    p, li { font-size: 9.5pt; }
+    p { margin: 4px 0 8px; }
+
+    .note {
+      margin: 6px 0 10px;
+      padding: 6px 8px;
+      background: var(--band);
+      border-left: 3px solid #333;
+      font-size: 9pt;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 10px;
+      font-size: 8.5pt;
+      page-break-inside: auto;
+    }
+
+    thead { display: table-header-group; }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 3px 5px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: var(--band);
+      font-weight: 700;
+    }
+
+    tr { page-break-inside: avoid; }
+
+    .col-num { width: 6%; text-align: center; }
+    .check { width: 6%; text-align: center; font-family: monospace; }
+
+    pre.scheme {
+      margin: 6px 0 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      background: #fafafa;
+      font: 8pt/1.25 Consolas, "Courier New", monospace;
+      white-space: pre;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+
+    ul.compact {
+      margin: 4px 0 8px 18px;
+      padding: 0;
+    }
+
+    ul.compact li { margin: 2px 0; }
+
+    .checklist {
+      columns: 2;
+      column-gap: 16px;
+      margin: 6px 0 10px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .checklist li {
+      break-inside: avoid;
+      margin: 0 0 4px;
+      padding-left: 0;
+      font-size: 9pt;
+    }
+
+    .checklist li::before {
+      content: "☐ ";
+      font-family: Consolas, monospace;
+    }
+
+    .footer {
+      margin-top: 14px;
+      padding-top: 6px;
+      border-top: 1px solid var(--line);
+      font-size: 8pt;
+      color: var(--muted);
+    }
+
+    .page-break { page-break-before: always; }
+
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .no-print { display: none !important; }
+      .sheet {
+        width: auto;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div>
+      <strong>Печать:</strong> Ctrl+P → принтер или «Сохранить как PDF».
+      Формат A4, поля нормальные.
+    </div>
+    <button type="button" onclick="window.print()">Печать / PDF</button>
+  </div>
+
+  <div class="sheet">
+    <h1>Автономный дрон без GPS</h1>
+    <p class="subtitle">
+      Комплектующие · подключение · программирование · чеклист испытаний
+    </p>
+    <div class="meta">
+      <span>Стек: ArduPilot Copter + companion VIO (MAVLink)</span>
+      <span>Aether / DIY · для печати A4</span>
+    </div>
+
+    <div class="note">
+      <strong>Важно:</strong> это не доработка iNav FPV и не optical nav в Aether.
+      Полётный estimator — на companion (OpenVINS / VINS-Fusion и т.п.),
+      поза уходит в EKF Pixhawk. Aether — только лаборатория/отладка.
+    </div>
+
+    <h2>1. Комплектующие (BOM)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th>Комплектующее</th>
+          <th>Пример / класс</th>
+          <th>Зачем</th>
+          <th class="check">☐</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>Полётный контроллер</td><td>Pixhawk 6C / Cube Orange / Kakute H7 (ArduPilot)</td><td>EKF, моторы, миссии, failsafe</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">2</td><td>Companion computer</td><td>Raspberry Pi 5 (4–8 GB) / Orange Pi 5 / Jetson Orin Nano</td><td>VIO/VSLAM в реальном времени</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">3</td><td>Камера вниз (VIO)</td><td>Global shutter: Arducam OV9281 / CSI IMX219</td><td>Трек земли без GPS</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">4</td><td>Камера вперёд (опц.)</td><td>Та же серия</td><td>Усиление VIO / препятствия</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">5</td><td>Дальномер вниз</td><td>TF-Luna / VL53L1X / Lightware LW20</td><td>Высота AGL, посадка</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">6</td><td>IMU на FC</td><td>Встроенный в Pixhawk</td><td>Основной IMU EKF</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">7</td><td>IMU на companion (опц.)</td><td>ICM-42688 на плате с камерой</td><td>Синхронизация camera–IMU</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">8</td><td>Рама + моторы + ESC + пропы</td><td>5–7″ / 10″ под задачу</td><td>Силовая часть</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">9</td><td>Приёмник RC</td><td>ELRS / CRSF</td><td>Override, failsafe</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">10</td><td>FPV-видео (опц.)</td><td>Аналог / Digi</td><td>Наблюдение; не источник позы</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">11</td><td>Телеметрия</td><td>SiK / ELRS telem / USB</td><td>QGC, миссии</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">12</td><td>Питание companion</td><td>BEC 5 V ≥ 3 A (отдельный)</td><td>Стабильное питание Pi/Jetson</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">13</td><td>ПО на земле</td><td>ПК + QGroundControl / Mission Planner</td><td>Калибровки, миссии</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">14</td><td>GPS только для базы (опц.)</td><td>Любой GNSS на FC</td><td>Привязка home на земле</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">15</td><td>microSD</td><td>В FC + в companion</td><td>Логи / ROS bags</td><td class="check">☐</td></tr>
+      </tbody>
+    </table>
+
+    <h2>2. Схема связей</h2>
+    <pre class="scheme">LiPo ──► PDB ──► Pixhawk FC (ArduPilot) ──► ESC ×4 ──► моторы
+              │            │
+              │            └── TELEM2 / UART MAVLink 921600
+              │                         │
+         5V BEC ≥3A ──► Companion (RPi / Jetson) ◄── камера вниз (CSI/USB)
+                              │              ◄── дальномер (UART/I²C)
+                              ▼
+                     QGroundControl (USB / Wi‑Fi отладка)</pre>
+
+    <h2>3. Таблица подключений</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>От</th>
+          <th>К</th>
+          <th>Интерфейс</th>
+          <th>Примечание</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>PDB / BEC 5 V</td><td>Pixhawk POWER</td><td>Силовой разъём FC</td><td>Не путать с servo rail</td></tr>
+        <tr><td>Отдельный BEC 5 V ≥3 A</td><td>Raspberry Pi 5V</td><td>USB‑C / GPIO 5V+GND</td><td>Отдельный BEC — иначе просадки</td></tr>
+        <tr><td>ESC сигналы</td><td>Pixhawk MAIN/AUX</td><td>PWM / DShot</td><td>Распиновка рамы (X/quad)</td></tr>
+        <tr><td>ELRS RX</td><td>RCIN или UART</td><td>CRSF</td><td>SERIAL protocol = CRSF/RCIN</td></tr>
+        <tr><td>Pi UART (GPIO 14/15)</td><td>Pixhawk TELEM2</td><td>TTL UART 3.3 V</td><td>Tx↔Rx, общий GND; не RS232</td></tr>
+        <tr><td>Камера вниз</td><td>Pi CSI или USB3</td><td>CSI предпочтительнее</td><td>Жёстко вниз, без люфта</td></tr>
+        <tr><td>TF-Luna / LW20</td><td>FC SERIAL4/5 или Pi</td><td>UART ~115200</td><td>На FC проще для RNGFND</td></tr>
+        <tr><td>GPS (опц.)</td><td>Pixhawk GPS1</td><td>UART + I²C</td><td>Можно не ставить</td></tr>
+        <tr><td>FPV VTX</td><td>Своя FPV-камера</td><td>Аналог/Digi</td><td>Не смешивать с VIO-камерой</td></tr>
+        <tr><td>Ноут</td><td>FC USB / telem</td><td>USB</td><td>Прошивка, параметры</td></tr>
+        <tr><td>Ноут</td><td>Companion SSH</td><td>Wi‑Fi / Ethernet</td><td>Отладка VIO / MAVROS</td></tr>
+      </tbody>
+    </table>
+
+    <ul class="compact">
+      <li>UART Pixhawk ↔ Pi: Tx↔Rx перекрёстно, GND общий, только 3.3 V TTL.</li>
+      <li>Камера и IMU для VIO — жёстко на одной пластине.</li>
+      <li>Вибрации: мягкий маунт FC + жёсткий маунт камеры (по доке VIO).</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2>4. Программирование — полётный контроллер</h2>
+    <table>
+      <thead>
+        <tr><th class="col-num">Шаг</th><th>Действие</th><th class="check">☐</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>Прошить ArduCopter (стабильная ветка) через QGC / Mission Planner</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">2</td><td>Калибровки: ACC, компас (если есть), радио, ESC, уровень горизонта</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">3</td><td>Рама: FRAME_CLASS / FRAME_TYPE под квад</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">4</td><td>Дальномер: RNGFND1_TYPE, порт, RNGFND1_MAX_CM — проверка в HUD</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">5</td><td>EKF3: позиция/скорость XY из ExternalNav (напр. EK3_SRC1_POSXY=6, EK3_SRC1_VELXY=6) — сверить wiki вашей версии</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">6</td><td>Приём VISION_POSITION_ESTIMATE / ODOMETRY (параметры VISO_* / VIS_*) — docs ArduPilot Vision Position</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">7</td><td>Failsafe: потеря RC / vision → Land (не «лететь в никуда»)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">8</td><td>Режимы на пульте: Stabilize / AltHold / Loiter / Auto / Land</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">9</td><td>Логи включены; после каждого теста сохранять .bin</td><td class="check">☐</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. Программирование — companion (Pi / Jetson)</h2>
+    <table>
+      <thead>
+        <tr><th class="col-num">Шаг</th><th>Действие</th><th class="check">☐</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>ОС: Raspberry Pi OS 64-bit или Ubuntu 22.04 (Jetson — JetPack)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">2</td><td>ROS 2 (Humble/Jazzy) или лёгкий стек MAVSDK + VIO</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">3</td><td>Камера: v4l2 / libcamera, fps ≥ 30, желателен global shutter</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">4</td><td>Установить VIO: OpenVINS / VINS-Fusion (или готовый пакет под камеру)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">5</td><td>Калибровка intrinsics камеры (Kalibr / OpenCV chessboard)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">6</td><td>Калибровка extrinsics camera–IMU (Kalibr) — критично</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">7</td><td>MAVROS / MAVSDK → TELEM2, baud 921600</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">8</td><td>Публиковать VISION_POSITION_ESTIMATE (102) или ODOMETRY; frame NED/ENU как ждёт Ardu</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">9</td><td>systemd: автозапуск VIO + MAVLink bridge</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">10</td><td>Время: chrony / PTP (иначе растут innovations EKF)</td><td class="check">☐</td></tr>
+      </tbody>
+    </table>
+
+    <h2>6. Миссии (земля)</h2>
+    <table>
+      <thead>
+        <tr><th class="col-num">Шаг</th><th>Действие</th><th class="check">☐</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>QGroundControl → подключение к FC</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">2</td><td>Home = точка взлёта (локальный NED origin при vision)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">3</td><td>WP в метрах относительно home (проще без GPS)</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">4</td><td>Взлёт при уверенном vision fix</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">5</td><td>Auto только после успешных Loiter-тестов</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">6</td><td>Посадка: Land / RTL по vision + ручной запасной канал</td><td class="check">☐</td></tr>
+      </tbody>
+    </table>
+
+    <h2>7. Программа испытаний (обязательно)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th>Тест</th>
+          <th>Критерий «ок»</th>
+          <th class="check">☐</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="col-num">1</td><td>Камера на столе, VIO трек</td><td>Гладкая траектория, loop при возврате</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">2</td><td>Дрон на привязи, AltHold</td><td>Высота стабильна по дальномеру</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">3</td><td>Loiter по vision 30–60 с</td><td>Удержание примерно ±0.5–1 m</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">4</td><td>Квадрат Auto 5×5 m</td><td>Ошибка на углах приемлема</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">5</td><td>Закрыть объектив (потеря vision)</td><td>Failsafe Land, без улёта</td><td class="check">☐</td></tr>
+        <tr><td class="col-num">6</td><td>Вибрации на ховере</td><td>EKF innovations в норме</td><td class="check">☐</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Пока п.3–4 не стабильны — миссию в поле не грузить.</strong></p>
+
+    <h2>8. Чеклист заказа</h2>
+    <ul class="checklist">
+      <li>Pixhawk-совместимый FC + ArduCopter</li>
+      <li>Raspberry Pi 5 / Jetson + microSD</li>
+      <li>BEC 5 V ≥ 3 A для companion</li>
+      <li>Global-shutter камера вниз + кабель</li>
+      <li>Дальномер вниз + проводка</li>
+      <li>ELRS RX</li>
+      <li>Рама, моторы, ESC, пропы, LiPo</li>
+      <li>Кабель TELEM2 ↔ UART Pi (Tx/Rx/GND)</li>
+      <li>Ноут + QGroundControl</li>
+      <li>GPS-модуль для базы (опц.)</li>
+      <li>FPV-линк отдельно от VIO (опц.)</li>
+    </ul>
+
+    <h2>9. iNav FPV vs этот стек</h2>
+    <table>
+      <thead>
+        <tr><th></th><th>iNav FPV (оператор)</th><th>Автономия без GPS</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Цель</td><td>Подсказка пилоту</td><td>Миссии Auto</td></tr>
+        <tr><td>Поза</td><td>Optical flow / Aether</td><td>VIO на companion</td></tr>
+        <tr><td>FC</td><td>iNav</td><td>ArduPilot</td></tr>
+        <tr><td>Inject vision</td><td>Выкл.</td><td>Вкл. (вход EKF)</td></tr>
+        <tr><td>GPS</td><td>Опц. home/RTH</td><td>Опц. только привязка</td></tr>
+      </tbody>
+    </table>
+
+    <h2>10. Ссылки</h2>
+    <ul class="compact">
+      <li>ArduPilot Vision: https://ardupilot.org/copter/docs/common-vio-tracking-camera.html</li>
+      <li>ArduPilot EKF sources: https://ardupilot.org/copter/docs/common-ekf-sources.html</li>
+      <li>OpenVINS: https://docs.openvins.com/</li>
+      <li>MAVLink VISION_POSITION_ESTIMATE: https://mavlink.io/en/messages/common.html#VISION_POSITION_ESTIMATE</li>
+    </ul>
+
+    <div class="footer">
+      Инженерный каркас DIY. Соблюдайте местные правила полётов и failsafe.
+      Параметры ArduPilot сверяйте с wiki вашей версии прошивки.
+      Исходник: docs/GPS_DENIED_AUTONOMY_BOM.md · печать: docs/GPS_DENIED_AUTONOMY_BOM_print.html
+    </div>
+  </div>
+</body>
+</html>
