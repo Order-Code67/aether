@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## 0.2.41 — 2026-10-23
+
+- **Arduino offline libraries** — curated Library Manager pack in `%LOCALAPPDATA%\Aether\arduino-user`; Settings → Tools download/update/import; compile uses offline `--libraries`; online search/install still refreshes the store (`docs/ARDUINO_OFFLINE_LIBS.md`, `npm run build:arduino-offline-libs`)
+
 ## 0.2.40 — 2026-10-18
 
 - **AI Agent network** — connect timeout 5s→30s; clearer error when OpenRouter/API is unreachable (VPN/proxy/firewall)

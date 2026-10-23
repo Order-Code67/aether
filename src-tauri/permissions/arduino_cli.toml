@@ -1,0 +1,16 @@
+[[permission]]
+identifier = "allow-arduino-cli"
+description = "Arduino CLI detect, libraries, offline pack, compile/upload."
+commands.allow = [
+  "arduino_cli_detect",
+  "arduino_cli_lib_search",
+  "arduino_cli_lib_install",
+  "arduino_cli_lib_list",
+  "arduino_cli_ensure_cores",
+  "arduino_cli_run",
+  "arduino_cli_offline_status",
+  "arduino_cli_prepare_offline_libs",
+  "arduino_cli_update_offline_libs",
+  "arduino_cli_import_offline_libs",
+  "arduino_cli_find_sidecar_offline_zips"
+]

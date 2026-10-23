@@ -442,6 +442,31 @@
     "Not found on PATH or common install folders (Program Files, Scoop, WinGet Links).",
   "arduinoCli.installHint":
     "Windows: download from the Arduino docs, or winget install ArduinoSA.CLI, then Recheck. Restart Aether after install if PATH changed.",
+  "arduinoOffline.title": "Arduino libraries (offline store)",
+  "arduinoOffline.hint":
+    "Curated Library Manager pack lives inside Aether (%LOCALAPPDATA%\\Aether\\arduino-user). Use offline without the registry; when online, search/install and Update still refresh this store. Not every Arduino library ever published — download extras anytime.",
+  "arduinoOffline.status": "{count} libraries · {dir}",
+  "arduinoOffline.prepare": "Download offline libs",
+  "arduinoOffline.prepareTitle":
+    "Download curated Arduino libraries + index into the Aether offline store (needs internet)",
+  "arduinoOffline.preparing": "Downloading…",
+  "arduinoOffline.prepareStarted":
+    "Downloading Arduino offline libs — watch Output.",
+  "arduinoOffline.prepareFailed": "Could not start Arduino offline download.",
+  "arduinoOffline.update": "Update online",
+  "arduinoOffline.updateTitle":
+    "Refresh library index and upgrade installed offline libraries",
+  "arduinoOffline.updateStarted":
+    "Updating Arduino libs online — watch Output.",
+  "arduinoOffline.updateFailed": "Could not start Arduino libs update.",
+  "arduinoOffline.import": "Import zip…",
+  "arduinoOffline.importTitle": "Import Aether_ArduinoLibs_*.zip into the offline store",
+  "arduinoOffline.importSidecar": "Import pack next to app",
+  "arduinoOffline.importSidecarTitle":
+    "Import Aether_ArduinoLibs zip found next to Aether / Desktop / Downloads",
+  "arduinoOffline.importFailed": "Import failed.",
+  "arduinoOffline.sidecarFound": "Found offline pack: {file}",
+  "arduinoOffline.recheckTitle": "Recheck Arduino offline library count",
   "arduinoCli.recheckTitle": "Recheck arduino-cli and toolchain",
   "arduinoCli.toolLabel": "Build tool",
   "arduinoCli.toolTitle":

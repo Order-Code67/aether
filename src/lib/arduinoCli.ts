@@ -61,6 +61,46 @@ export async function ensureArduinoCliCores(): Promise<string> {
   return invoke<string>("arduino_cli_ensure_cores");
 }
 
+export type ArduinoOfflineStatus = {
+  dir: string;
+  libraryCount: number;
+  indexPresent: boolean;
+  ready: boolean;
+};
+
+export type ArduinoSidecarZip = {
+  path: string;
+  kind: string;
+};
+
+export async function arduinoOfflineStatus(): Promise<ArduinoOfflineStatus> {
+  if (!isTauriRuntime()) {
+    return { dir: "", libraryCount: 0, indexPresent: false, ready: false };
+  }
+  return invoke<ArduinoOfflineStatus>("arduino_cli_offline_status");
+}
+
+export async function prepareArduinoOfflineLibs(): Promise<void> {
+  return invoke("arduino_cli_prepare_offline_libs");
+}
+
+export async function updateArduinoOfflineLibs(): Promise<void> {
+  return invoke("arduino_cli_update_offline_libs");
+}
+
+export async function importArduinoOfflineLibs(
+  zipPath: string,
+): Promise<string> {
+  return invoke<string>("arduino_cli_import_offline_libs", { zipPath });
+}
+
+export async function findArduinoSidecarOfflineZips(): Promise<
+  ArduinoSidecarZip[]
+> {
+  if (!isTauriRuntime()) return [];
+  return invoke<ArduinoSidecarZip[]>("arduino_cli_find_sidecar_offline_zips");
+}
+
 export const ARDUINO_CLI_DOCS_URL =
   "https://arduino.github.io/arduino-cli/latest/installation/";
 

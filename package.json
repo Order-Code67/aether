@@ -1,7 +1,7 @@
 {
   "name": "aether",
   "private": true,
-  "version": "0.2.40",
+  "version": "0.2.41",
   "description": "Modern IDE for robots, drones, and embedded systems",
   "type": "module",
   "workspaces": [
@@ -28,6 +28,7 @@
     "configurator:package": "npm run package -w aether-configurator",
     "build:offline-cache": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-offline-cache.ps1",
     "build:offline-libs": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-offline-cache.ps1 -LibsOnly",
+    "build:arduino-offline-libs": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/build-arduino-offline-libs.ps1",
     "package:dist": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/package-dist.ps1"
   },
   "dependencies": {

@@ -447,6 +447,31 @@ export const ru: Record<MessageKey, string> = {
     "Не найден в PATH и обычных папках (Program Files, Scoop, WinGet Links).",
   "arduinoCli.installHint":
     "Windows: скачайте с сайта Arduino или winget install ArduinoSA.CLI, затем «Проверить снова». После установки перезапустите Aether, если PATH обновился.",
+  "arduinoOffline.title": "Библиотеки Arduino (офлайн-хранилище)",
+  "arduinoOffline.hint":
+    "Набор библиотек Library Manager хранится в Aether (%LOCALAPPDATA%\\Aether\\arduino-user). Офлайн — без реестра; онлайн — поиск/установка и «Обновить» пополняют это хранилище. Это не весь каталог Arduino — недостающее можно скачать в любой момент.",
+  "arduinoOffline.status": "{count} библиотек · {dir}",
+  "arduinoOffline.prepare": "Скачать офлайн-библиотеки",
+  "arduinoOffline.prepareTitle":
+    "Скачать курируемый набор библиотек Arduino + индекс в хранилище Aether (нужен интернет)",
+  "arduinoOffline.preparing": "Скачивание…",
+  "arduinoOffline.prepareStarted":
+    "Скачивание офлайн-библиотек Arduino — смотрите Вывод.",
+  "arduinoOffline.prepareFailed": "Не удалось начать скачивание офлайн-библиотек.",
+  "arduinoOffline.update": "Обновить онлайн",
+  "arduinoOffline.updateTitle":
+    "Обновить индекс и установленные офлайн-библиотеки",
+  "arduinoOffline.updateStarted":
+    "Онлайн-обновление библиотек Arduino — смотрите Вывод.",
+  "arduinoOffline.updateFailed": "Не удалось начать обновление библиотек.",
+  "arduinoOffline.import": "Импорт zip…",
+  "arduinoOffline.importTitle": "Импорт Aether_ArduinoLibs_*.zip в офлайн-хранилище",
+  "arduinoOffline.importSidecar": "Импорт пакета рядом с приложением",
+  "arduinoOffline.importSidecarTitle":
+    "Импорт zip Aether_ArduinoLibs рядом с Aether / на Рабочем столе / в Загрузках",
+  "arduinoOffline.importFailed": "Импорт не удался.",
+  "arduinoOffline.sidecarFound": "Найден офлайн-пакет: {file}",
+  "arduinoOffline.recheckTitle": "Пересчитать офлайн-библиотеки Arduino",
   "arduinoCli.recheckTitle": "Проверить arduino-cli и тулчейн",
   "arduinoCli.toolLabel": "Инструмент сборки",
   "arduinoCli.toolTitle":

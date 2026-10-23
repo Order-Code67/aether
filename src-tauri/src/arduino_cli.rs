@@ -23,6 +23,114 @@ pub struct ArduinoCliInfo {
     pub version: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArduinoOfflineStatus {
+    pub dir: String,
+    pub library_count: u32,
+    pub index_present: bool,
+    pub ready: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ArduinoSidecarZip {
+    pub path: String,
+    pub kind: String,
+}
+
+/// Curated Arduino Library Manager names for the offline pack.
+/// Not the entire registry (thousands of packages) — staples for Blink / sensors / LoRa / displays.
+/// Online `lib search` / `lib install` still fetch anything else and cache into this store.
+fn curated_offline_libraries() -> &'static [&'static str] {
+    &[
+        // Arduino official
+        "Servo",
+        "Stepper",
+        "LiquidCrystal",
+        "SD",
+        "Ethernet",
+        "WiFiNINA",
+        "ArduinoHttpClient",
+        "ArduinoMqttClient",
+        "ArduinoBLE",
+        "ArduinoJson",
+        "Keyboard",
+        "Mouse",
+        "CapacitiveSensor",
+        "Firmata",
+        // Sensors / bus / display
+        "OneWire",
+        "DallasTemperature",
+        "DHT sensor library",
+        "Adafruit Unified Sensor",
+        "Adafruit BME280 Library",
+        "Adafruit BMP280 Library",
+        "Adafruit SSD1306",
+        "Adafruit GFX Library",
+        "Adafruit BusIO",
+        "Adafruit NeoPixel",
+        "FastLED",
+        "U8g2",
+        "PubSubClient",
+        // Radio / LoRa
+        "RadioLib",
+        "LoRa",
+        "MCCI LoRaWAN LMIC library",
+        // Motion / misc
+        "ESP32Servo",
+        "WebSockets",
+        "IRremote",
+        "RTClib",
+        "TinyGPSPlus",
+        "AccelStepper",
+        "MIDI Library",
+    ]
+}
+
+/// Aether-managed Arduino user dir: `%LOCALAPPDATA%/Aether/arduino-user` (libraries/).
+pub fn aether_arduino_user_dir() -> PathBuf {
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        return PathBuf::from(local).join("Aether").join("arduino-user");
+    }
+    if let Ok(home) = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")) {
+        return PathBuf::from(home).join(".aether").join("arduino-user");
+    }
+    PathBuf::from("aether-arduino-user")
+}
+
+pub fn aether_arduino_libraries_dir() -> PathBuf {
+    aether_arduino_user_dir().join("libraries")
+}
+
+fn ensure_arduino_user_dir() -> Result<PathBuf, String> {
+    let user = aether_arduino_user_dir();
+    let libs = user.join("libraries");
+    fs::create_dir_all(&libs).map_err(|e| format!("Cannot create Arduino offline dir: {e}"))?;
+    Ok(user)
+}
+
+fn count_library_folders(libs: &Path) -> u32 {
+    let Ok(entries) = fs::read_dir(libs) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .filter(|e| e.path().is_dir())
+        .filter(|e| {
+            let name = e.file_name();
+            let name = name.to_string_lossy();
+            !name.starts_with('.')
+        })
+        .count() as u32
+}
+
+fn library_index_present(user: &Path) -> bool {
+    // arduino-cli stores indexes under data dir; we also keep a copy beside the pack.
+    user.join("library_index.json").is_file()
+        || user.join("libraries").join("library_index.json").is_file()
+}
+
 fn path_ok(path: &Path) -> bool {
     path.is_file()
 }
@@ -633,6 +741,7 @@ pub fn arduino_cli_detect() -> Result<ArduinoCliInfo, String> {
 }
 
 /// Search Arduino Library Manager via `arduino-cli lib search --format json`.
+/// Falls back to the Aether offline library folder when the registry is unreachable.
 #[tauri::command]
 pub fn arduino_cli_lib_search(query: String) -> Result<Vec<PioLibEntry>, String> {
     let cli = resolve_arduino_cli().ok_or_else(|| {
@@ -641,7 +750,7 @@ pub fn arduino_cli_lib_search(query: String) -> Result<Vec<PioLibEntry>, String>
     })?;
     let q = query.trim();
     if q.is_empty() {
-        return Ok(vec![]);
+        return Ok(search_offline_libraries(""));
     }
     if q.len() > 120 {
         return Err("Search query too long.".into());
@@ -652,12 +761,66 @@ pub fn arduino_cli_lib_search(query: String) -> Result<Vec<PioLibEntry>, String>
         &["lib", "search", q, "--format", "json"],
         None,
         Duration::from_secs(12),
-    )?;
-    if !output.status.success() {
-        return Err(failure_detail(&output, "arduino-cli lib search failed."));
+    );
+    match output {
+        Ok(out) if out.status.success() => {
+            let online = parse_lib_search_json(&out.stdout);
+            if online.is_empty() {
+                Ok(search_offline_libraries(q))
+            } else {
+                Ok(online)
+            }
+        }
+        _ => Ok(search_offline_libraries(q)),
     }
+}
 
-    Ok(parse_lib_search_json(&output.stdout))
+fn search_offline_libraries(query: &str) -> Vec<PioLibEntry> {
+    let libs = aether_arduino_libraries_dir();
+    let Ok(entries) = fs::read_dir(&libs) else {
+        return vec![];
+    };
+    let q = query.trim().to_ascii_lowercase();
+    let mut out = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.starts_with('.') {
+            continue;
+        }
+        if !q.is_empty() && !name.to_ascii_lowercase().contains(&q) {
+            continue;
+        }
+        out.push(PioLibEntry {
+            id: format!("arduino:{name}"),
+            name: name.clone(),
+            owner: "offline".into(),
+            description: format!("Cached in Aether offline store ({})", libs.display()),
+            version: String::new(),
+            platforms: vec!["arduino".into()],
+        });
+        if out.len() >= 40 {
+            break;
+        }
+    }
+    out.sort_by(|a, b| a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase()));
+    out
+}
+
+fn push_libraries_args(args: &mut Vec<String>, project_root: &Path) {
+    let project_lib = project_root.join("lib");
+    if project_lib.is_dir() {
+        args.push("--libraries".into());
+        args.push(project_lib.display().to_string());
+    }
+    let offline = aether_arduino_libraries_dir();
+    if offline.is_dir() && offline != project_lib {
+        args.push("--libraries".into());
+        args.push(offline.display().to_string());
+    }
 }
 
 fn parse_lib_search_json(stdout: &[u8]) -> Vec<PioLibEntry> {
@@ -718,9 +881,7 @@ fn parse_lib_search_json(stdout: &[u8]) -> Vec<PioLibEntry> {
     out
 }
 
-/// Install a library into the project's PlatformIO-compatible `lib/` folder.
-///
-/// Uses a temporary Arduino user dir, then moves `{user}/libraries/<Name>` → `{cwd}/lib/<Name>`.
+/// Install a library into the Aether offline store and copy into the project's `lib/` folder.
 #[tauri::command]
 pub fn arduino_cli_lib_install(cwd: String, library: String) -> Result<String, String> {
     let cli = resolve_arduino_cli().ok_or_else(|| {
@@ -737,13 +898,13 @@ pub fn arduino_cli_lib_install(cwd: String, library: String) -> Result<String, S
         return Err("Open a PlatformIO project (platformio.ini) first.".into());
     }
 
-    let staging = project.join(".aether").join("arduino_user");
-    let staging_libs = staging.join("libraries");
-    fs::create_dir_all(&staging_libs).map_err(|e| format!("Cannot create staging dir: {e}"))?;
+    // Prefer Aether offline store so installs stay available offline; also copy into project lib/.
+    let offline_user = ensure_arduino_user_dir()?;
+    let offline_libs = offline_user.join("libraries");
 
     let mut cmd = Command::new(&cli);
     cmd.args(["lib", "install", name])
-        .env("ARDUINO_DIRECTORIES_USER", &staging)
+        .env("ARDUINO_DIRECTORIES_USER", &offline_user)
         .current_dir(&project)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -756,8 +917,8 @@ pub fn arduino_cli_lib_install(cwd: String, library: String) -> Result<String, S
         return Err(failure_detail(&output, "arduino-cli lib install failed."));
     }
 
-    let installed_dir = find_installed_lib_dir(&staging_libs, name)
-        .ok_or_else(|| format!("Library installed but folder not found under staging: {name}"))?;
+    let installed_dir = find_installed_lib_dir(&offline_libs, name)
+        .ok_or_else(|| format!("Library installed but folder not found under offline store: {name}"))?;
 
     let lib_root = project.join("lib");
     fs::create_dir_all(&lib_root).map_err(|e| format!("Cannot create lib/: {e}"))?;
@@ -769,19 +930,14 @@ pub fn arduino_cli_lib_install(cwd: String, library: String) -> Result<String, S
     if dest.exists() {
         fs::remove_dir_all(&dest).map_err(|e| format!("Cannot replace existing lib: {e}"))?;
     }
-    fs::rename(&installed_dir, &dest)
-        .or_else(|_| {
-            copy_dir_recursive(&installed_dir, &dest).and_then(|_| {
-                let _ = fs::remove_dir_all(&installed_dir);
-                Ok(())
-            })
-        })
-        .map_err(|e| format!("Failed to move library into lib/: {e}"))?;
+    // Keep a copy in the offline store; also place into the project lib/ for PIO.
+    copy_dir_recursive(&installed_dir, &dest)
+        .map_err(|e| format!("Failed to copy library into lib/: {e}"))?;
 
-    // Best-effort cleanup of staging leftovers.
-    let _ = fs::remove_dir_all(&staging);
-
-    Ok(format!("Installed {name} into {}", dest.display()))
+    Ok(format!(
+        "Installed {name} into offline store and {}",
+        dest.display()
+    ))
 }
 
 fn find_installed_lib_dir(libraries: &Path, name: &str) -> Option<PathBuf> {
@@ -892,11 +1048,7 @@ pub fn arduino_cli_run(
             args.push("compile".into());
             args.push("--fqbn".into());
             args.push(resolved_fqbn.clone());
-            let lib = root.join("lib");
-            if lib.is_dir() {
-                args.push("--libraries".into());
-                args.push(lib.display().to_string());
-            }
+            push_libraries_args(&mut args, &root);
             args.push(sketch_dir.display().to_string());
         }
         "upload" => {
@@ -921,11 +1073,7 @@ pub fn arduino_cli_run(
             args.push("--clean".into());
             args.push("--fqbn".into());
             args.push(resolved_fqbn.clone());
-            let lib = root.join("lib");
-            if lib.is_dir() {
-                args.push("--libraries".into());
-                args.push(lib.display().to_string());
-            }
+            push_libraries_args(&mut args, &root);
             args.push(sketch_dir.display().to_string());
         }
         "compiledb" => {
@@ -1089,6 +1237,373 @@ pub fn arduino_cli_run(
     });
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn arduino_cli_offline_status() -> Result<ArduinoOfflineStatus, String> {
+    let user = aether_arduino_user_dir();
+    let libs = user.join("libraries");
+    let library_count = count_library_folders(&libs);
+    let index_present = library_index_present(&user);
+    Ok(ArduinoOfflineStatus {
+        dir: user.display().to_string(),
+        library_count,
+        index_present,
+        ready: library_count > 0,
+    })
+}
+
+fn is_arduino_offline_zip_name(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    lower.starts_with("aether_arduinolibs_") || lower.starts_with("aether_arduino_libs_")
+}
+
+#[tauri::command]
+pub fn arduino_cli_find_sidecar_offline_zips() -> Result<Vec<ArduinoSidecarZip>, String> {
+    let mut found = Vec::new();
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            dirs.push(dir.to_path_buf());
+            dirs.push(dir.join("offline"));
+        }
+    }
+    if let Ok(home) = std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")) {
+        let home = PathBuf::from(home);
+        dirs.push(home.join("Desktop"));
+        dirs.push(home.join("Downloads"));
+        dirs.push(home.join("Documents").join("Aether").join("offline"));
+    }
+    if let Ok(local) = std::env::var("LOCALAPPDATA") {
+        dirs.push(PathBuf::from(local).join("Aether").join("offline"));
+    }
+    for dir in dirs {
+        let Ok(entries) = fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+            if !name.to_ascii_lowercase().ends_with(".zip") {
+                continue;
+            }
+            if is_arduino_offline_zip_name(name) {
+                found.push(ArduinoSidecarZip {
+                    path: path.display().to_string(),
+                    kind: "arduino-libs".into(),
+                });
+            }
+        }
+    }
+    found.sort_by(|a, b| a.path.cmp(&b.path));
+    found.dedup_by(|a, b| a.path == b.path);
+    Ok(found)
+}
+
+/// Download curated Arduino libraries + index into the Aether offline store (online).
+#[tauri::command]
+pub fn arduino_cli_prepare_offline_libs(app: AppHandle, state: State<'_, PioState>) -> Result<(), String> {
+    let running = state.running_flag();
+    if running.load(Ordering::SeqCst) {
+        return Err("A firmware task is already running.".into());
+    }
+    let cli = resolve_arduino_cli().ok_or_else(|| {
+        "arduino-cli not found. Install Arduino CLI first (Settings → Tools).".to_string()
+    })?;
+    let user = ensure_arduino_user_dir()?;
+    let child_slot = state.child_slot();
+    running.store(true, Ordering::SeqCst);
+    emit_status(
+        &app,
+        PioStatusPayload {
+            running: true,
+            task: Some("arduino-offline-libs".into()),
+            success: None,
+            code: None,
+            error: None,
+        },
+    );
+
+    let app_bg = app.clone();
+    let running_bg = running.clone();
+    thread::spawn(move || {
+        let mut all_ok = true;
+        emit_line(
+            &app_bg,
+            "system",
+            format!("Preparing Arduino offline libs → {}", user.display()),
+        );
+        emit_line(
+            &app_bg,
+            "system",
+            "> arduino-cli lib update-index".to_string(),
+        );
+        let mut upd = Command::new(&cli);
+        upd.args(["lib", "update-index"])
+            .env("ARDUINO_DIRECTORIES_USER", &user)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        configure_cli_command(&mut upd);
+        match upd.output() {
+            Ok(out) => {
+                let text = String::from_utf8_lossy(&out.stdout);
+                for line in text.lines() {
+                    emit_line(&app_bg, "stdout", line.to_string());
+                }
+                let err = String::from_utf8_lossy(&out.stderr);
+                for line in err.lines() {
+                    emit_line(&app_bg, "stderr", line.to_string());
+                }
+                if !out.status.success() {
+                    all_ok = false;
+                }
+            }
+            Err(e) => {
+                emit_line(&app_bg, "stderr", format!("update-index failed: {e}"));
+                all_ok = false;
+            }
+        }
+
+        for lib in curated_offline_libraries() {
+            if !running_bg.load(Ordering::SeqCst) {
+                all_ok = false;
+                break;
+            }
+            emit_line(
+                &app_bg,
+                "system",
+                format!("> arduino-cli lib install \"{lib}\""),
+            );
+            let mut cmd = Command::new(&cli);
+            cmd.args(["lib", "install", lib])
+                .env("ARDUINO_DIRECTORIES_USER", &user)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+            configure_cli_command(&mut cmd);
+            match cmd.output() {
+                Ok(out) => {
+                    if out.status.success() {
+                        emit_line(&app_bg, "stdout", format!("✔ {lib}"));
+                    } else {
+                        all_ok = false;
+                        let detail = failure_detail(&out, "install failed");
+                        emit_line(&app_bg, "stderr", format!("✖ {lib}: {detail}"));
+                    }
+                }
+                Err(e) => {
+                    all_ok = false;
+                    emit_line(&app_bg, "stderr", format!("✖ {lib}: {e}"));
+                }
+            }
+        }
+
+        // Best-effort: copy library_index from Arduino15 data dir into the pack.
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            let idx = PathBuf::from(local)
+                .join("Arduino15")
+                .join("library_index.json");
+            if idx.is_file() {
+                let dest = user.join("library_index.json");
+                let _ = fs::copy(&idx, &dest);
+                emit_line(
+                    &app_bg,
+                    "system",
+                    format!("Copied library_index.json → {}", dest.display()),
+                );
+            }
+        }
+
+        let count = count_library_folders(&user.join("libraries"));
+        emit_line(
+            &app_bg,
+            "system",
+            format!(
+                "Arduino offline store: {count} libraries in {}",
+                user.join("libraries").display()
+            ),
+        );
+        if all_ok {
+            emit_line(
+                &app_bg,
+                "system",
+                "✔ Offline pack ready. Online search/install still updates this store.".into(),
+            );
+        }
+
+        {
+            let mut slot = child_slot.lock().unwrap_or_else(|e| e.into_inner());
+            *slot = None;
+        }
+        running_bg.store(false, Ordering::SeqCst);
+        emit_status(
+            &app_bg,
+            PioStatusPayload {
+                running: false,
+                task: Some("arduino-offline-libs".into()),
+                success: Some(all_ok),
+                code: None,
+                error: None,
+            },
+        );
+    });
+
+    Ok(())
+}
+
+/// Online refresh: update index + upgrade installed offline libraries.
+#[tauri::command]
+pub fn arduino_cli_update_offline_libs(app: AppHandle, state: State<'_, PioState>) -> Result<(), String> {
+    let running = state.running_flag();
+    if running.load(Ordering::SeqCst) {
+        return Err("A firmware task is already running.".into());
+    }
+    let cli = resolve_arduino_cli().ok_or_else(|| {
+        "arduino-cli not found. Install Arduino CLI first (Settings → Tools).".to_string()
+    })?;
+    let user = ensure_arduino_user_dir()?;
+    running.store(true, Ordering::SeqCst);
+    emit_status(
+        &app,
+        PioStatusPayload {
+            running: true,
+            task: Some("arduino-offline-update".into()),
+            success: None,
+            code: None,
+            error: None,
+        },
+    );
+    let app_bg = app.clone();
+    let running_bg = running.clone();
+    thread::spawn(move || {
+        let mut ok = true;
+        for args in [
+            vec!["lib", "update-index"],
+            vec!["lib", "upgrade"],
+        ] {
+            if !running_bg.load(Ordering::SeqCst) {
+                ok = false;
+                break;
+            }
+            emit_line(
+                &app_bg,
+                "system",
+                format!("> arduino-cli {}", args.join(" ")),
+            );
+            let mut cmd = Command::new(&cli);
+            cmd.args(&args)
+                .env("ARDUINO_DIRECTORIES_USER", &user)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+            configure_cli_command(&mut cmd);
+            match cmd.output() {
+                Ok(out) => {
+                    let text = String::from_utf8_lossy(&out.stdout);
+                    for line in text.lines() {
+                        emit_line(&app_bg, "stdout", line.to_string());
+                    }
+                    let err = String::from_utf8_lossy(&out.stderr);
+                    for line in err.lines() {
+                        emit_line(&app_bg, "stderr", line.to_string());
+                    }
+                    if !out.status.success() {
+                        ok = false;
+                    }
+                }
+                Err(e) => {
+                    ok = false;
+                    emit_line(&app_bg, "stderr", format!("{e}"));
+                }
+            }
+        }
+        running_bg.store(false, Ordering::SeqCst);
+        emit_status(
+            &app_bg,
+            PioStatusPayload {
+                running: false,
+                task: Some("arduino-offline-update".into()),
+                success: Some(ok),
+                code: None,
+                error: None,
+            },
+        );
+    });
+    Ok(())
+}
+
+/// Import `Aether_ArduinoLibs_*.zip` (libraries/ + optional library_index.json) into the offline store.
+#[tauri::command]
+pub fn arduino_cli_import_offline_libs(zip_path: String) -> Result<String, String> {
+    let zip_path = PathBuf::from(zip_path.trim());
+    if !zip_path.is_file() {
+        return Err("Offline Arduino libs zip not found.".into());
+    }
+    let user = ensure_arduino_user_dir()?;
+    let libs_dest = user.join("libraries");
+    fs::create_dir_all(&libs_dest).map_err(|e| format!("Cannot create libraries dir: {e}"))?;
+
+    let file = fs::File::open(&zip_path).map_err(|e| format!("Cannot open zip: {e}"))?;
+    let mut archive =
+        zip::ZipArchive::new(file).map_err(|e| format!("Invalid zip: {e}"))?;
+
+    let mut imported = 0u32;
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Zip entry error: {e}"))?;
+        let name = file.name().replace('\\', "/");
+        if name.contains("..") {
+            continue;
+        }
+        let rel = name
+            .trim_start_matches("./")
+            .trim_start_matches('/');
+        // Accept libraries/Foo/... or Foo/... at root of pack.
+        let target = if let Some(rest) = rel.strip_prefix("libraries/") {
+            if rest.is_empty() {
+                continue;
+            }
+            libs_dest.join(rest)
+        } else if rel == "library_index.json" || rel.ends_with("/library_index.json") {
+            user.join("library_index.json")
+        } else if !rel.contains('/') {
+            // skip junk at root
+            continue;
+        } else {
+            // top-level library folder in zip
+            let first = rel.split('/').next().unwrap_or("");
+            if first.is_empty() || first.starts_with('.') {
+                continue;
+            }
+            libs_dest.join(rel)
+        };
+
+        if file.is_dir() || name.ends_with('/') {
+            fs::create_dir_all(&target).ok();
+            continue;
+        }
+        if let Some(parent) = target.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("mkdir: {e}"))?;
+        }
+        let mut outfile =
+            fs::File::create(&target).map_err(|e| format!("Cannot write {}: {e}", target.display()))?;
+        std::io::copy(&mut file, &mut outfile)
+            .map_err(|e| format!("Extract failed: {e}"))?;
+        imported += 1;
+    }
+
+    let count = count_library_folders(&libs_dest);
+    Ok(format!(
+        "Imported {imported} files → {count} libraries in {}",
+        libs_dest.display()
+    ))
 }
 
 #[cfg(test)]

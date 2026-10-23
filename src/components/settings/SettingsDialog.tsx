@@ -4,10 +4,17 @@ import { useI18n } from "@/hooks/useI18n";
 import type { Locale } from "@/i18n";
 import { cn } from "@/lib/cn";
 import {
+  arduinoOfflineStatus,
   detectArduinoCli,
   ensureArduinoCliCores,
+  findArduinoSidecarOfflineZips,
+  importArduinoOfflineLibs,
   openArduinoCliInstallDocs,
+  prepareArduinoOfflineLibs,
+  updateArduinoOfflineLibs,
   type ArduinoCliInfo,
+  type ArduinoOfflineStatus,
+  type ArduinoSidecarZip,
 } from "@/lib/arduinoCli";
 import { isTauriRuntime } from "@/lib/tauri";
 import { useAgentStore } from "@/stores/agentStore";
@@ -111,8 +118,30 @@ export function SettingsDialog() {
   const [arduinoCliStatus, setArduinoCliStatus] = useState<
     "idle" | "checking" | ArduinoCliInfo
   >("idle");
+  const [arduinoOffline, setArduinoOffline] =
+    useState<ArduinoOfflineStatus | null>(null);
+  const [arduinoSidecars, setArduinoSidecars] = useState<ArduinoSidecarZip[]>(
+    [],
+  );
+  const [arduinoOfflineBusy, setArduinoOfflineBusy] = useState(false);
+  const flashNotice = useSettingsStore((s) => s.flashNotice);
   const panelRef = useRef<HTMLDivElement>(null);
   const runDoctor = usePlatformIoStore((s) => s.runDoctor);
+
+  const refreshArduinoOffline = async () => {
+    if (!isTauriRuntime()) return;
+    try {
+      const [st, zips] = await Promise.all([
+        arduinoOfflineStatus(),
+        findArduinoSidecarOfflineZips(),
+      ]);
+      setArduinoOffline(st);
+      setArduinoSidecars(zips);
+    } catch {
+      setArduinoOffline(null);
+      setArduinoSidecars([]);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -140,6 +169,7 @@ export function SettingsDialog() {
   useEffect(() => {
     if (!open || tab !== "tools") return;
     void refreshOfflineCache();
+    void refreshArduinoOffline();
   }, [open, tab, refreshOfflineCache]);
 
   useEffect(() => {
@@ -523,6 +553,174 @@ export function SettingsDialog() {
                   <p className="text-[11px] leading-relaxed text-aether-fg-dim">
                     {t("arduinoCli.installHint")}
                   </p>
+                  <div className="mt-3 space-y-2 rounded border border-aether-border/80 bg-aether-bg/40 p-2">
+                    <p className="font-medium text-aether-fg">
+                      {t("arduinoOffline.title")}
+                    </p>
+                    <p className="text-[11px] leading-relaxed text-aether-fg-muted">
+                      {t("arduinoOffline.hint")}
+                    </p>
+                    {arduinoOffline && (
+                      <p className="text-[11px] text-aether-fg-dim">
+                        {t("arduinoOffline.status", {
+                          count: String(arduinoOffline.libraryCount),
+                          dir: arduinoOffline.dir || "—",
+                        })}
+                      </p>
+                    )}
+                    {arduinoSidecars[0] && (
+                      <p className="text-[11px] text-aether-fg-muted">
+                        {t("arduinoOffline.sidecarFound", {
+                          file:
+                            arduinoSidecars[0].path.split(/[/\\]/).pop() ??
+                            arduinoSidecars[0].path,
+                        })}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        title={t("arduinoOffline.prepareTitle")}
+                        disabled={
+                          running ||
+                          arduinoOfflineBusy ||
+                          !isTauriRuntime() ||
+                          (arduinoCliStatus !== "idle" &&
+                            arduinoCliStatus !== "checking" &&
+                            !arduinoCliStatus.installed)
+                        }
+                        onClick={() => {
+                          setArduinoOfflineBusy(true);
+                          void prepareArduinoOfflineLibs()
+                            .then(() => {
+                              flashNotice(t("arduinoOffline.prepareStarted"));
+                              void refreshArduinoOffline();
+                            })
+                            .catch((e) =>
+                              flashNotice(
+                                e instanceof Error
+                                  ? e.message
+                                  : t("arduinoOffline.prepareFailed"),
+                              ),
+                            )
+                            .finally(() => setArduinoOfflineBusy(false));
+                        }}
+                        className="rounded border border-aether-accent bg-aether-accent px-2.5 py-1.5 text-[11px] text-white hover:opacity-90 disabled:opacity-40"
+                        data-testid="settings-arduino-offline-prepare"
+                      >
+                        {arduinoOfflineBusy || running
+                          ? t("arduinoOffline.preparing")
+                          : t("arduinoOffline.prepare")}
+                      </button>
+                      <button
+                        type="button"
+                        title={t("arduinoOffline.updateTitle")}
+                        disabled={
+                          running || arduinoOfflineBusy || !isTauriRuntime()
+                        }
+                        onClick={() => {
+                          setArduinoOfflineBusy(true);
+                          void updateArduinoOfflineLibs()
+                            .then(() => {
+                              flashNotice(t("arduinoOffline.updateStarted"));
+                              void refreshArduinoOffline();
+                            })
+                            .catch((e) =>
+                              flashNotice(
+                                e instanceof Error
+                                  ? e.message
+                                  : t("arduinoOffline.updateFailed"),
+                              ),
+                            )
+                            .finally(() => setArduinoOfflineBusy(false));
+                        }}
+                        className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                      >
+                        {t("arduinoOffline.update")}
+                      </button>
+                      {arduinoSidecars[0] && (
+                        <button
+                          type="button"
+                          title={t("arduinoOffline.importSidecarTitle")}
+                          disabled={arduinoOfflineBusy || !isTauriRuntime()}
+                          onClick={() => {
+                            setArduinoOfflineBusy(true);
+                            const zip = arduinoSidecars[0];
+                            if (!zip) return;
+                            void importArduinoOfflineLibs(zip.path)
+                              .then((msg) => {
+                                flashNotice(msg);
+                                void refreshArduinoOffline();
+                              })
+                              .catch((e) =>
+                                flashNotice(
+                                  e instanceof Error
+                                    ? e.message
+                                    : t("arduinoOffline.importFailed"),
+                                ),
+                              )
+                              .finally(() => setArduinoOfflineBusy(false));
+                          }}
+                          className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                        >
+                          {t("arduinoOffline.importSidecar")}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        title={t("arduinoOffline.importTitle")}
+                        disabled={arduinoOfflineBusy || !isTauriRuntime()}
+                        onClick={() => {
+                          void (async () => {
+                            const { open } = await import(
+                              "@tauri-apps/plugin-dialog"
+                            );
+                            const selected = await open({
+                              multiple: false,
+                              filters: [
+                                {
+                                  name: "Arduino libs zip",
+                                  extensions: ["zip"],
+                                },
+                              ],
+                              title: t("arduinoOffline.import"),
+                            });
+                            if (typeof selected === "string" && selected) {
+                              setArduinoOfflineBusy(true);
+                              try {
+                                const msg =
+                                  await importArduinoOfflineLibs(selected);
+                                flashNotice(msg);
+                                await refreshArduinoOffline();
+                              } catch (e) {
+                                flashNotice(
+                                  e instanceof Error
+                                    ? e.message
+                                    : t("arduinoOffline.importFailed"),
+                                );
+                              } finally {
+                                setArduinoOfflineBusy(false);
+                              }
+                            }
+                          })();
+                        }}
+                        className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                      >
+                        {t("arduinoOffline.import")}
+                      </button>
+                      <button
+                        type="button"
+                        title={t("arduinoOffline.recheckTitle")}
+                        disabled={arduinoOfflineBusy}
+                        onClick={() => {
+                          void refreshArduinoOffline();
+                        }}
+                        className="rounded border border-aether-border bg-aether-bg px-2.5 py-1.5 text-[11px] text-aether-fg hover:bg-aether-surface-raised disabled:opacity-40"
+                      >
+                        {t("doctor.recheck")}
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2 border-b border-aether-border pb-3">
                   <label className="flex items-start justify-between gap-3">

@@ -54,6 +54,15 @@ else {
   Write-Host "      Run: npm run build:offline-libs"
 }
 
+$arduinoLibsZip = Join-Path $ReleaseDir "Aether_ArduinoLibs_${Version}_windows-x64.zip"
+if (Test-Path $arduinoLibsZip) {
+  Copy-Item -Force $arduinoLibsZip (Join-Path $OutDir (Split-Path $arduinoLibsZip -Leaf))
+  Write-Host "Copied Arduino offline libs zip."
+}
+else {
+  Write-Host "INFO: no Aether_ArduinoLibs zip — optional. Run: npm run build:arduino-offline-libs"
+}
+
 # --- Optional portable Aether Configurator (detection + README if too large) ---
 $configuratorNote = "not bundled (Electron pack is large — install separately or set AETHER_CONFIGURATOR)."
 $configuratorCopied = $false

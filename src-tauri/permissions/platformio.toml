@@ -16,5 +16,7 @@ commands.allow = [
   "pio_lib_uninstall",
   "pio_lib_list",
   "pio_cache_status",
-  "pio_prepare_offline_cache"
+  "pio_prepare_offline_cache",
+  "pio_find_sidecar_offline_zips",
+  "pio_import_offline_cache"
 ]

@@ -26,6 +26,7 @@
     "allow-serial",
     "allow-terminal",
     "allow-platformio",
+    "allow-arduino-cli",
     "allow-ai",
     "allow-watcher",
     "allow-search",
