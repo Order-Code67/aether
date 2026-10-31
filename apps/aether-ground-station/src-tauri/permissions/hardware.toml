@@ -1,0 +1,14 @@
+[[permission]]
+identifier = "allow-hardware"
+description = "Hardware Connection Manager commands"
+commands.allow = [
+  "serial_list_ports",
+  "serial_open",
+  "serial_close",
+  "serial_write",
+  "serial_write_bytes",
+  "serial_get_status",
+  "list_usb_devices",
+  "list_network_interfaces",
+  "probe_host"
+]

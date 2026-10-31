@@ -1,0 +1,11 @@
+[[permission]]
+identifier = "allow-database"
+description = "SQLite persistence commands"
+commands.allow = [
+  "db_init",
+  "db_append_event",
+  "db_list_events",
+  "db_upsert_setting",
+  "db_get_setting",
+  "db_backup"
+]
