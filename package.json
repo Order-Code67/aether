@@ -6,7 +6,8 @@
   "type": "module",
   "workspaces": [
     "apps/bpla-studio",
-    "apps/aether-configurator"
+    "apps/aether-configurator",
+    "apps/aether-ground-station"
   ],
   "scripts": {
     "dev": "vite",
@@ -23,6 +24,9 @@
     "tauri:build": "tauri build",
     "studio:dev": "npm run tauri:dev -w bpla-studio",
     "studio:build": "npm run tauri:build -w bpla-studio",
+    "gs:dev": "npm run tauri:dev -w aether-ground-station",
+    "gs:build": "npm run tauri:build -w aether-ground-station",
+    "gs:typecheck": "npm run typecheck -w aether-ground-station",
     "configurator:dev": "npm run dev -w aether-configurator",
     "configurator:build": "npm run build -w aether-configurator",
     "configurator:package": "npm run package -w aether-configurator",
