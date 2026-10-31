@@ -7,5 +7,12 @@ commands.allow = [
   "db_list_events",
   "db_upsert_setting",
   "db_get_setting",
-  "db_backup"
+  "db_backup",
+  "db_upsert_json",
+  "db_get_json",
+  "db_list_users",
+  "db_verify_user_password",
+  "db_upsert_recording",
+  "db_list_recordings",
+  "db_audit"
 ]

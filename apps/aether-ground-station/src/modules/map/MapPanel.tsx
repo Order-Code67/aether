@@ -6,10 +6,10 @@ import {
   Popup,
   ScaleControl,
   type MapMouseEvent,
-  type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { eventBus } from "@/services/events/eventBus";
+import { OSM_STYLE, offlineStyle } from "./mapStyles";
 
 function haversineM(
   a: { lng: number; lat: number },
@@ -27,19 +27,6 @@ function haversineM(
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-const OSM_STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenStreetMap",
-    },
-  },
-  layers: [{ id: "osm", type: "raster", source: "osm" }],
-};
-
 interface UserMarker {
   id: string;
   lng: number;
@@ -47,34 +34,53 @@ interface UserMarker {
   label: string;
 }
 
+type TileMode = "osm" | "offline" | "local";
+
 export function MapPanel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
-  const measureRef = useRef<{ a: { lng: number; lat: number }; b?: { lng: number; lat: number } } | null>(
-    null,
-  );
+  const measureRef = useRef<{
+    a: { lng: number; lat: number };
+    b?: { lng: number; lat: number };
+  } | null>(null);
 
   const [terrain, setTerrain] = useState(false);
   const [markers, setMarkers] = useState<UserMarker[]>([]);
   const [measureMode, setMeasureMode] = useState(false);
   const [distanceM, setDistanceM] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tileMode, setTileMode] = useState<TileMode>("offline");
+  const [localUrl, setLocalUrl] = useState("");
 
   const measureModeRef = useRef(measureMode);
   measureModeRef.current = measureMode;
 
+  const styleFor = (mode: TileMode, url: string) => {
+    if (mode === "osm") return OSM_STYLE;
+    if (mode === "local") return offlineStyle(url || undefined);
+    return offlineStyle();
+  };
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     try {
+      // Prefer blob workers; MapLibre CSP worker is enabled via vite worker.es + CSP.
       const map = new Map({
         container: containerRef.current,
-        style: OSM_STYLE,
+        style: styleFor(tileMode, localUrl),
         center: [37.62, 55.75],
         zoom: 10,
       });
       map.addControl(new NavigationControl(), "top-right");
       map.addControl(new ScaleControl({ unit: "metric" }));
+      map.on("error", (e) => {
+        const msg =
+          e.error instanceof Error
+            ? e.error.message
+            : "Ошибка слоя карты (тайлы / worker)";
+        eventBus.emit("warning", "map", msg);
+      });
       map.on("click", (e: MapMouseEvent) => {
         if (!measureModeRef.current) return;
         const point = e.lngLat;
@@ -95,7 +101,13 @@ export function MapPanel() {
         );
       });
       mapRef.current = map;
-      eventBus.emit("info", "map", "Карта OpenStreetMap загружена");
+      eventBus.emit(
+        "info",
+        "map",
+        tileMode === "offline"
+          ? "Карта: офлайн-база (без интернета)"
+          : "Карта инициализирована",
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка инициализации карты");
     }
@@ -105,7 +117,32 @@ export function MapPanel() {
       mapRef.current?.remove();
       mapRef.current = null;
     };
+    // init once; style switches via setStyle below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.setStyle(styleFor(tileMode, localUrl));
+      eventBus.emit(
+        "info",
+        "map",
+        tileMode === "osm"
+          ? "Тайлы OSM (нужен интернет)"
+          : tileMode === "local"
+            ? "Локальные тайлы"
+            : "Офлайн-база",
+      );
+    } catch (e) {
+      eventBus.emit(
+        "error",
+        "map",
+        e instanceof Error ? e.message : "Не удалось сменить стиль",
+      );
+    }
+  }, [tileMode, localUrl]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -138,17 +175,6 @@ export function MapPanel() {
     ]);
   };
 
-  const toggleTerrainHint = () => {
-    setTerrain((v) => !v);
-    eventBus.emit(
-      "info",
-      "map",
-      terrain
-        ? "Слой рельефа скрыт"
-        : "Рельеф/горизонтали требуют источника DEM — подключите свой tileset в настройках карты",
-    );
-  };
-
   if (error) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-sm text-ags-danger">
@@ -160,6 +186,23 @@ export function MapPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-wrap gap-2 border-b border-ags-border-subtle p-2 text-xs">
+        <select
+          className="rounded border border-ags-border bg-ags-elevated px-2 py-1"
+          value={tileMode}
+          onChange={(e) => setTileMode(e.target.value as TileMode)}
+        >
+          <option value="offline">Офлайн (без тайлов)</option>
+          <option value="local">Локальные XYZ</option>
+          <option value="osm">OSM онлайн</option>
+        </select>
+        {tileMode === "local" && (
+          <input
+            className="min-w-[14rem] flex-1 rounded border border-ags-border bg-ags-elevated px-2 py-1"
+            placeholder="http://127.0.0.1:8080/{z}/{x}/{y}.png"
+            value={localUrl}
+            onChange={(e) => setLocalUrl(e.target.value)}
+          />
+        )}
         <button
           type="button"
           className="rounded border border-ags-border px-2 py-1"
@@ -177,7 +220,16 @@ export function MapPanel() {
         <button
           type="button"
           className="rounded border border-ags-border px-2 py-1"
-          onClick={toggleTerrainHint}
+          onClick={() => {
+            setTerrain((v) => !v);
+            eventBus.emit(
+              "info",
+              "map",
+              terrain
+                ? "Слой рельефа скрыт"
+                : "Рельеф требует DEM tileset",
+            );
+          }}
         >
           Рельеф {terrain ? "вкл" : "выкл"}
         </button>

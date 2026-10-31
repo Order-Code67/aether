@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { MODULES, type ModuleId } from "@/types";
 import { useNavigationStore } from "@/stores/navigationStore";
+import { ModuleErrorBoundary } from "@/components/common/ModuleErrorBoundary";
 import { WorkspaceView } from "@/modules/workspace";
 import { VideoView } from "@/modules/video";
 import { WalksnailView } from "@/modules/walksnail";
@@ -46,7 +47,9 @@ export function WorkArea() {
 
   return (
     <main className="min-w-0 flex-1 overflow-auto bg-ags-bg">
-      <View />
+      <ModuleErrorBoundary name={def.label}>
+        <View />
+      </ModuleErrorBoundary>
     </main>
   );
 }

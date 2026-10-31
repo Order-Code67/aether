@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { listNetworkInterfaces, probeHost } from "@/services/hardware";
 import type { HostProbeResult, NetworkInterfaceInfo } from "@/types";
 import { eventBus } from "@/services/events/eventBus";
 import { isTauriRuntime } from "@/services/tauri";
+import {
+  networkMonitor,
+  type MonitoredTarget,
+} from "@/services/network/monitor";
+import { useDeviceStore } from "@/stores/deviceStore";
 
 export function NetworkPanel() {
   const [allowed, setAllowed] = useState(false);
@@ -11,6 +16,10 @@ export function NetworkPanel() {
   const [port, setPort] = useState(80);
   const [probe, setProbe] = useState<HostProbeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [monitored, setMonitored] = useState<MonitoredTarget[]>([]);
+  const upsert = useDeviceStore((s) => s.upsert);
+
+  useEffect(() => networkMonitor.subscribe(setMonitored), []);
 
   const refresh = async () => {
     if (!isTauriRuntime()) {
@@ -21,6 +30,17 @@ export function NetworkPanel() {
       const list = await listNetworkInterfaces();
       setIfaces(list);
       setError(null);
+      for (const i of list) {
+        upsert({
+          id: `iface:${i.name}`,
+          name: i.name,
+          connectionType: "ethernet",
+          address: i.ipv4,
+          status: i.ipv4 ? "Online" : "Offline",
+          lastSeenAt: new Date().toISOString(),
+          capabilities: ["network-interface"],
+        });
+      }
       eventBus.emit("info", "network", `Интерфейсов: ${list.length}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -49,8 +69,8 @@ export function NetworkPanel() {
       {!allowed ? (
         <div className="rounded border border-ags-border bg-ags-elevated p-3 text-ags-muted">
           <p className="mb-2">
-            Автосканирование сети не выполняется. Отображение интерфейсов и
-            проверка хоста — только по запросу.
+            Автосканирование чужих сетей не выполняется. Интерфейсы и монитор —
+            только для явно указанных хостов.
           </p>
           <button
             type="button"
@@ -89,9 +109,10 @@ export function NetworkPanel() {
               </li>
             ))}
           </ul>
+
           <div className="border-t border-ags-border-subtle pt-3">
             <div className="mb-1 text-xs uppercase tracking-wide text-ags-dim">
-              Проверка доступности (TCP)
+              Network Monitor (latency / loss / reconnect)
             </div>
             <div className="flex flex-wrap gap-2">
               <input
@@ -109,9 +130,24 @@ export function NetworkPanel() {
               <button
                 type="button"
                 onClick={() => void runProbe()}
+                className="rounded border border-ags-border px-2 py-1"
+              >
+                Разовая проверка
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!host.trim()) return;
+                  networkMonitor.add(host.trim(), port);
+                  eventBus.emit(
+                    "info",
+                    "network-monitor",
+                    `Мониторинг ${host}:${port}`,
+                  );
+                }}
                 className="rounded bg-ags-accent px-2 py-1 text-white"
               >
-                Проверить
+                Следить
               </button>
             </div>
             {probe && (
@@ -121,6 +157,33 @@ export function NetworkPanel() {
                   : `Ошибка · ${probe.error ?? "нет ответа"}`}
               </p>
             )}
+            <ul className="mt-3 space-y-2 text-xs">
+              {monitored.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-ags-border bg-ags-elevated px-2 py-1.5"
+                >
+                  <span className="font-mono">
+                    {t.host}:{t.port}
+                  </span>
+                  <span className="text-ags-muted">
+                    lat{" "}
+                    {t.avgLatencyMs != null
+                      ? `${t.avgLatencyMs.toFixed(0)} мс`
+                      : "—"}{" "}
+                    · loss {(t.lossRatio * 100).toFixed(0)}% · reconnects{" "}
+                    {t.reconnects}
+                  </span>
+                  <button
+                    type="button"
+                    className="text-ags-danger"
+                    onClick={() => networkMonitor.remove(t.id)}
+                  >
+                    Стоп
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </>
       )}

@@ -6,7 +6,7 @@ mod video;
 
 use database::sqlite::DbState;
 use hardware::serial::SerialState;
-use rusqlite::Connection;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -17,51 +17,8 @@ pub fn run() {
         .manage(SerialState::default())
         .manage(DbState::default())
         .setup(|app| {
-            use directories::ProjectDirs;
-            use tauri::Manager;
-            if let Some(dirs) = ProjectDirs::from("com", "aether", "ground-station") {
-                let dir = dirs.data_dir();
-                let _ = std::fs::create_dir_all(dir);
-                let path = dir.join("ags.sqlite");
-                if let Ok(conn) = Connection::open(&path) {
-                    let _ = conn.execute_batch(
-                        r#"
-                        CREATE TABLE IF NOT EXISTS profiles (
-                          id TEXT PRIMARY KEY,
-                          name TEXT NOT NULL,
-                          payload TEXT NOT NULL,
-                          updated_at TEXT NOT NULL
-                        );
-                        CREATE TABLE IF NOT EXISTS workspace_layouts (
-                          id TEXT PRIMARY KEY,
-                          name TEXT NOT NULL,
-                          payload TEXT NOT NULL,
-                          updated_at TEXT NOT NULL
-                        );
-                        CREATE TABLE IF NOT EXISTS event_log (
-                          id TEXT PRIMARY KEY,
-                          at TEXT NOT NULL,
-                          severity TEXT NOT NULL,
-                          source TEXT NOT NULL,
-                          message TEXT NOT NULL,
-                          details TEXT
-                        );
-                        CREATE TABLE IF NOT EXISTS archive_clips (
-                          id TEXT PRIMARY KEY,
-                          payload TEXT NOT NULL
-                        );
-                        CREATE TABLE IF NOT EXISTS settings_kv (
-                          key TEXT PRIMARY KEY,
-                          value TEXT NOT NULL
-                        );
-                        "#,
-                    );
-                    let state = app.state::<DbState>();
-                    if let Ok(mut guard) = state.conn.lock() {
-                        *guard = Some(conn);
-                    };
-                }
-            }
+            let state = app.state::<DbState>();
+            let _ = database::sqlite::open_and_migrate(&state);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -81,6 +38,13 @@ pub fn run() {
             database::sqlite::db_upsert_setting,
             database::sqlite::db_get_setting,
             database::sqlite::db_backup,
+            database::sqlite::db_upsert_json,
+            database::sqlite::db_get_json,
+            database::sqlite::db_list_users,
+            database::sqlite::db_verify_user_password,
+            database::sqlite::db_upsert_recording,
+            database::sqlite::db_list_recordings,
+            database::sqlite::db_audit,
         ])
         .run(tauri::generate_context!())
         .expect("ошибка запуска Aether Ground Station");

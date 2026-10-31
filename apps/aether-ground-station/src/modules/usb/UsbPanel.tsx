@@ -28,7 +28,8 @@ export function UsbPanel() {
           model: d.product,
           connectionType: "usb",
           address: d.serialNumber,
-          status: "Unknown",
+          status: "Online",
+          lastSeenAt: new Date().toISOString(),
           capabilities: ["usb"],
         });
       }

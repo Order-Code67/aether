@@ -11,6 +11,7 @@ import type { SerialPortInfo, SerialStatus } from "@/types";
 import { eventBus } from "@/services/events/eventBus";
 import { isTauriRuntime } from "@/services/tauri";
 import { useDeviceStore } from "@/stores/deviceStore";
+import { deviceManager } from "@/services/devices/deviceManager";
 
 export function SerialPanel() {
   const [ports, setPorts] = useState<SerialPortInfo[]>([]);
@@ -23,6 +24,7 @@ export function SerialPanel() {
   const [allowed, setAllowed] = useState(false);
   const upsert = useDeviceStore((s) => s.upsert);
   const remove = useDeviceStore((s) => s.remove);
+  const setDeviceStatus = useDeviceStore((s) => s.setStatus);
 
   const refresh = async () => {
     if (!isTauriRuntime()) {
@@ -57,12 +59,13 @@ export function SerialPanel() {
   }, []);
 
   const connect = async () => {
+    const id = `uart:${path}`;
     try {
       await serialOpen(path, baud);
       const st = await serialGetStatus();
       setStatus(st);
       upsert({
-        id: `uart:${path}`,
+        id,
         name: path,
         connectionType: "uart",
         address: `${path} @ ${baud}`,
@@ -70,10 +73,17 @@ export function SerialPanel() {
         lastSeenAt: new Date().toISOString(),
         capabilities: ["uart"],
       });
+      deviceManager.registerReconnectHandler(id, async () => {
+        await serialOpen(path, baud);
+        const st2 = await serialGetStatus();
+        setStatus(st2);
+        if (!st2.connected) throw new Error("Порт не открыт после reconnect");
+      });
       eventBus.emit("info", "serial", `Подключено: ${path}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
+      setDeviceStatus(id, "Error", msg);
       eventBus.emit("error", "serial", msg);
     }
   };
@@ -81,7 +91,10 @@ export function SerialPanel() {
   const disconnect = async () => {
     await serialClose();
     setStatus({ connected: false });
-    if (path) remove(`uart:${path}`);
+    if (path) {
+      setDeviceStatus(`uart:${path}`, "Offline");
+      remove(`uart:${path}`);
+    }
     eventBus.emit("warning", "serial", "Соединение закрыто");
   };
 

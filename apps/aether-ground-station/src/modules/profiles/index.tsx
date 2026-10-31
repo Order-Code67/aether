@@ -3,6 +3,8 @@ import { useProfileStore } from "@/stores/profileStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import type { ProfileExportBundle } from "@/types";
 import { eventBus } from "@/services/events/eventBus";
+import { COMPLEX_PRESETS, presetToProfileDraft } from "./presets";
+import { validateProfileBundle } from "./importValidate";
 
 export function ProfilesView() {
   const profiles = useProfileStore((s) => s.profiles);
@@ -14,6 +16,7 @@ export function ProfilesView() {
   const setActive = useProfileStore((s) => s.setActive);
   const exportProfile = useProfileStore((s) => s.exportProfile);
   const importProfile = useProfileStore((s) => s.importProfile);
+  const applyTemplate = useWorkspaceStore((s) => s.applyTemplate);
   const workspaceId = useWorkspaceStore((s) => s.activeLayoutId);
   const [name, setName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,10 +28,40 @@ export function ProfilesView() {
       <div>
         <h1 className="text-2xl font-semibold">Профили комплексов</h1>
         <p className="mt-1 text-sm text-ags-muted">
-          Сохранение состава устройств и привязки workspace. Секреты в экспорт не
-          попадают.
+          Готовые профили и пользовательские. Секреты в экспорт не попадают.
+          Хранение — SQLite (зеркало через sync).
         </p>
       </div>
+
+      <section>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ags-muted">
+          Готовые профили
+        </h2>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {COMPLEX_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              type="button"
+              className="rounded border border-ags-border bg-ags-panel p-3 text-left hover:border-ags-accent/50"
+              onClick={() => {
+                const draft = presetToProfileDraft(preset);
+                const p = create(draft.name);
+                update(p.id, {
+                  description: draft.description,
+                  connectionParams: draft.connectionParams,
+                  workspaceLayoutId: workspaceId,
+                });
+                applyTemplate(preset.workspaceTemplate);
+                setActive(p.id);
+                eventBus.emit("info", "profiles", `Профиль: ${preset.name}`);
+              }}
+            >
+              <div className="font-semibold">{preset.name}</div>
+              <div className="mt-1 text-xs text-ags-dim">{preset.description}</div>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-2">
         <input
@@ -66,8 +99,10 @@ export function ProfilesView() {
             if (!file) return;
             try {
               const text = await file.text();
-              const bundle = JSON.parse(text) as ProfileExportBundle;
-              const p = importProfile(bundle);
+              const parsed = JSON.parse(text) as unknown;
+              const bundle = validateProfileBundle(parsed);
+              if (!bundle) throw new Error("Неверный формат профиля");
+              const p = importProfile(bundle as ProfileExportBundle);
               if (!p) throw new Error("Неверный формат");
               eventBus.emit("info", "profiles", `Импортирован: ${p.name}`);
             } catch (err) {
@@ -93,6 +128,9 @@ export function ProfilesView() {
             }`}
           >
             <h3 className="font-semibold">{p.name}</h3>
+            {p.description && (
+              <p className="mt-1 text-xs text-ags-muted">{p.description}</p>
+            )}
             <p className="mt-1 text-xs text-ags-dim">
               Обновлён {new Date(p.updatedAt).toLocaleString()}
             </p>

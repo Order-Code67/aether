@@ -7,4 +7,6 @@ export * from "./video";
 export * from "./telemetry";
 export * from "./profiles";
 export * from "./remote";
+export * from "./auth";
+
 

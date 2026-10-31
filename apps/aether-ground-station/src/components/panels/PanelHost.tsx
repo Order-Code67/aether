@@ -1,4 +1,5 @@
 import type { PanelKind } from "@/types";
+import { ModuleErrorBoundary } from "@/components/common/ModuleErrorBoundary";
 import { VideoPanel } from "@/modules/video/VideoPanel";
 import { WalksnailPanel } from "@/modules/walksnail/WalksnailPanel";
 import { MapPanel } from "@/modules/map/MapPanel";
@@ -14,7 +15,7 @@ interface PanelHostProps {
   kind: PanelKind;
 }
 
-export function PanelHost({ kind }: PanelHostProps) {
+function Inner({ kind }: PanelHostProps) {
   switch (kind) {
     case "video":
       return <VideoPanel />;
@@ -44,4 +45,12 @@ export function PanelHost({ kind }: PanelHostProps) {
         </div>
       );
   }
+}
+
+export function PanelHost({ kind }: PanelHostProps) {
+  return (
+    <ModuleErrorBoundary name={`Панель:${kind}`}>
+      <Inner kind={kind} />
+    </ModuleErrorBoundary>
+  );
 }

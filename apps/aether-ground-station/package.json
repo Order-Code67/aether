@@ -1,7 +1,7 @@
 {
   "name": "aether-ground-station",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Aether Ground Station — modular desktop platform for ground hardware complexes",
   "type": "module",
   "scripts": {
@@ -9,6 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "test:critical": "node scripts/critical-path.test.mjs",
+    "smoke:install": "powershell -ExecutionPolicy Bypass -File scripts/smoke-post-install.ps1",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"

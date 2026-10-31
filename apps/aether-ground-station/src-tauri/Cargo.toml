@@ -1,6 +1,6 @@
 [package]
 name = "aether-ground-station"
-version = "0.3.0"
+version = "0.4.0"
 description = "Aether Ground Station — modular ground station platform"
 authors = ["Aether"]
 edition = "2021"
@@ -24,6 +24,7 @@ nusb = "0.1"
 if-addrs = "0.13"
 rusqlite = { version = "0.32", features = ["bundled"] }
 directories = "5"
+sha2 = "0.10"
 
 [profile.release]
 codegen-units = 1

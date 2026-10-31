@@ -1,6 +1,7 @@
 export type DeviceStatus =
   | "Online"
   | "Offline"
+  | "Lost"
   | "Connecting"
   | "Warning"
   | "Error"

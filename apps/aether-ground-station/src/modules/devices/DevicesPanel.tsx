@@ -8,6 +8,7 @@ function tone(status: DeviceStatus): "neutral" | "ok" | "warn" | "danger" {
       return "ok";
     case "Connecting":
     case "Warning":
+    case "Lost":
       return "warn";
     case "Error":
       return "danger";
